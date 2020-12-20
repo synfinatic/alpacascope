@@ -214,6 +214,6 @@ func (a *Alpaca) Put(device string, id uint32, api string, form map[string]strin
 	if result.ErrorNumber != 0 {
 		return fmt.Errorf("%d: %s", result.ErrorNumber, result.ErrorMessage)
 	}
-	log.Debugf("%s", result)
+	log.Debugf("%v", result)
 	return nil
 }

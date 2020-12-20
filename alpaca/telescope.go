@@ -6,6 +6,9 @@ package alpaca
 
 import (
 	"fmt"
+	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Telescope struct {
@@ -145,4 +148,74 @@ func (t *Telescope) PutSlewToCoordinates(ra float64, dec float64) error {
 	}
 	err := t.alpaca.Put("telescope", t.Id, "slewtocoordinates", form)
 	return err
+}
+
+func (t *Telescope) PutSiteLatitude(lat float64) error {
+	var form map[string]string = map[string]string{
+		"SiteLatitude":        fmt.Sprintf("%g", lat),
+		"ClientID":            fmt.Sprintf("%d", t.alpaca.ClientId),
+		"ClientTransactionID": fmt.Sprintf("%d", t.alpaca.GetNextTransactionId()),
+	}
+	err := t.alpaca.Put("telescope", t.Id, "sitelatitude", form)
+	return err
+}
+
+func (t *Telescope) PutSiteLongitude(long float64) error {
+	var form map[string]string = map[string]string{
+		"SiteLongitude":       fmt.Sprintf("%g", long),
+		"ClientID":            fmt.Sprintf("%d", t.alpaca.ClientId),
+		"ClientTransactionID": fmt.Sprintf("%d", t.alpaca.GetNextTransactionId()),
+	}
+	err := t.alpaca.Put("telescope", t.Id, "sitelongitude", form)
+	return err
+}
+
+func (t *Telescope) PutUTCDate(date time.Time) error {
+	var form map[string]string = map[string]string{
+		"UTCDate":             fmt.Sprintf("%s", date.Format(time.RFC3339)),
+		"ClientID":            fmt.Sprintf("%d", t.alpaca.ClientId),
+		"ClientTransactionID": fmt.Sprintf("%d", t.alpaca.GetNextTransactionId()),
+	}
+	err := t.alpaca.Put("telescope", t.Id, "utcdate", form)
+	return err
+}
+
+/*
+ * Helper functions
+ */
+
+// Get RA/DEC as degrees (double)
+func (t *Telescope) GetRaDec() (float64, float64, error) {
+	ra, err := t.GetRightAscension()
+	if err != nil {
+		return 0.0, 0.0, err
+	} else {
+		log.Debugf("RA: %g", ra)
+	}
+	dec, err := t.GetDeclination()
+	if err != nil {
+		return 0.0, 0.0, err
+	} else {
+		log.Debugf("Dec: %g", dec)
+	}
+
+	return ra, dec, nil
+}
+
+// Get Azmiuth / Altitude as degrees (double)
+func (t *Telescope) GetAzmAlt() (float64, float64, error) {
+	azm, err := t.GetAzimuth()
+	if err != nil {
+		return 0.0, 0.0, err
+	} else {
+		log.Debugf("Azm: %g", azm)
+	}
+	alt, err := t.GetAltitude()
+	if err != nil {
+		return 0.0, 0.0, err
+	} else {
+		log.Debugf("Alt: %g", alt)
+	}
+
+	return azm, alt, nil
 }

@@ -35,6 +35,11 @@ Something useful goes here.
 Yes, this supports all versions of SkySafari which allow for controlling telescopes.
 Typically this is SkySafari Plus and Pro.
 
+##### What about other astronomy software?
+Yep, anything that can do Celestron Nexstar protocol over TCP/IP should work.
+That said, I haven't yet implimented the complete Nexstar protocol so there
+may be issues.  Please open a bug report if you find any issues!
+
 ##### Does Alpaca-Gateway support [INDI](https://www.indilib.org)?
 No it doesn't.  There's probably no reason it can't support INDI, but CWPI
 doesn't support INDI so I have no easy way of developing/testing the code.

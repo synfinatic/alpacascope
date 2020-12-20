@@ -110,15 +110,39 @@ func (t *Telescope) PutMoveAxis(axis AxisType, rate int) error {
 		"ClientID":            fmt.Sprintf("%d", t.alpaca.ClientId),
 		"ClientTransactionID": fmt.Sprintf("%d", t.alpaca.GetNextTransactionId()),
 	}
-	/*
-		article := putMoveAxis{
-			Axis:                axis,
-			Rate:                rate,
-			ClientID:            t.alpaca.ClientId,
-			ClientTransactionID: t.alpaca.GetNextTransactionId(),
-		}
-		log.Debugf(article)
-	*/
-	t.alpaca.Put("telescope", t.Id, "moveaxis", form)
-	return nil
+	err := t.alpaca.Put("telescope", t.Id, "moveaxis", form)
+	return err
+}
+
+func (t *Telescope) PutSyncToCoordinates(ra float64, dec float64) error {
+	var form map[string]string = map[string]string{
+		"RightAsension":       fmt.Sprintf("%g", ra),
+		"Declination":         fmt.Sprintf("%g", dec),
+		"ClientID":            fmt.Sprintf("%d", t.alpaca.ClientId),
+		"ClientTransactionID": fmt.Sprintf("%d", t.alpaca.GetNextTransactionId()),
+	}
+	err := t.alpaca.Put("telescope", t.Id, "synctocoordinates", form)
+	return err
+}
+
+func (t *Telescope) PutSlewToCoordinatestAsync(ra float64, dec float64) error {
+	var form map[string]string = map[string]string{
+		"RightAsension":       fmt.Sprintf("%g", ra),
+		"Declination":         fmt.Sprintf("%g", dec),
+		"ClientID":            fmt.Sprintf("%d", t.alpaca.ClientId),
+		"ClientTransactionID": fmt.Sprintf("%d", t.alpaca.GetNextTransactionId()),
+	}
+	err := t.alpaca.Put("telescope", t.Id, "slewtocoordinatesasync", form)
+	return err
+}
+
+func (t *Telescope) PutSlewToCoordinates(ra float64, dec float64) error {
+	var form map[string]string = map[string]string{
+		"RightAsension":       fmt.Sprintf("%g", ra),
+		"Declination":         fmt.Sprintf("%g", dec),
+		"ClientID":            fmt.Sprintf("%d", t.alpaca.ClientId),
+		"ClientTransactionID": fmt.Sprintf("%d", t.alpaca.GetNextTransactionId()),
+	}
+	err := t.alpaca.Put("telescope", t.Id, "slewtocoordinates", form)
+	return err
 }

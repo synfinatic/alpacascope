@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/binary"
 	"fmt"
 	"net"
 
@@ -120,15 +121,56 @@ func handleNexStar(conn net.Conn, t *alpaca.Telescope) {
 
 	case 'V':
 		// Get Version
-		_, err = conn.Write([]byte("23#"))
+		_, err = conn.Write([]byte("50#"))
 		return
+
 	case 'P':
 		// Slew
-		err = executeSlew(buf, t)
+		err = executeSlew(t, buf)
 		if err != nil {
 			log.Errorf("Unable to slew: %s", err.Error())
 			return
 		}
+		_, err = conn.Write([]byte("#"))
+
+	case 's':
+		// Precise sync aka: Align on object.  Uses the same math as 'e'
+		ra_bytes := buf[1:8]
+		dec_bytes := buf[10:18]
+		ra := float64(binary.BigEndian.Uint32(ra_bytes)) / 4294967296.0 * 360.0
+		dec := float64(binary.BigEndian.Uint32(dec_bytes)) / 4294967296.0 * 360.0
+		err = executeSync(t, ra, dec)
+
+		_, err = conn.Write([]byte("#"))
+
+	case 'S':
+		// sync aka: Align on object.  Uses same math as 'E'
+		ra_bytes := buf[1:4]
+		dec_bytes := buf[6:10]
+		ra := float64(binary.BigEndian.Uint32(ra_bytes)) / 65536.0 * 360.0
+		dec := float64(binary.BigEndian.Uint32(dec_bytes)) / 65536.0 * 360.0
+		err = executeSync(t, ra, dec)
+
+		_, err = conn.Write([]byte("#"))
+
+	case 'r':
+		// precise goto Ra/Dec values
+		ra_bytes := buf[1:8]
+		dec_bytes := buf[10:18]
+		ra := float64(binary.BigEndian.Uint32(ra_bytes)) / 4294967296.0 * 360.0
+		dec := float64(binary.BigEndian.Uint32(dec_bytes)) / 4294967296.0 * 360.0
+		err = executeSlewToCoordinatesAsync(t, ra, dec)
+
+		_, err = conn.Write([]byte("#"))
+
+	case 'R':
+		// precise goto Ra/Dec values
+		ra_bytes := buf[1:4]
+		dec_bytes := buf[6:10]
+		ra := float64(binary.BigEndian.Uint32(ra_bytes)) / 65536.0 * 360.0
+		dec := float64(binary.BigEndian.Uint32(dec_bytes)) / 65536.0 * 360.0
+		err = executeSlewToCoordinatesAsync(t, ra, dec)
+
 		_, err = conn.Write([]byte("#"))
 	}
 	var strbuf string
@@ -136,6 +178,22 @@ func handleNexStar(conn net.Conn, t *alpaca.Telescope) {
 		strbuf = fmt.Sprintf("%s %d", strbuf, buf[i])
 	}
 	log.Debugf("Received %d bytes [%s]: %c %s", len, string(buf), buf[0], strbuf)
+}
+
+/*
+ * Aligns/Sync a scope to the Ra/Dec
+ */
+func executeSync(t *alpaca.Telescope, ra float64, dec float64) error {
+	err := t.PutSyncToCoordinates(ra, dec)
+	return err
+}
+
+/*
+ * Tells the scope to GoTo a Ra/Dec
+ */
+func executeSlewToCoordinatesAsync(t *alpaca.Telescope, ra float64, dec float64) error {
+	err := t.PutSlewToCoordinatestAsync(ra, dec)
+	return err
 }
 
 /*
@@ -151,7 +209,7 @@ func handleNexStar(conn net.Conn, t *alpaca.Telescope) {
  * only uses the fixed type and ASCOM has no concept of variable rates so we will
  * treat variable as fixed.
  */
-func executeSlew(buf []byte, t *alpaca.Telescope) error {
+func executeSlew(t *alpaca.Telescope, buf []byte) error {
 	var axis alpaca.AxisType = alpaca.AxisAzmRa
 	var positive_direction bool = false
 	var rate int = 0 // SkySafari uses direction with speeds of 0,2,5,7,9 but ASCOM uses axis with speeds -3 to 3

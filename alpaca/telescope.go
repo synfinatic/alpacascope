@@ -95,9 +95,15 @@ func (t *Telescope) GetCanSlewAltAzAsync() (bool, error) {
 type AxisType int
 
 const (
-	AxisAzmRa  = 0
-	AxisAltDec = 1
+	AxisAzmRa    = 0
+	AxisAltDec   = 1
+	AxisTertiary = 3
 )
+
+// Returns the min & max rate (deg/sec) that the given axis can move
+func (t *Telescope) GetAxisRates(axis AxisType) ([]uint32, error) {
+	return t.alpaca.GetListUint32("telescope", t.Id, "axisrates")
+}
 
 type putMoveAxis struct {
 	Axis                AxisType `json:"Axis"`
@@ -119,7 +125,7 @@ func (t *Telescope) PutMoveAxis(axis AxisType, rate int) error {
 
 func (t *Telescope) PutSyncToCoordinates(ra float64, dec float64) error {
 	var form map[string]string = map[string]string{
-		"RightAsension":       fmt.Sprintf("%g", ra),
+		"RightAscension":      fmt.Sprintf("%g", ra),
 		"Declination":         fmt.Sprintf("%g", dec),
 		"ClientID":            fmt.Sprintf("%d", t.alpaca.ClientId),
 		"ClientTransactionID": fmt.Sprintf("%d", t.alpaca.GetNextTransactionId()),
@@ -130,7 +136,7 @@ func (t *Telescope) PutSyncToCoordinates(ra float64, dec float64) error {
 
 func (t *Telescope) PutSlewToCoordinatestAsync(ra float64, dec float64) error {
 	var form map[string]string = map[string]string{
-		"RightAsension":       fmt.Sprintf("%g", ra),
+		"RightAscension":      fmt.Sprintf("%g", ra),
 		"Declination":         fmt.Sprintf("%g", dec),
 		"ClientID":            fmt.Sprintf("%d", t.alpaca.ClientId),
 		"ClientTransactionID": fmt.Sprintf("%d", t.alpaca.GetNextTransactionId()),
@@ -141,7 +147,7 @@ func (t *Telescope) PutSlewToCoordinatestAsync(ra float64, dec float64) error {
 
 func (t *Telescope) PutSlewToCoordinates(ra float64, dec float64) error {
 	var form map[string]string = map[string]string{
-		"RightAsension":       fmt.Sprintf("%g", ra),
+		"RightAscension":      fmt.Sprintf("%g", ra),
 		"Declination":         fmt.Sprintf("%g", dec),
 		"ClientID":            fmt.Sprintf("%d", t.alpaca.ClientId),
 		"ClientTransactionID": fmt.Sprintf("%d", t.alpaca.GetNextTransactionId()),
@@ -180,23 +186,32 @@ func (t *Telescope) PutUTCDate(date time.Time) error {
 	return err
 }
 
+func (t *Telescope) PutAbortSlew() error {
+	var form map[string]string = map[string]string{
+		"ClientID":            fmt.Sprintf("%d", t.alpaca.ClientId),
+		"ClientTransactionID": fmt.Sprintf("%d", t.alpaca.GetNextTransactionId()),
+	}
+	err := t.alpaca.Put("telescope", t.Id, "abortslew", form)
+	return err
+}
+
 /*
  * Helper functions
  */
 
-// Get RA/DEC as degrees (double)
+// Get RA/DEC as hours/degrees (double)
 func (t *Telescope) GetRaDec() (float64, float64, error) {
 	ra, err := t.GetRightAscension()
 	if err != nil {
 		return 0.0, 0.0, err
 	} else {
-		log.Debugf("RA: %g", ra)
+		//	log.Debugf("RA: %g", ra)
 	}
 	dec, err := t.GetDeclination()
 	if err != nil {
 		return 0.0, 0.0, err
 	} else {
-		log.Debugf("Dec: %g", dec)
+		//	log.Debugf("Dec: %g", dec)
 	}
 
 	return ra, dec, nil

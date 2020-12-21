@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/binary"
 	"fmt"
+	"math"
 	"net"
 	"time"
 
@@ -24,7 +25,9 @@ func handleNexstar(conn net.Conn, t *alpaca.Telescope) {
 		for i := 1; i < len; i++ {
 			strbuf = fmt.Sprintf("%s %d", strbuf, buf[i])
 		}
-		log.Debugf("Received %d bytes [%s]: %c %s", len, string(buf), buf[0], strbuf)
+		if buf[0] != 'e' {
+			log.Debugf("Received %d bytes [%s]: %c %s", len, string(buf), buf[0], strbuf)
+		}
 	}
 
 	// single byte commands
@@ -36,8 +39,8 @@ func handleNexstar(conn net.Conn, t *alpaca.Telescope) {
 			return
 		}
 
-		var ra_int uint32 = uint32(ra / 360.0 * 65536.0)
-		var dec_int uint32 = uint32(dec / 360.0 * 65536.0)
+		var ra_int uint16 = raTo16bitSteps(ra)
+		var dec_int uint16 = decTo16bitSteps(dec)
 		var ret string = fmt.Sprintf("%04X,%04X#", ra_int, dec_int)
 		_, we = conn.Write([]byte(ret))
 
@@ -49,8 +52,8 @@ func handleNexstar(conn net.Conn, t *alpaca.Telescope) {
 			return
 		}
 
-		var ra_int uint32 = uint32(ra / 360.0 * 4294967296.0)
-		var dec_int uint32 = uint32(dec / 360.0 * 4294967296.0)
+		var ra_int uint32 = raTo32bitSteps(ra)
+		var dec_int uint32 = decTo32bitSteps(dec)
 		var ret string = fmt.Sprintf("%08X,%08X#", ra_int, dec_int)
 		_, we = conn.Write([]byte(ret))
 
@@ -62,8 +65,8 @@ func handleNexstar(conn net.Conn, t *alpaca.Telescope) {
 			return
 		}
 
-		var azm_int uint32 = uint32(azm / 360.0 * 65536.0)
-		var alt_int uint32 = uint32(alt / 360.0 * 65536.0)
+		var azm_int uint32 = uint32(azm / 360.0 * math.Pow(2, 16))
+		var alt_int uint32 = uint32(alt / 360.0 * math.Pow(2, 16))
 		var ret string = fmt.Sprintf("%04X,%04X#", azm_int, alt_int)
 		_, we = conn.Write([]byte(ret))
 
@@ -104,39 +107,46 @@ func handleNexstar(conn net.Conn, t *alpaca.Telescope) {
 
 	case 's':
 		// Precise sync aka: Align on object.  Uses the same math as 'e'
-		ra_bytes := buf[1:8]
-		dec_bytes := buf[10:18]
-		ra := float64(binary.BigEndian.Uint32(ra_bytes)) / 4294967296.0 * 360.0
-		dec := float64(binary.BigEndian.Uint32(dec_bytes)) / 4294967296.0 * 360.0
-		err = executeSync(t, ra, dec)
-
+		ra_bytes := binary.BigEndian.Uint32(buf[1:9])
+		dec_bytes := binary.BigEndian.Uint32(buf[10:18])
+		ra := uint32StepsToRA(ra_bytes)
+		dec := uint32StepsToDec(dec_bytes)
+		err = t.PutSyncToCoordinates(ra, dec)
 		_, we = conn.Write([]byte("#"))
 
 	case 'S':
 		// sync aka: Align on object.  Uses same math as 'E'
-		ra_bytes := buf[1:4]
-		dec_bytes := buf[6:10]
-		ra := float64(binary.BigEndian.Uint32(ra_bytes)) / 65536.0 * 360.0
-		dec := float64(binary.BigEndian.Uint32(dec_bytes)) / 65536.0 * 360.0
-		err = executeSync(t, ra, dec)
+		ra_bytes := binary.BigEndian.Uint16(buf[1:5])
+		dec_bytes := binary.BigEndian.Uint16(buf[6:10])
+		ra := uint16StepsToRA(ra_bytes)
+		dec := uint16StepsToDec(dec_bytes)
+		err = t.PutSyncToCoordinates(ra, dec)
 		_, we = conn.Write([]byte("#"))
 
 	case 'r':
-		// precise goto Ra/Dec values
-		ra_bytes := buf[1:8]
-		dec_bytes := buf[10:18]
-		ra := float64(binary.BigEndian.Uint32(ra_bytes)) / 4294967296.0 * 360.0
-		dec := float64(binary.BigEndian.Uint32(dec_bytes)) / 4294967296.0 * 360.0
-		err = executeSlewToCoordinatesAsync(t, ra, dec)
+		// precise goto Ra/Dec values.  RA is in hours, Dec in deg
+		ra_bytes := binary.BigEndian.Uint32(buf[1:9])
+		dec_bytes := binary.BigEndian.Uint32(buf[10:18])
+		log.Debugf("RAW RA: %d\t\tDec: %d", ra_bytes, dec_bytes)
+		ra := uint32StepsToRA(ra_bytes)
+		dec := uint32StepsToDec(dec_bytes)
+		if log.IsLevelEnabled(log.DebugLevel) {
+			h, m, s := rev32ToHMS(ra_bytes)
+			dh, dm, ds := rev32ToHMS(dec_bytes)
+			log.Debugf("Goto RA: %d:%d:%g\t\tDec: %d:%d:%g", h, m, s, dh, dm, ds)
+		}
+
+		log.Debugf("Goto RA: %v\t\tDec: %v", ra, dec)
+		err = t.PutSlewToCoordinatestAsync(ra, dec)
 		_, we = conn.Write([]byte("#"))
 
 	case 'R':
-		// precise goto Ra/Dec values
-		ra_bytes := buf[1:4]
-		dec_bytes := buf[6:10]
-		ra := float64(binary.BigEndian.Uint32(ra_bytes)) / 65536.0 * 360.0
-		dec := float64(binary.BigEndian.Uint32(dec_bytes)) / 65536.0 * 360.0
-		err = executeSlewToCoordinatesAsync(t, ra, dec)
+		// goto Ra/Dec values
+		ra_bytes := binary.BigEndian.Uint16(buf[1:5])
+		dec_bytes := binary.BigEndian.Uint16(buf[6:10])
+		ra := uint16StepsToRA(ra_bytes)
+		dec := uint16StepsToDec(dec_bytes)
+		err = t.PutSlewToCoordinatestAsync(ra, dec)
 		_, we = conn.Write([]byte("#"))
 
 	case 'W':
@@ -171,6 +181,12 @@ func handleNexstar(conn net.Conn, t *alpaca.Telescope) {
 			tz)
 		err = t.PutUTCDate(date)
 		_, we = conn.Write([]byte("#"))
+
+	case 'M':
+		// cancel GOTO
+		err = t.PutAbortSlew()
+		_, we = conn.Write([]byte("#"))
+
 	default:
 		log.Errorf("Unsupported command: %c", buf[0])
 	}
@@ -182,22 +198,6 @@ func handleNexstar(conn net.Conn, t *alpaca.Telescope) {
 	if we != nil {
 		log.Errorf("Error writing to client: %s", we.Error())
 	}
-}
-
-/*
- * Aligns/Sync a scope to the Ra/Dec
- */
-func executeSync(t *alpaca.Telescope, ra float64, dec float64) error {
-	err := t.PutSyncToCoordinates(ra, dec)
-	return err
-}
-
-/*
- * Tells the scope to GoTo a Ra/Dec
- */
-func executeSlewToCoordinatesAsync(t *alpaca.Telescope, ra float64, dec float64) error {
-	err := t.PutSlewToCoordinatestAsync(ra, dec)
-	return err
 }
 
 /*
@@ -218,20 +218,24 @@ func executeSlew(t *alpaca.Telescope, buf []byte) error {
 	var positive_direction bool = false
 	var rate int = 0 // SkySafari uses direction with speeds of 0,2,5,7,9 but ASCOM uses axis with speeds -3 to 3
 
-	switch buf[2] {
+	switch int(buf[2]) {
 	case 16:
 		// Azm/RA
 		axis = alpaca.AxisAzmRa
 	case 17:
 		// Alt/Dec
 		axis = alpaca.AxisAltDec
+	default:
+		log.Errorf("Unknown axis: %d", int(buf[2]))
 	}
 
-	switch buf[3] {
+	switch int(buf[3]) {
 	case 6, 36:
 		positive_direction = true
 	case 7, 37:
 		positive_direction = false
+	default:
+		log.Errorf("Unknown direction: %d", int(buf[3]))
 	}
 
 	rate = rate_to_ascom(positive_direction, int(buf[4]))
@@ -274,4 +278,94 @@ func bytes_to_latlong(b []byte) (float64, float64) {
 		long *= -1
 	}
 	return lat, long
+}
+
+/*
+ * 16bit percent revolution to H:M:S.s
+ */
+func rev16ToHMS(rev uint16) (int, int, float64) {
+	hours := uint16StepsToRA(rev)
+	h := int(hours)
+	remainder := hours - float64(h)
+	m := int(remainder * 60.0)
+	// remove the minutes from the hours and leave fractions of minute
+	frac_minute := hours - float64(h) - float64(m)/60.0
+	s := 60.0 * frac_minute
+	return h, m, s
+}
+
+/*
+ * 32bit percent revolution to H:M:S.s
+ */
+func rev32ToHMS(rev uint32) (int, int, float64) {
+	hours := uint32StepsToRA(rev)
+	h := int(hours)
+	remainder := hours - float64(h)
+	m := int(remainder * 60.0)
+	// remove the minutes from the hours and leave fractions of minute
+	frac_minute := hours - float64(h) - float64(m)/60.0
+	s := 60.0 * frac_minute
+	return h, m, s
+}
+
+/*
+ * THESE ARE THE NEW SMARTER NexStar -> ASCOM methods
+ * Dec is +90 -> -90 deg
+ * RA is in hours.frac_hour
+ */
+
+func uint16StepsToDec(steps uint16) float64 {
+	s := int32(steps)
+	// check if negative value
+	if float64(s) > math.Pow(2, 16)/2.0 {
+		s = (int32(math.Pow(2, 16)) - s) * -1
+	}
+
+	resolution := math.Pow(2, 16) / 360.0
+
+	return float64(s) / resolution
+}
+
+func uint32StepsToDec(steps uint32) float64 {
+	s := int64(steps)
+	// check if negative value
+	if float64(s) > math.Pow(2, 32)/2.0 {
+		s = (int64(math.Pow(2, 32)) - s) * -1
+	}
+
+	resolution := math.Pow(2, 32) / 360.0
+	return float64(s) / resolution
+}
+
+func uint16StepsToRA(steps uint16) float64 {
+	hrs := float64(steps) / math.Pow(2, 16) * 24.0
+	return hrs
+}
+
+func uint32StepsToRA(steps uint32) float64 {
+	hrs := float64(steps) / math.Pow(2, 32) * 24.0
+	return hrs
+}
+
+func decTo16bitSteps(ra float64) uint16 {
+	if ra < 0 {
+		return uint16(math.Pow(2, 16) / 360.0 * (360.0 + ra))
+	}
+	return uint16(ra / 360.0 * math.Pow(2, 16))
+}
+
+func decTo32bitSteps(ra float64) uint32 {
+	if ra < 0 {
+		// need to convert to positive value
+		return uint32(math.Pow(2, 32) / 360.0 * (360.0 + ra))
+	}
+	return uint32(ra / 360.0 * math.Pow(2, 32))
+}
+
+func raTo16bitSteps(hours float64) uint16 {
+	return uint16(math.Pow(2, 16) * hours / 24.0)
+}
+
+func raTo32bitSteps(hours float64) uint32 {
+	return uint32(math.Pow(2, 32) * hours / 24.0)
 }

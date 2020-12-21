@@ -151,6 +151,28 @@ func (a *Alpaca) GetFloat64(device string, id uint32, api string) (float64, erro
 	return result.Value, nil
 }
 
+type listUint32Response struct {
+	Value               []uint32 `json:"Value"`
+	ClientTransactionID int32    `json:"ClientTransactionID"`
+	ServerTransactionID int32    `json:"ServerTransactionID"`
+	ErrorNumber         int32    `json:"ErrorNumber"`
+	ErrorMessage        string   `json:"ErrorMessage"`
+}
+
+func (a *Alpaca) GetListUint32(device string, id uint32, api string) ([]uint32, error) {
+	url := a.url(device, id, api)
+	resp, err := a.client.R().
+		SetResult(&listUint32Response{}).
+		SetQueryString(a.getQueryString()).
+		Get(url)
+	if err != nil {
+		return []uint32{}, err
+	}
+	result := (resp.Result().(*listUint32Response))
+	return result.Value, nil
+
+}
+
 /*
  * https://ascom-standards.org/api/#/ASCOM%20Methods%20Common%20To%20All%20Devices/get__device_type___device_number__name
  */

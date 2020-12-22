@@ -29,9 +29,11 @@ func handleNexstar(conn net.Conn, t *alpaca.Telescope) {
 		}
 		rlen, err = conn.Read(buf)
 	}
+	// Will get this any time the client sends a Fin, so don't log that
 	if err.Error() != "EOF" {
 		log.Errorf("conn.Read() returned error: %s", err.Error())
 	}
+	conn.Close()
 }
 
 func process_command(t *alpaca.Telescope, len int, buf []byte) string {

@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/synfinatic/alpaca-gateway/alpaca"
+	"github.com/synfinatic/alpacascope/alpaca"
 
 	log "github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
@@ -53,7 +53,7 @@ func main() {
 	}
 
 	if version == true {
-		fmt.Printf("alpaca-gateway Version %s -- Copyright 2020 Aaron Turner\n", Version)
+		fmt.Printf("AlpacaScope Version %s -- Copyright 2020 Aaron Turner\n", Version)
 		fmt.Printf("%s (%s) built at %s\n", CommitID, Tag, Buildinfos)
 		os.Exit(0)
 	}

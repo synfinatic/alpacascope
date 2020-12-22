@@ -1,4 +1,4 @@
-module github.com/synfinatic/alpaca-gateway
+module github.com/synfinatic/alpacascope
 
 go 1.15
 

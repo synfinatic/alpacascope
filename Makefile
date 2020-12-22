@@ -11,7 +11,7 @@ PROGRAM_ARGS ?=
 
 PROJECT_VERSION           := 0.0.1
 DOCKER_REPO               := synfinatic
-PROJECT_NAME              := alpaca-gateway
+PROJECT_NAME              := alpacascope
 PROJECT_TAG               := $(shell git describe --tags 2>/dev/null $(git rev-list --tags --max-count=1))
 ifeq ($(PROJECT_TAG),)
 PROJECT_TAG               := NO-TAG
@@ -23,7 +23,7 @@ endif
 VERSION_PKG               := $(shell echo $(PROJECT_VERSION) | sed 's/^v//g')
 LICENSE                   := GPLv3
 URL                       := https://github.com/$(DOCKER_REPO)/$(PROJECT_NAME)
-DESCRIPTION               := Alpaca Gateway: Alpaca to Telescope Protocol Gateway for SkySafari
+DESCRIPTION               := AlpacaScope: Alpaca to Telescope Protocol Proxy
 BUILDINFOS                := $(shell date +%FT%T%z)$(BUILDINFOSDET)
 HOSTNAME                  := $(shell hostname)
 LDFLAGS                   := -X "main.Version=$(PROJECT_VERSION)" -X "main.Buildinfos=$(BUILDINFOS)" -X "main.Tag=$(PROJECT_TAG)" -X "main.CommitID=$(PROJECT_COMMIT)"

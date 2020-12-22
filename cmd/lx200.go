@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/synfinatic/alpaca-gateway/alpaca"
+	"github.com/synfinatic/alpacascope/alpaca"
 	"net"
 
 	log "github.com/sirupsen/logrus"

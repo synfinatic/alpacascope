@@ -1,4 +1,4 @@
-# Alpaca-Gateway
+# AlpacaScope
 
 ## Why?
 
@@ -30,7 +30,7 @@ Evolution mount, or any mount that supports the ASCOM standard.
 So basically, my setup looks sorta like this:
 
 ```
-Celestron Evolution <-> CWPI <-> ASCOM <-> Alpaca Server <-> Alpaca-Gateway <-> SkySafari
+Celestron Evolution <-> CWPI <-> ASCOM <-> Alpaca Server <-> AlpacaScope <-> SkySafari
              Focuser  <-'           `-> Sharp Cap
                                      `-> ZWO Camera
 ```
@@ -39,7 +39,7 @@ Basically, just download the binary for your system (easist to run on the same W
 box as ASCOM & the Alpaca Remote Server) and run it.  By default it will try to connect
 to Alpaca on the local host (127.0.0.0) on port 11111 and listen on port 4030.
 
-Configure SkySafari or other remote control software to connect to Alpaca-Gateway on port
+Configure SkySafari or other remote control software to connect to AlpacaScope on port
 4030 using the Celestron Nexstar (I use the Nexstar/Advanced GT) protocol.
 
 ## FAQ
@@ -53,11 +53,11 @@ Yep, anything that can do Celestron Nexstar protocol over TCP/IP should work.
 That said, I haven't yet implimented the complete Nexstar protocol so there
 may be issues.  Please open a bug report if you find any issues!
 
-#### Does Alpaca-Gateway support [INDI](https://www.indilib.org)?
+#### Does AlpacaScope support [INDI](https://www.indilib.org)?
 No it doesn't.  There's probably no reason it can't support INDI, but CWPI
 doesn't support INDI so I have no easy way of developing/testing the code.
 
-#### Does Alpaca-Gateway need to run on the same computer as CWPI/ASCOM?
+#### Does AlpacaScope need to run on the same computer as CWPI/ASCOM?
 No, but that is probably the most common solution.  Alpaca-Gateway just needs
 to be able to talk to the Alpaca Server running on the same computer as the
 ASCOM driver connected to your telescope mount.

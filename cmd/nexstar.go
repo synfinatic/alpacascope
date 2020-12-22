@@ -6,7 +6,7 @@ import (
 	"net"
 	"time"
 
-	alpaca "github.com/synfinatic/alpaca-gateway/alpaca"
+	alpaca "github.com/synfinatic/alpacascope/alpaca"
 
 	log "github.com/sirupsen/logrus"
 )

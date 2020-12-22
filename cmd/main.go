@@ -35,7 +35,7 @@ func main() {
 
 	flag.StringVar(&sip, "alpaca-ip", "127.0.0.1", "IP address of Alpaca server")
 	flag.Int32Var(&sport, "alpaca-port", 11111, "TCP port of the Alpaca server")
-	flag.Uint32Var(&clientid, "clientid", 0, "Alpaca ClientID used for debugging")
+	flag.Uint32Var(&clientid, "clientid", 1, "Alpaca ClientID used for debugging")
 	flag.Int32Var(&lport, "listen-port", 4030, "TCP port to listen on for clients")
 	flag.StringVar(&lip, "listen-ip", "0.0.0.0", "IP to listen on for clients")
 	flag.BoolVar(&debug, "debug", false, "Enable debug logging")

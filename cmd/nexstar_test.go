@@ -116,15 +116,15 @@ func Test32BitHMS(t *testing.T) {
 		uint32(math.Pow(2, 32)/24.0 + 1): HMS{1.0, 0, 1.1175870895385742e-07},
 	}
 	for input, check := range my_tests {
-		hms := rev32ToHMS(input)
+		hms := uint32StepsToHMS(input)
 		if check.Hours != hms.Hours {
-			t.Errorf("rev32ToHMS: %v failed, expected hours %v, got %v", input, check.Hours, hms.Hours)
+			t.Errorf("uint32StepsToHMS: %v failed, expected hours %v, got %v", input, check.Hours, hms.Hours)
 		}
 		if check.Minutes != hms.Minutes {
-			t.Errorf("rev32ToHMS: %v failed, expected minutes %v, got %v", input, check.Minutes, hms.Minutes)
+			t.Errorf("uint32StepsToHMS: %v failed, expected minutes %v, got %v", input, check.Minutes, hms.Minutes)
 		}
 		if check.Seconds != hms.Seconds {
-			t.Errorf("rev32ToHMS: %v failed, expected seconds %v, got %v", input, check.Seconds, hms.Seconds)
+			t.Errorf("uint32StepsToHMS: %v failed, expected seconds %v, got %v", input, check.Seconds, hms.Seconds)
 		}
 	}
 }
@@ -141,23 +141,52 @@ func Test16BitHMS(t *testing.T) {
 		uint16(math.Pow(2, 16)/24.0 + 1): HMS{1.0, 0, 0.00732421875},
 	}
 	for input, check := range my_tests {
-		hms := rev16ToHMS(input)
+		hms := uint16StepsToHMS(input)
 		if check.Hours != hms.Hours {
-			t.Errorf("rev16ToHMS: %v failed, expected hours %v, got %v", input, check.Hours, hms.Hours)
+			t.Errorf("uint16StepsToHMS: %v failed, expected hours %v, got %v", input, check.Hours, hms.Hours)
 		}
 		if check.Minutes != hms.Minutes {
-			t.Errorf("rev16ToHMS: %v failed, expected minutes %v, got %v", input, check.Minutes, hms.Minutes)
+			t.Errorf("uint16StepsToHMS: %v failed, expected minutes %v, got %v", input, check.Minutes, hms.Minutes)
 		}
 		if check.Seconds != hms.Seconds {
-			t.Errorf("rev16ToHMS: %v failed, expected seconds %v, got %v", input, check.Seconds, hms.Seconds)
+			t.Errorf("uint16StepsToHMS: %v failed, expected seconds %v, got %v", input, check.Seconds, hms.Seconds)
 		}
 	}
 
 }
 
-// Tests bytes_to_latlong()
-func TestBytesToLatLong(t *testing.T) {
+// Test our parsing of steps as bytes
+func TestStepsToUint32(t *testing.T) {
+	my_tests := map[string]uint32{
+		"00000000": 0,
+		"00000001": 1,
+		"000000FF": 255,
+		"0000FFFF": 65535,
+		"FFFFFFFF": uint32(math.Pow(2, 32) - 1),
+		"7FFFFFFF": uint32(math.Pow(2, 31) - 1),
+	}
+	for test, check := range my_tests {
+		x := StepsToUint32([]byte(test))
+		if x != check {
+			t.Errorf("StepsToUint32: %v failed, expected %v, got %v", test, check, x)
+		}
+	}
+}
 
+func TestStep16Parse(t *testing.T) {
+	my_tests := map[string]uint16{
+		"0000": 0,
+		"0001": 1,
+		"00FF": 255,
+		"FFFF": 65535,
+		"7FFF": uint16(math.Pow(2, 15) - 1),
+	}
+	for test, check := range my_tests {
+		x := StepsToUint16([]byte(test))
+		if x != check {
+			t.Errorf("StepsToUint16: %v failed, expected %v, got %v", test, check, x)
+		}
+	}
 }
 
 /*

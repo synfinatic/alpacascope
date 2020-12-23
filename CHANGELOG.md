@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+Fixed:
+- Bug with enum for Alpaca Axis control
+
 ## v0.0.2 - 2020-12-23
 
 Fixed: 

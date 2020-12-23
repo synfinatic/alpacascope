@@ -7,8 +7,22 @@ package alpaca
 import (
 	"fmt"
 	"time"
+)
 
-	log "github.com/sirupsen/logrus"
+type AlignmentMode int
+
+const (
+	algAltAz       int = 0
+	algPolar       int = 1
+	algGermanPolar int = 2
+)
+
+type AxisType int
+
+const (
+	AxisAzmRa    = 0
+	AxisAltDec   = 1
+	AxisTertiary = 2
 )
 
 type Telescope struct {
@@ -23,14 +37,6 @@ func NewTelescope(id uint32, alpaca *Alpaca) *Telescope {
 	}
 	return &t
 }
-
-type AlignmentMode int
-
-const (
-	algAltAz       int = 0
-	algPolar       int = 1
-	algGermanPolar int = 2
-)
 
 func (t *Telescope) GetName() (string, error) {
 	return t.alpaca.GetName("telescope", t.Id)
@@ -91,14 +97,6 @@ func (t *Telescope) GetCanSlewAsync() (bool, error) {
 func (t *Telescope) GetCanSlewAltAzAsync() (bool, error) {
 	return t.alpaca.GetBool("telescope", t.Id, "canslewaltazasync")
 }
-
-type AxisType int
-
-const (
-	AxisAzmRa    = 0
-	AxisAltDec   = 1
-	AxisTertiary = 3
-)
 
 // Returns the min & max rate (deg/sec) that the given axis can move
 func (t *Telescope) GetAxisRates(axis AxisType) ([]uint32, error) {
@@ -204,14 +202,10 @@ func (t *Telescope) GetRaDec() (float64, float64, error) {
 	ra, err := t.GetRightAscension()
 	if err != nil {
 		return 0.0, 0.0, err
-	} else {
-		//	log.Debugf("RA: %g", ra)
 	}
 	dec, err := t.GetDeclination()
 	if err != nil {
 		return 0.0, 0.0, err
-	} else {
-		//	log.Debugf("Dec: %g", dec)
 	}
 
 	return ra, dec, nil
@@ -222,14 +216,10 @@ func (t *Telescope) GetAzmAlt() (float64, float64, error) {
 	azm, err := t.GetAzimuth()
 	if err != nil {
 		return 0.0, 0.0, err
-	} else {
-		log.Debugf("Azm: %g", azm)
 	}
 	alt, err := t.GetAltitude()
 	if err != nil {
 		return 0.0, 0.0, err
-	} else {
-		log.Debugf("Alt: %g", alt)
 	}
 
 	return azm, alt, nil

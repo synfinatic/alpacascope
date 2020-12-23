@@ -7,12 +7,15 @@ import (
 	"time"
 
 	alpaca "github.com/synfinatic/alpacascope/alpaca"
+	telescope "github.com/synfinatic/alpacascope/telescope"
 
 	log "github.com/sirupsen/logrus"
 )
 
 func handleNexstar(conn net.Conn, t *alpaca.Telescope) {
 	buf := make([]byte, 1024)
+
+	defer conn.Close() // make sure we close connection before we leave
 	rlen, err := conn.Read(buf)
 	for {
 		if err != nil {
@@ -20,7 +23,7 @@ func handleNexstar(conn net.Conn, t *alpaca.Telescope) {
 		}
 		reply := process_command(t, rlen, buf)
 		if len(reply) > 0 {
-			_, err = conn.Write([]byte(reply))
+			_, err = conn.Write(reply)
 			if err != nil {
 				log.Errorf("writing reply to NexStar client: %s", err.Error())
 			}
@@ -33,11 +36,11 @@ func handleNexstar(conn net.Conn, t *alpaca.Telescope) {
 	if err.Error() != "EOF" {
 		log.Errorf("conn.Read() returned error: %s", err.Error())
 	}
-	conn.Close()
 }
 
-func process_command(t *alpaca.Telescope, len int, buf []byte) string {
-	var ret string = ""
+func process_command(t *alpaca.Telescope, len int, buf []byte) []byte {
+	var ret_val []byte
+	ret := ""
 	var err error
 	if log.IsLevelEnabled(log.DebugLevel) {
 		var strbuf string
@@ -51,35 +54,33 @@ func process_command(t *alpaca.Telescope, len int, buf []byte) string {
 
 	// single byte commands
 	switch buf[0] {
-	case 'E':
+	case 'K':
+		// echo next byte
+		ret = fmt.Sprintf("%c#", buf[1])
+
+	case 'e', 'E':
 		ra, dec, err := t.GetRaDec()
 		if err != nil {
 			log.Errorf("Unable to get RA/DEC: %s", err.Error())
-			return ret
+			break
+		}
+		radec := telescope.Coordinates{
+			RA:  ra,
+			Dec: dec,
 		}
 
-		ra_int := raTo16bitSteps(ra)
-		dec_int := decTo16bitSteps(dec)
-		ret = fmt.Sprintf("%04X,%04X#", ra_int, dec_int)
-
-	case 'e':
-		// Get Precise RA/DEC
-		ra, dec, err := t.GetRaDec()
-		if err != nil {
-			log.Errorf("Unable to get RA/DEC: %s", err.Error())
-			return ret
+		high_precision := true
+		if buf[0] == 'E' {
+			high_precision = false
 		}
-
-		ra_int := raTo32bitSteps(ra)
-		dec_int := decTo32bitSteps(dec)
-		ret = fmt.Sprintf("%08X,%08X#", ra_int, dec_int)
+		ret = fmt.Sprintf("%s#", radec.Nexstar(high_precision))
 
 	case 'Z':
 		// Get AZM/ALT.  Note that AZM is 0->360, while Alt is -90->90
 		azm, alt, err := t.GetAzmAlt()
 		if err != nil {
 			log.Errorf("Unable to get AZM/ALT: %s", err.Error())
-			return ret
+			break
 		}
 
 		azm_int := uint32(azm / 360.0 * math.Pow(2, 16))
@@ -91,20 +92,15 @@ func process_command(t *alpaca.Telescope, len int, buf []byte) string {
 		azm, alt, err := t.GetAzmAlt()
 		if err != nil {
 			log.Errorf("Unable to get AZM/ALT: %s", err.Error())
-			return ret
+			break
 		}
 
 		azm_int := uint32(azm / 360.0 * 4294967296.0)
 		alt_int := uint32(alt / 360.0 * 4294967296.0)
 		ret = fmt.Sprintf("%08X,%08X#", azm_int, alt_int)
 
-	case 't':
-		// Get tracking mode
-		// 0 = off, 1 alt/az, 2 EQ North, 3 EQ south
-		ret = "1#" // hard code to alt/az for now
-
-	case 'T':
-		// Set tracking mode
+	case 't', 'T':
+		log.Errorf("Tracking commands (%c) are not supported by ASCOM", buf[0])
 		ret = "#"
 
 	case 'V':
@@ -116,65 +112,60 @@ func process_command(t *alpaca.Telescope, len int, buf []byte) string {
 		err = executeSlew(t, buf)
 		if err != nil {
 			log.Errorf("Unable to slew: %s", err.Error())
-			return ret
+			break
 		}
 		ret = "#"
 
 	case 's':
 		// Precise sync aka: Align on object.  Uses the same math as 'e'
-		ra_bytes := StepsToUint32(buf[1:9])
-		dec_bytes := StepsToUint32(buf[10:18])
-		ra := uint32StepsToRA(ra_bytes)
-		dec := uint32StepsToDec(dec_bytes)
-		err = t.PutSyncToCoordinates(ra, dec)
+		radec := telescope.NewCoordinateNexstar(buf[1:9], buf[10:18], true)
+		err = t.PutSyncToCoordinates(radec.RA, radec.Dec)
 		ret = "#"
 
 	case 'S':
 		// sync aka: Align on object.  Uses same math as 'E'
-		ra_bytes := StepsToUint16(buf[1:5])
-		dec_bytes := StepsToUint16(buf[6:10])
-		ra := uint16StepsToRA(ra_bytes)
-		dec := uint16StepsToDec(dec_bytes)
-		err = t.PutSyncToCoordinates(ra, dec)
+		radec := telescope.NewCoordinateNexstar(buf[1:5], buf[6:10], false)
+		err = t.PutSyncToCoordinates(radec.RA, radec.Dec)
 		ret = "#"
 
 	case 'r':
 		// precise goto Ra/Dec values.  RA is in hours, Dec in deg
-		ra_bytes := StepsToUint32(buf[1:9])
-		dec_bytes := StepsToUint32(buf[10:18])
-		log.Debugf("RAW RA: %d\t\tDec: %d", ra_bytes, dec_bytes)
-		ra := uint32StepsToRA(ra_bytes)
-		dec := uint32StepsToDec(dec_bytes)
-		if log.IsLevelEnabled(log.DebugLevel) {
-			ra_hms := uint32StepsToHMS(ra_bytes)
-			dec_hms := uint32StepsToHMS(dec_bytes)
-			log.Debugf("Goto RA: %dh %dm%gs\t\tDec: %dh %dm %gs", ra_hms.Hours,
-				ra_hms.Minutes, ra_hms.Seconds, dec_hms.Hours, dec_hms.Minutes, dec_hms.Seconds)
-		}
-
-		log.Debugf("Goto RA: %v\t\tDec: %v", ra, dec)
-		err = t.PutSlewToCoordinatestAsync(ra, dec)
+		radec := telescope.NewCoordinateNexstar(buf[1:9], buf[10:18], true)
+		err = t.PutSlewToCoordinatestAsync(radec.RA, radec.Dec)
 		ret = "#"
 
 	case 'R':
 		// goto Ra/Dec values
-		ra_bytes := StepsToUint16(buf[1:5])
-		dec_bytes := StepsToUint16(buf[6:10])
-		ra := uint16StepsToRA(ra_bytes)
-		dec := uint16StepsToDec(dec_bytes)
-		err = t.PutSlewToCoordinatestAsync(ra, dec)
+		radec := telescope.NewCoordinateNexstar(buf[1:5], buf[6:10], false)
+		err = t.PutSlewToCoordinatestAsync(radec.RA, radec.Dec)
 		ret = "#"
+
+	case 'w':
+		// get location
+		lat, err := t.GetSiteLatitude()
+		if err != nil {
+			break
+		}
+
+		long, err := t.GetSiteLatitude()
+		if err != nil {
+			break
+		}
+		ret_val = LatLongToNexstar(lat, long)
+		ret_val = append(ret_val, '#')
 
 	case 'W':
 		// set location
-		lat, long := bytes_to_latlong(buf[1:8])
+		lat, long := NexstarToLatLong(buf[1:8])
 		err = t.PutSiteLatitude(lat)
 		if err != nil {
 			log.Errorf("Error setting site latitude: %s", err.Error())
+			break
 		}
 		err = t.PutSiteLongitude(long)
 		if err != nil {
 			log.Errorf("Error setting site longitude: %s", err.Error())
+			break
 		}
 		ret = "#"
 
@@ -198,6 +189,16 @@ func process_command(t *alpaca.Telescope, len int, buf []byte) string {
 		err = t.PutUTCDate(date)
 		ret = "#"
 
+	case 'L':
+		// Goto in progress??
+		var slewing bool
+		slewing, err = t.GetSlewing()
+		if slewing {
+			ret = "1#"
+		} else {
+			ret = "0#"
+		}
+
 	case 'M':
 		// cancel GOTO
 		err = t.PutAbortSlew()
@@ -211,7 +212,12 @@ func process_command(t *alpaca.Telescope, len int, buf []byte) string {
 	if err != nil {
 		log.Errorf("Error talking to scope: %s", err.Error())
 	}
-	return ret
+
+	// convert our return string to the ret_val
+	if ret != "" {
+		ret_val = []byte(ret)
+	}
+	return ret_val
 }
 
 /*
@@ -282,138 +288,44 @@ func rate_to_ascom(direction bool, rate int) int {
 }
 
 // convert ABCDEFGH bytes to lat/long
-func bytes_to_latlong(b []byte) (float64, float64) {
+func NexstarToLatLong(b []byte) (float64, float64) {
 	var lat float64 = float64(b[0]) + float64(b[1])/60.0 + float64(b[2])/3600.0
-	if b[3] > 0 {
-		lat *= -1
+	if b[3] == 1 {
+		lat *= -1.0
 	}
 	var long float64 = float64(b[4]) + float64(b[5])/60.0 + float64(b[6])/3600.0
-	if b[7] > 0 {
-		long *= -1
+	if b[7] == 1 {
+		long *= -1.0
 	}
 	return lat, long
 }
 
-type HMS struct {
-	Hours   int
-	Minutes int
-	Seconds float64
-}
-
-/*
- * 16bit percent revolution to H:M:S.s
- */
-func uint16StepsToHMS(rev uint16) HMS {
-	hours := uint16StepsToRA(rev)
-	h := int(hours)
-	remainder := hours - float64(h)
-	m := int(remainder * 60.0)
-	// remove the minutes from the hours and leave fractions of minute
-	frac_minute := hours - float64(h) - float64(m)/60.0
-	s := 60.0 * frac_minute
-	return HMS{
-		Hours:   h,
-		Minutes: m,
-		Seconds: s,
+// Convert Lat/Long to ABCDEFGH bytes
+func LatLongToNexstar(lat float64, long float64) []byte {
+	var a, b, c, d, e, f, g, h byte
+	// West & South are negative
+	if lat < 0 {
+		d = 1
+		lat = math.Abs(lat)
 	}
-}
-
-/*
- * 32bit percent revolution to H:M:S.s
- */
-func uint32StepsToHMS(rev uint32) HMS {
-	hours := uint32StepsToRA(rev)
-	h := int(hours)
-	remainder := hours - float64(h)
-	m := int(remainder * 60.0)
-	// remove the minutes from the hours and leave fractions of minute
-	frac_minute := hours - float64(h) - float64(m)/60.0
-	s := 60.0 * frac_minute
-	return HMS{
-		Hours:   h,
-		Minutes: m,
-		Seconds: s,
-	}
-}
-
-/*
- * Functions to convert the Nexstar ASCII RA/DEC & ALT/AZM
- * steps to uint32/16
- */
-func StepsToUint32(steps []byte) uint32 {
-	var a, b, c, d byte
-	fmt.Sscanf(string(steps), "%02x%02x%02x%02x", &a, &b, &c, &d)
-	return uint32(a)<<24 + uint32(b)<<16 + uint32(c)<<8 + uint32(d)
-}
-
-func StepsToUint16(steps []byte) uint16 {
-	var a, b byte
-	fmt.Sscanf(string(steps), "%02x%02x", &a, &b)
-	return uint16(a)<<8 + uint16(b)
-}
-
-/*
- * Convert steps to RA (hours) or Dec (deg)
- * Dec is +90 -> -90 deg
- * RA is in hours.frac_hour
- */
-
-func uint16StepsToDec(steps uint16) float64 {
-	s := int32(steps)
-	// check if negative value
-	if float64(s) > math.Pow(2, 16)/2.0 {
-		s = (int32(math.Pow(2, 16)) - s) * -1
+	if long < 0 {
+		h = 1
+		long = math.Abs(long)
 	}
 
-	resolution := math.Pow(2, 16) / 360.0
+	// latitude
+	a = byte(int(lat))
+	remain := lat - math.Floor(lat)
+	b = byte(int(remain * 60.0))
+	frac_minute := remain - float64(b)/60.0
+	c = byte(int(frac_minute * 60.0 * 60.0))
 
-	return float64(s) / resolution
-}
+	// longitude
+	e = byte(int(long))
+	remain = long - math.Floor(long)
+	f = byte(int(remain * 60.0))
+	frac_minute = remain - float64(f)/60.0
+	g = byte(int(frac_minute * 60.0 * 60.0))
 
-func uint32StepsToDec(steps uint32) float64 {
-	s := int64(steps)
-	// check if negative value
-	if float64(s) > math.Pow(2, 32)/2.0 {
-		s = (int64(math.Pow(2, 32)) - s) * -1
-	}
-
-	resolution := math.Pow(2, 32) / 360.0
-	return float64(s) / resolution
-}
-
-func uint16StepsToRA(steps uint16) float64 {
-	hrs := float64(steps) / math.Pow(2, 16) * 24.0
-	return hrs
-}
-
-func uint32StepsToRA(steps uint32) float64 {
-	hrs := float64(steps) / math.Pow(2, 32) * 24.0
-	return hrs
-}
-
-/*
- * Convert RA (hours) or Dec (deg) to Nexstar steps
- */
-
-func decTo16bitSteps(ra float64) uint16 {
-	if ra < 0 {
-		return uint16(math.Pow(2, 16) / 360.0 * (360.0 + ra))
-	}
-	return uint16(ra / 360.0 * math.Pow(2, 16))
-}
-
-func decTo32bitSteps(ra float64) uint32 {
-	if ra < 0 {
-		// need to convert to positive value
-		return uint32(math.Pow(2, 32) / 360.0 * (360.0 + ra))
-	}
-	return uint32(ra / 360.0 * math.Pow(2, 32))
-}
-
-func raTo16bitSteps(hours float64) uint16 {
-	return uint16(math.Pow(2, 16) * hours / 24.0)
-}
-
-func raTo32bitSteps(hours float64) uint32 {
-	return uint32(math.Pow(2, 32) * hours / 24.0)
+	return []byte{a, b, c, d, e, f, g, h}
 }

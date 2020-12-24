@@ -98,6 +98,19 @@ func (t *Telescope) GetCanSlewAltAzAsync() (bool, error) {
 	return t.alpaca.GetBool("telescope", t.Id, "canslewaltazasync")
 }
 
+func (t *Telescope) GetSlewing() (bool, error) {
+	return t.alpaca.GetBool("telescope", t.Id, "slewing")
+}
+
+func (t *Telescope) GetSiteLatitude() (float64, error) {
+	return t.alpaca.GetFloat64("telescope", t.Id, "sitelatitude")
+
+}
+
+func (t *Telescope) GetSiteLongitude() (float64, error) {
+	return t.alpaca.GetFloat64("telescope", t.Id, "sitelongitude")
+}
+
 // Returns the min & max rate (deg/sec) that the given axis can move
 func (t *Telescope) GetAxisRates(axis AxisType) ([]uint32, error) {
 	return t.alpaca.GetListUint32("telescope", t.Id, "axisrates")

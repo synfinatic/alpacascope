@@ -9,20 +9,20 @@ import (
 	"time"
 )
 
-type AlignmentMode int
+type AlignmentMode int32
 
 const (
-	algAltAz       int = 0
-	algPolar       int = 1
-	algGermanPolar int = 2
+	AlignmentAltAz AlignmentMode = iota
+	AlignmentPolar
+	AlignmentGermanPolar
 )
 
 type AxisType int
 
 const (
-	AxisAzmRa    = 0
-	AxisAltDec   = 1
-	AxisTertiary = 2
+	AxisAzmRa AxisType = iota
+	AxisAltDec
+	AxisTertiary
 )
 
 type Telescope struct {
@@ -54,8 +54,9 @@ func (t *Telescope) GetSupportedActions() ([]string, error) {
 	return t.alpaca.GetSupportedActions("telescope", t.Id)
 }
 
-func (t *Telescope) GetAlignmentMode() (int32, error) {
-	return t.alpaca.GetInt32("telescope", t.Id, "alignmentmode")
+func (t *Telescope) GetAlignmentMode() (AlignmentMode, error) {
+	mode, err := t.alpaca.GetInt32("telescope", t.Id, "alignmentmode")
+	return AlignmentMode(mode), err
 }
 
 func (t *Telescope) GetAltitude() (float64, error) {
@@ -111,9 +112,43 @@ func (t *Telescope) GetSiteLongitude() (float64, error) {
 	return t.alpaca.GetFloat64("telescope", t.Id, "sitelongitude")
 }
 
-// Returns the min & max rate (deg/sec) that the given axis can move
-func (t *Telescope) GetAxisRates(axis AxisType) ([]uint32, error) {
-	return t.alpaca.GetListUint32("telescope", t.Id, "axisrates")
+func (t *Telescope) GetTargetDeclination() (float64, error) {
+	return t.alpaca.GetFloat64("telescope", t.Id, "targetdeclination")
+}
+
+func (t *Telescope) GetTargetAltitude() (float64, error) {
+	return t.alpaca.GetFloat64("telescope", t.Id, "targetrightascension")
+}
+
+func (t *Telescope) GetUTCDate() (time.Time, error) {
+	iso8601, err := t.alpaca.GetString("telescope", t.Id, "utcdate")
+	if err != nil {
+		return time.Unix(0, 0), err
+	}
+	return time.Parse("2006-01-02T15:04:05Z0700", iso8601)
+}
+
+type mapAxisRates struct {
+	Value               []map[string]float64 `json:"Value"`
+	ClientTransactionID int32                `json:"ClientTransactionID"`
+	ServerTransactionID int32                `json:"ServerTransactionID"`
+	ErrorNumber         int32                `json:"ErrorNumber"`
+	ErrorMessage        string               `json:"ErrorMessage"`
+}
+
+// Returns the `Maximum` & `Minimum` rate (deg/sec) that the given axis can move
+func (t *Telescope) GetAxisRates(axis AxisType) (map[string]float64, error) {
+	url := t.alpaca.url("telescope", t.Id, "axisrates")
+	querystr := fmt.Sprintf("Axis=%d&%s", axis, t.alpaca.getQueryString())
+	resp, err := t.alpaca.client.R().
+		SetResult(&mapAxisRates{}).
+		SetQueryString(querystr).
+		Get(url)
+	if err != nil {
+		return map[string]float64{}, err
+	}
+	result := (resp.Result().(*mapAxisRates))
+	return result.Value[0], nil
 }
 
 type putMoveAxis struct {
@@ -187,6 +222,26 @@ func (t *Telescope) PutSiteLongitude(long float64) error {
 	return err
 }
 
+func (t *Telescope) PutTargetRightAscension(long float64) error {
+	var form map[string]string = map[string]string{
+		"TargetRightAscension": fmt.Sprintf("%g", long),
+		"ClientID":             fmt.Sprintf("%d", t.alpaca.ClientId),
+		"ClientTransactionID":  fmt.Sprintf("%d", t.alpaca.GetNextTransactionId()),
+	}
+	err := t.alpaca.Put("telescope", t.Id, "targetrightascension", form)
+	return err
+}
+
+func (t *Telescope) PutTargetDeclination(long float64) error {
+	var form map[string]string = map[string]string{
+		"TargetDeclination":   fmt.Sprintf("%g", long),
+		"ClientID":            fmt.Sprintf("%d", t.alpaca.ClientId),
+		"ClientTransactionID": fmt.Sprintf("%d", t.alpaca.GetNextTransactionId()),
+	}
+	err := t.alpaca.Put("telescope", t.Id, "targetdeclination", form)
+	return err
+}
+
 func (t *Telescope) PutUTCDate(date time.Time) error {
 	var form map[string]string = map[string]string{
 		"UTCDate":             fmt.Sprintf("%s", date.Format(time.RFC3339)),
@@ -203,6 +258,24 @@ func (t *Telescope) PutAbortSlew() error {
 		"ClientTransactionID": fmt.Sprintf("%d", t.alpaca.GetNextTransactionId()),
 	}
 	err := t.alpaca.Put("telescope", t.Id, "abortslew", form)
+	return err
+}
+
+func (t *Telescope) PutSlewToTargetAsync() error {
+	var form map[string]string = map[string]string{
+		"ClientID":            fmt.Sprintf("%d", t.alpaca.ClientId),
+		"ClientTransactionID": fmt.Sprintf("%d", t.alpaca.GetNextTransactionId()),
+	}
+	err := t.alpaca.Put("telescope", t.Id, "slewtotargetasync", form)
+	return err
+}
+
+func (t *Telescope) PutSyncToTarget() error {
+	var form map[string]string = map[string]string{
+		"ClientID":            fmt.Sprintf("%d", t.alpaca.ClientId),
+		"ClientTransactionID": fmt.Sprintf("%d", t.alpaca.GetNextTransactionId()),
+	}
+	err := t.alpaca.Put("telescope", t.Id, "synctotarget", form)
 	return err
 }
 

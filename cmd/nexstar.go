@@ -21,7 +21,7 @@ func handleNexstar(conn net.Conn, t *alpaca.Telescope) {
 		if err != nil {
 			break
 		}
-		reply := process_command(t, rlen, buf)
+		reply := nexstar_command(t, rlen, buf)
 		if len(reply) > 0 {
 			_, err = conn.Write(reply)
 			if err != nil {
@@ -38,7 +38,7 @@ func handleNexstar(conn net.Conn, t *alpaca.Telescope) {
 	}
 }
 
-func process_command(t *alpaca.Telescope, len int, buf []byte) []byte {
+func nexstar_command(t *alpaca.Telescope, len int, buf []byte) []byte {
 	var ret_val []byte
 	ret := ""
 	var err error
@@ -258,7 +258,7 @@ func executeSlew(t *alpaca.Telescope, buf []byte) error {
 		log.Errorf("Unknown direction: %d", int(buf[3]))
 	}
 
-	rate = rate_to_ascom(positive_direction, int(buf[4]))
+	rate = nexstar_rate_to_ascom(positive_direction, int(buf[4]))
 
 	// buf[1] is variable vs. fixed rate, but we always use fixed
 	// buf[5] is the "slow" variable rate which we always ignore
@@ -269,7 +269,7 @@ func executeSlew(t *alpaca.Telescope, buf []byte) error {
 }
 
 // Converts the direction & rate to an ASCOM rate
-func rate_to_ascom(direction bool, rate int) int {
+func nexstar_rate_to_ascom(direction bool, rate int) int {
 	switch rate {
 	case 0:
 		rate = 0

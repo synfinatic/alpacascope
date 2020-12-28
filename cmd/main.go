@@ -28,12 +28,12 @@ func main() {
 	var clientid uint32 // alpaca client id
 	var debug bool      // enable debugging
 	var sport int32     // Alpaca server port
-	var sip string      // Alpaca server IP
+	var shost string    // Alpaca server IP
 	var version bool    //  Version info
 	var _mode string    // Comms mode
 	var mode int
 
-	flag.StringVar(&sip, "alpaca-ip", "127.0.0.1", "IP address of Alpaca server")
+	flag.StringVar(&shost, "alpaca-host", "127.0.0.1", "FQDN or IP address of Alpaca server")
 	flag.Int32Var(&sport, "alpaca-port", 11111, "TCP port of the Alpaca server")
 	flag.Uint32Var(&clientid, "clientid", 1, "Alpaca ClientID used for debugging")
 	flag.Int32Var(&lport, "listen-port", 4030, "TCP port to listen on for clients")
@@ -72,7 +72,7 @@ func main() {
 		log.Fatalf("Error listening on %s: %s", listen, err.Error())
 	}
 
-	a := alpaca.NewAlpaca(clientid, sip, sport)
+	a := alpaca.NewAlpaca(clientid, shost, sport)
 	telescope := alpaca.NewTelescope(0, a)
 
 	connected, err := telescope.GetConnected()

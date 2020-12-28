@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+Changed:
+- --alpaca-ip is now --alpaca-host since hostname/FQDN is supported
+
 Added:
 - Refactor code to make it easier for other projects to use
 - Add support for additional Nexstar commands

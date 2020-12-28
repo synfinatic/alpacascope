@@ -114,13 +114,13 @@ func TestNexstarDec16(t *testing.T) {
 
 func TestNestarToHMS(t *testing.T) {
 	tests := map[uint32]HMS{
-		0:                                HMS{0, 0, 0.0},
-		1:                                HMS{0, 0, 3.3527612686157227e-07},
-		uint32(math.Pow(2, 32) / 2.0):    HMS{12.0, 0, 0.0},
-		uint32(math.Pow(2, 32)/2.0 + 1):  HMS{12.0, 0, 3.3527612686157227e-07},
-		uint32(math.Pow(2, 32)/2.0 + 2):  HMS{12.0, 0, 6.705522537231445e-07},
-		uint32(math.Pow(2, 32) / 24.0):   HMS{0.0, 59, 0.9999997764825852},
-		uint32(math.Pow(2, 32)/24.0 + 1): HMS{1.0, 0, 1.1175870895385742e-07},
+		0:                                NewHMS(0, 0, 0.0),
+		1:                                NewHMS(0, 0, 3.3527612686157227e-07),
+		uint32(math.Pow(2, 32) / 2.0):    NewHMS(12.0, 0, 0.0),
+		uint32(math.Pow(2, 32)/2.0 + 1):  NewHMS(12.0, 0, 3.3527612686157227e-07),
+		uint32(math.Pow(2, 32)/2.0 + 2):  NewHMS(12.0, 0, 6.705522537231445e-07),
+		uint32(math.Pow(2, 32) / 24.0):   NewHMS(0.0, 59, 0.9999997764825852),
+		uint32(math.Pow(2, 32)/24.0 + 1): NewHMS(1.0, 0, 1.1175870895385742e-07),
 	}
 	for input, check := range tests {
 		ra_value := uint32StepsToRA(input)

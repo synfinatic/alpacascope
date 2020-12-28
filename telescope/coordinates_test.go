@@ -6,38 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestHMS(t *testing.T) {
-	tests := map[float64]HMS{
-		0.0:    HMS{Hours: 0, Minutes: 0, Seconds: 0.0},
-		8.2525: HMS{Hours: 8, Minutes: 15, Seconds: 8.99999999999821},    // float error
-		12.505: HMS{Hours: 12, Minutes: 30, Seconds: 18.000000000002814}, // float error
-	}
-	for test, check := range tests {
-		assert.Equal(t, check, NewHMS(test))
-	}
-}
-
-func TestHMSToFloat(t *testing.T) {
-	tests := map[float64]HMS{
-		-1.9166666666666665: HMS{-1, 55, 0},
-		22.841666666666665:  HMS{22, 50, 30},
-	}
-	for check, test := range tests {
-		assert.Equal(t, check, test.ToFloat())
-	}
-}
-
-func TestHM(t *testing.T) {
-	tests := map[float64]float64{
-		0.0:                HMToFloat(0, 0.0),
-		8.508333333333333:  HMToFloat(8, 30.5),   // 8:30:30
-		12.254166666666666: HMToFloat(12, 15.25), // 12:15:15
-	}
-	for check, test := range tests {
-		assert.Equal(t, check, test)
-	}
-}
-
 func TestRAToHourAngle(t *testing.T) {
 	tests := map[float64]map[string]float64{
 		54.382619999999974: map[string]float64{
@@ -46,7 +14,7 @@ func TestRAToHourAngle(t *testing.T) {
 		},
 	}
 	for check, test := range tests {
-		ra := NewDMS(test["ra"])
+		ra := NewDMSDegrees(test["ra"])
 		assert.Equal(t, check, RAToHourAngle(ra.HMS(), test["lst"]))
 	}
 }

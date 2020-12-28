@@ -47,14 +47,9 @@ func TestSideralTimeCalcs(t *testing.T) {
 	assert.Equal(t, 2.440227545511389e+06, CalcJulianDate(mm, tt_hours))
 	gmst := GreenwichMeanSiderealTime(mm)
 	assert.Equal(t, 8.112740425894629, gmst)
-	dms := DMS{
-		-81,
-		23,
-		0,
-	}
-	long_hrs := dms.ToFloat() / 15.0
-	assert.Equal(t, -5.425555555555556, long_hrs)
-	assert.Equal(t, 2.687184870339072, GMSTToLST(gmst, long_hrs))
+	dms := NewDMS(-81, 23, 0)
+	assert.Equal(t, -5.425555555555556, dms.Hours())
+	assert.Equal(t, 2.687184870339072, GMSTToLST(gmst, dms.Hours()))
 
 	/*
 	 * second test from SkySafari
@@ -68,15 +63,10 @@ func TestSideralTimeCalcs(t *testing.T) {
 
 	// San Jose, CA
 	gmst = GreenwichMeanSiderealTime(viewing)
-	dms = DMS{
-		-121,
-		53,
-		41.9,
-	}
-	long_hrs = dms.ToHours()
+	dms = NewDMS(-121, 53, 41.9)
 
 	// LST per SkySafari is 1h 16m 41sec but doesn't have enough resolution
-	assert.Equal(t, 1.2779162228025633, GMSTToLST(gmst, long_hrs))
+	assert.Equal(t, 1.2779162228025633, GMSTToLST(gmst, dms.Hours()))
 
 	/*
 	 * Third test using old values from http://www.stargazing.net/kepler/altaz.html
@@ -88,14 +78,8 @@ func TestSideralTimeCalcs(t *testing.T) {
 	assert.Equal(t, 2.451036423611111e+06, CalcJulianDate(m13_time, TimeToUTCHours(m13_time)))
 
 	gmst = GreenwichMeanSiderealTime(m13_time)
-	dms = DMS{
-		-1,
-		53,
-		59.4,
-	}
-	long_hrs = dms.ToHours()
+	dms = NewDMS(-1, 53, 59.4)
 
 	// LST per SkySafari is 19h 19m 9s but doesn't have enough resolution
-	assert.Equal(t, 19.318920795558416, GMSTToLST(gmst, long_hrs))
-
+	assert.Equal(t, 19.318920795558416, GMSTToLST(gmst, dms.Hours()))
 }

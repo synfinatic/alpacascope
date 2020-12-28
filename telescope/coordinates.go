@@ -10,18 +10,6 @@ import (
 )
 
 /*
- * GoLang's math library works in radians, so we need functions to convert to degrees
- */
-
-func Rads2degs(rads float64) float64 {
-	return rads * 180.0 / math.Pi
-}
-
-func Degs2rads(degs float64) float64 {
-	return degs * math.Pi / 180.0
-}
-
-/*
  *  Right Ascension & Declination
  */
 type Coordinates struct {
@@ -57,120 +45,6 @@ func (c *Coordinates) DecToDegrees() DMS {
 		Seconds: seconds,
 	}
 
-}
-
-/*
- * Hours, Minutes, Seconds: RA and Hour Angles
- */
-
-type HMS struct {
-	Hours   int
-	Minutes int
-	Seconds float64
-}
-
-// Converts hours.frac_hours to HMS
-func NewHMS(hours float64) HMS {
-	hrs := math.Floor(hours)
-	frac_hours := hours - float64(hrs)
-	min := math.Floor(frac_hours * 60.0)
-
-	sec := frac_hours - (float64(min) / 60.0)
-	sec *= 3600.0
-	return HMS{
-		Hours:   int(hrs),
-		Minutes: int(min),
-		Seconds: sec,
-	}
-}
-
-func (dms *HMS) DMS() DMS {
-	degrees := dms.ToDegrees()
-	return NewDMS(degrees)
-}
-
-// converts H:M:S to a hours.frac_hours
-func (hms *HMS) ToFloat() float64 {
-	var ret float64 = math.Abs(float64(hms.Hours))
-	ret += float64(hms.Minutes) / 60.0
-	ret += hms.Seconds / 3600.0
-	if hms.Hours < 0 {
-		ret *= -1.0
-	}
-	return ret
-}
-
-func (hms *HMS) ToDegrees() float64 {
-	return hms.ToFloat() * 15.0
-}
-
-// Sometime we express things in hours min.frac_min
-func HMToFloat(hours int, minutes float64) float64 {
-	min := math.Floor(minutes)
-	sec := (minutes - min) * 60.0
-
-	hms := HMS{
-		Hours:   hours,
-		Minutes: int(min),
-		Seconds: sec,
-	}
-	return hms.ToFloat()
-}
-
-func HMSToFloat(hours int, minutes int, seconds float64) float64 {
-	hms := HMS{
-		Hours:   hours,
-		Minutes: minutes,
-		Seconds: seconds,
-	}
-	return hms.ToFloat()
-}
-
-/*
- * Degrees, Minutes, Seconds: Lat, Long, Az, Alt and Dec
- */
-type DMS struct {
-	Degrees int
-	Minutes int
-	Seconds float64
-}
-
-func NewDMS(degrees float64) DMS {
-	deg := math.Floor(degrees)
-	min := math.Floor((degrees - deg) * 60.0)
-	sec := (degrees - deg - (min / 60.0)) * 3600.0
-	return DMS{
-		Degrees: int(deg),
-		Minutes: int(min),
-		Seconds: sec,
-	}
-}
-
-func (dms *DMS) HMS() HMS {
-	hours := dms.ToHours()
-	return NewHMS(hours)
-}
-
-// Returns +/- degrees.  If you need 0->360, add 360.0 to negative results!
-func (dms *DMS) ToFloat() float64 {
-	var ret float64 = math.Abs(float64(dms.Degrees))
-	ret += float64(dms.Minutes) / 60.0
-	ret += dms.Seconds / 3600.0
-	if dms.Degrees < 0 {
-		ret *= -1
-	}
-	return ret
-}
-
-// Convert Degrees to hours
-func (dms *DMS) ToHours() float64 {
-	return dms.ToFloat() / 15.0
-}
-
-// Sometimes we want degrees & minutes with seconds as frac_min
-func (dms *DMS) ToDM() (int, float64) {
-	frac_min := dms.Seconds / 60.0
-	return dms.Degrees, float64(dms.Minutes) + frac_min
 }
 
 /*

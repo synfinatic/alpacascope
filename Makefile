@@ -2,7 +2,7 @@ DIST_DIR ?= dist/
 GOOS ?= $(shell uname -s | tr "[:upper:]" "[:lower:]")
 ARCH ?= $(shell uname -m)
 ifeq ($(ARCH),x86_64)
-GOARCH             := arm64
+GOARCH             := amd64
 else
 GOARCH             := $(ARCH)  # no idea if this works for other platforms....
 endif
@@ -33,7 +33,7 @@ WINDOWS_BIN               := $(DIST_DIR)$(PROJECT_NAME)-$(PROJECT_VERSION)-windo
 WINDOWS32_BIN             := $(DIST_DIR)$(PROJECT_NAME)-$(PROJECT_VERSION)-windows-386.exe
 LINUX_BIN                 := $(DIST_DIR)$(PROJECT_NAME)-$(PROJECT_VERSION)-linux-amd64
 LINUXARM64_BIN            := $(DIST_DIR)$(PROJECT_NAME)-$(PROJECT_VERSION)-linux-arm64
-DARWIN_BIN                := $(DIST_DIR)$(PROJECT_NAME)-$(PROJECT_VERSION)-darwin-arm64
+DARWIN_BIN                := $(DIST_DIR)$(PROJECT_NAME)-$(PROJECT_VERSION)-darwin-amd64
 
 
 
@@ -41,7 +41,7 @@ ALL: $(OUTPUT_NAME) ## Build binary.  Needs to be a supported plaform as defined
 
 include help.mk  # place after ALL target and before all other targets
 
-release: windows windows32 linux linuxarm64 darwin ## Build all our release binaries
+release: windows windows32 linux linux-arm64 darwin ## Build all our release binaries
 
 .PHONY: run
 run: cmd/*.go  ## build and run cria using $PROGRAM_ARGS
@@ -112,31 +112,32 @@ precheck: test test-fmt test-tidy  ## Run all tests that happen in a PR
 # Build targets for our supported plaforms
 windows: $(WINDOWS_BIN)  ## Build 64bit Windows binary
 
-$(WINDOWS_BIN): cmd/*.go alpaca/*.go .prepare
+GO_BUILD_DEPS: cmd/*.go alpaca/*.go telelscope/*.go .prepare
+
+$(WINDOWS_BIN): $(GO_BUILD_DEPS)
 	GOARCH=amd64 GOOS=windows go build -ldflags='$(LDFLAGS)' -o $(WINDOWS_BIN) cmd/*.go
 	@echo "Created: $(WINDOWS_BIN)"
 
 windows32: $(WINDOWS32_BIN)  ## Build 32bit Windows binary
 
-$(WINDOWS32_BIN):cmd/*.go alpaca/*.go .prepare
+$(WINDOWS32_BIN): $(GO_BUILD_DEPS)
 	GOARCH=386 GOOS=windows go build -ldflags='$(LDFLAGS)' -o $(WINDOWS32_BIN) cmd/*.go
 	@echo "Created: $(WINDOWS32_BIN)"
 
 linux: $(LINUX_BIN)  ## Build Linux/x86_64 binary
 
-$(LINUX_BIN): cmd/*.go alpaca/*.go .prepare
+$(LINUX_BIN): $(GO_BUILD_DEPS)
 	GOARCH=amd64 GOOS=linux go build -ldflags='$(LDFLAGS)' -o $(LINUX_BIN) cmd/*.go
 	@echo "Created: $(LINUX_BIN)"
 
-linuxarm64: $(LINUXARM64_BIN)  ## Build Linux/arm64 binary
+linux-arm64: $(LINUXARM64_BIN)  ## Build Linux/arm64 binary
 
-$(LINUXARM64_BIN): cmd/*.go alpaca/*.go .prepare
+$(LINUXARM64_BIN): $(GO_BUILD_DEPS)
 	GOARCH=arm64 GOOS=linux go build -ldflags='$(LDFLAGS)' -o $(LINUXARM64_BIN) cmd/*.go
 	@echo "Created: $(LINUXARM64_BIN)"
 
 darwin: $(DARWIN_BIN)  ## Build MacOS/x86_64 binary
 
-$(DARWIN_BIN): cmd/*.go alpaca/*.go .prepare
+$(DARWIN_BIN): $(GO_BUILD_DEPS)
 	GOARCH=amd64 GOOS=darwin go build -ldflags='$(LDFLAGS)' -o $(DARWIN_BIN) cmd/*.go
 	@echo "Created: $(DARWIN_BIN)"
-

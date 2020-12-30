@@ -1,6 +1,6 @@
 # AlpacaScope Changelog
 
-## Unreleased
+## v0.0.3 - 2020-12-30
 
 Changed:
 - --alpaca-ip is now --alpaca-host since hostname/FQDN is supported
@@ -14,6 +14,7 @@ Added:
 Fixed:
 - Bug with enum for Alpaca Axis control
 - Fix bug in Nexstar location (ABCDEFGH) math
+- Fix issue building amd64 binaries looking like arm64
 
 ## v0.0.2 - 2020-12-23
 

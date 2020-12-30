@@ -9,6 +9,7 @@ Added:
 - Refactor code to make it easier for other projects to use
 - Add support for additional Nexstar commands
 - More unit tests
+- Add LX200 support
 
 Fixed:
 - Bug with enum for Alpaca Axis control

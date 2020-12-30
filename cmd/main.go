@@ -96,6 +96,21 @@ func main() {
 	}
 	log.Debugf("SupportedActions: %s", actions)
 
+	var lxstate LX200State
+	if mode == LX200 {
+		minmax, err := telescope.GetAxisRates(alpaca.AxisAzmRa)
+		if err != nil {
+			log.Errorf("Unable to query axis rates: %s", err.Error())
+		}
+		lxstate = LX200State{
+			HighPrecision:  true,
+			TwentyFourHour: true,
+			MaxSlew:        minmax["Maximum"],
+			MinSlew:        minmax["Minimum"],
+			SlewRate:       int(minmax["Maximum"]),
+		}
+	}
+
 	for {
 		conn, err := ln.Accept()
 		if err != nil {
@@ -104,7 +119,7 @@ func main() {
 		}
 
 		if mode == LX200 {
-			go handleLX200Conn(conn, telescope)
+			go handleLX200Conn(conn, telescope, &lxstate)
 		} else if mode == NexStar {
 			go handleNexstar(conn, telescope)
 		} else {

@@ -58,6 +58,19 @@ Configure SkySafari or other remote control software to connect to AlpacaScope o
 Yes, this supports all versions of SkySafari which allow for controlling telescopes.
 Typically this is SkySafari Plus and Pro.
 
+#### Why do I get a virus warning for alpacascope?
+Unfortunately, this is a [known issue with GoLang programs](
+https://golang.org/doc/faq#virus).  A few anti-virus programs incorrectly
+flag Go programs as a virus because Go binaries "look funny".  Here is 
+[another Go program with the same issue](
+https://github.com/develar/app-builder/issues/33).  I've [scanned AlpacaScope](
+https://www.virustotal.com/gui/file/17282fcdd929d7f4232ce2c511ed6925355ac8fc19bb46d1ad518841730d3023/detection)
+with 71 different AV engines via Google VirusTotal and as you can see, only 
+2 AV products said it was suspicious.
+
+For the record, I build all the release binaries on a Mac- so the chances of 
+a Windows virus infecting the binaries is pretty much zero.
+
 #### What about other astronomy software?
 Yep, anything that can do Celestron Nexstar or LX200 protocols over TCP/IP
 should work.  
@@ -82,3 +95,14 @@ ASCOM driver connected to your telescope mount.
 Yes!  Slewing and GoTo works.  Be sure to specify `--mode lx200`.
 I believe align/sync should work but it doesn't seem to work with my mount/CWPI.
 Not sure if it's a bug on my end or a limitation with CWPI?
+
+#### How to build on Windows?
+If you wish to build a binary on Windows, you'll need to do:
+
+ 1. Install GoLang for Windows by following [these instructions](
+    https://golangdocs.com/install-go-windows).
+ 1. Install GNU Make for Windows/Git by following [these instructions](
+    https://gist.github.com/evanwill/0207876c3243bbb6863e65ec5dc3f058#make)
+ 1. Clone this repoistory onto your computer using Git or just downloading the
+    Zip file from Github.
+ 1. Run `make windows` for a 64bit binary or `make windows32` for a 32bit binary.

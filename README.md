@@ -19,7 +19,7 @@ https://ascom-standards.org) but that only allows IPC via Windows COM
 which doesn't even support talking to programs on other computers (or my iPad).
 
 But then in 2019, ASCOM introduced [Alpaca](
-https://ascom-standards.org/Developer/Alpaca.htm) which via 
+https://ascom-standards.org/Developer/Alpaca.htm) which via
 [Alpaca Remote Server](https://github.com/ASCOMInitiative/ASCOMRemote/releases)
 exposes the ASCOM API via REST.  Of course, SkySafari doesn't support this (yet)
 so I decided to write a service which emulates a telescope SkySafari supports
@@ -61,19 +61,19 @@ Typically this is SkySafari Plus and Pro.
 #### Why do I get a virus warning for alpacascope?
 Unfortunately, this is a [known issue with GoLang programs](
 https://golang.org/doc/faq#virus).  A few anti-virus programs incorrectly
-flag Go programs as a virus because Go binaries "look funny".  Here is 
+flag Go programs as a virus because Go binaries "look funny".  Here is
 [another Go program with the same issue](
 https://github.com/develar/app-builder/issues/33).  I've [scanned AlpacaScope](
 https://www.virustotal.com/gui/file/17282fcdd929d7f4232ce2c511ed6925355ac8fc19bb46d1ad518841730d3023/detection)
-with 71 different AV engines via Google VirusTotal and as you can see, only 
+with 71 different AV engines via Google VirusTotal and as you can see, only
 2 AV products said it was suspicious.
 
-For the record, I build all the release binaries on a Mac- so the chances of 
+For the record, I build all the release binaries on a Mac- so the chances of
 a Windows virus infecting the binaries is pretty much zero.
 
 #### What about other astronomy software?
 Yep, anything that can do Celestron Nexstar or LX200 protocols over TCP/IP
-should work.  
+should work.
 
 #### What features work?
 
@@ -105,4 +105,6 @@ If you wish to build a binary on Windows, you'll need to do:
     https://gist.github.com/evanwill/0207876c3243bbb6863e65ec5dc3f058#make)
  1. Clone this repoistory onto your computer using Git or just downloading the
     Zip file from Github.
- 1. Run `make windows` for a 64bit binary or `make windows32` for a 32bit binary.
+ 1. Using the Git shell (installed in Step #1), from inside of the AlpacaScope
+    source tree, run either `make windows` for a 64bit binary or
+    `make windows32` for a 32bit binary.

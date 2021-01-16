@@ -9,7 +9,7 @@ endif
 BUILDINFOSDET ?=
 PROGRAM_ARGS ?=
 
-PROJECT_VERSION           := 0.0.3
+PROJECT_VERSION           := 0.0.4
 DOCKER_REPO               := synfinatic
 PROJECT_NAME              := alpacascope
 PROJECT_TAG               := $(shell git describe --tags 2>/dev/null $(git rev-list --tags --max-count=1))
@@ -113,38 +113,36 @@ precheck: test test-fmt test-tidy  ## Run all tests that happen in a PR
 # Build targets for our supported plaforms
 windows: $(WINDOWS_BIN)  ## Build 64bit Windows binary
 
-GO_BUILD_DEPS: cmd/*.go alpaca/*.go telelscope/*.go .prepare
-
-$(WINDOWS_BIN): $(GO_BUILD_DEPS)
+$(WINDOWS_BIN): $(wildcard */*.go) .prepare
 	GOARCH=amd64 GOOS=windows go build -ldflags='$(LDFLAGS)' -o $(WINDOWS_BIN) cmd/*.go
 	@echo "Created: $(WINDOWS_BIN)"
 
 windows32: $(WINDOWS32_BIN)  ## Build 32bit Windows binary
 
-$(WINDOWS32_BIN): $(GO_BUILD_DEPS)
+$(WINDOWS32_BIN): $(wildcard */*.go) .prepare
 	GOARCH=386 GOOS=windows go build -ldflags='$(LDFLAGS)' -o $(WINDOWS32_BIN) cmd/*.go
 	@echo "Created: $(WINDOWS32_BIN)"
 
 linux: $(LINUX_BIN)  ## Build Linux/x86_64 binary
 
-$(LINUX_BIN): $(GO_BUILD_DEPS)
+$(LINUX_BIN): $(wildcard */*.go) .prepare
 	GOARCH=amd64 GOOS=linux go build -ldflags='$(LDFLAGS)' -o $(LINUX_BIN) cmd/*.go
 	@echo "Created: $(LINUX_BIN)"
 
 linux-arm64: $(LINUXARM64_BIN)  ## Build Linux/arm64 binary
 
-$(LINUXARM64_BIN): $(GO_BUILD_DEPS)
+$(LINUXARM64_BIN): $(wildcard */*.go) .prepare
 	GOARCH=arm64 GOOS=linux go build -ldflags='$(LDFLAGS)' -o $(LINUXARM64_BIN) cmd/*.go
 	@echo "Created: $(LINUXARM64_BIN)"
 
 linux-arm32: $(LINUXARM32_BIN)  ## Build Linux/arm64 binary
 
-$(LINUXARM32_BIN): $(GO_BUILD_DEPS)
+$(LINUXARM32_BIN): $(wildcard */*.go) .prepare
 	GOARCH=arm GOOS=linux go build -ldflags='$(LDFLAGS)' -o $(LINUXARM32_BIN) cmd/*.go
 	@echo "Created: $(LINUXARM32_BIN)"
 
 darwin: $(DARWIN_BIN)  ## Build MacOS/x86_64 binary
 
-$(DARWIN_BIN): $(GO_BUILD_DEPS)
+$(DARWIN_BIN): $(wildcard */*.go) .prepare
 	GOARCH=amd64 GOOS=darwin go build -ldflags='$(LDFLAGS)' -o $(DARWIN_BIN) cmd/*.go
 	@echo "Created: $(DARWIN_BIN)"

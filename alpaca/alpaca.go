@@ -19,6 +19,8 @@ type Alpaca struct {
 	url_base      string
 	ClientId      uint32
 	transactionId uint32
+	ErrorNumber   int    // last error
+	ErrorMessage  string // last error
 }
 
 func NewAlpaca(clientid uint32, ip string, port int32) *Alpaca {
@@ -63,6 +65,10 @@ func (a *Alpaca) GetString(device string, id uint32, api string) (string, error)
 	if err != nil {
 		return "", err
 	}
+	if resp.IsError() {
+		a.ErrorNumber = resp.StatusCode()
+		a.ErrorMessage = resp.String()
+	}
 	result := (resp.Result().(*stringResponse))
 	return result.Value, nil
 }
@@ -83,6 +89,10 @@ func (a *Alpaca) GetStringList(device string, id uint32, api string) ([]string, 
 		Get(url)
 	if err != nil {
 		return []string{""}, err
+	}
+	if resp.IsError() {
+		a.ErrorNumber = resp.StatusCode()
+		a.ErrorMessage = resp.String()
 	}
 	result := (resp.Result().(*stringlistResponse))
 	return result.Value, nil
@@ -105,6 +115,10 @@ func (a *Alpaca) GetBool(device string, id uint32, api string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	if resp.IsError() {
+		a.ErrorNumber = resp.StatusCode()
+		a.ErrorMessage = resp.String()
+	}
 	result := (resp.Result().(*boolResponse))
 	return result.Value, nil
 }
@@ -125,6 +139,10 @@ func (a *Alpaca) GetInt32(device string, id uint32, api string) (int32, error) {
 		Get(url)
 	if err != nil {
 		return 0, err
+	}
+	if resp.IsError() {
+		a.ErrorNumber = resp.StatusCode()
+		a.ErrorMessage = resp.String()
 	}
 	result := (resp.Result().(*int32Response))
 	return result.Value, nil
@@ -147,6 +165,10 @@ func (a *Alpaca) GetFloat64(device string, id uint32, api string) (float64, erro
 	if err != nil {
 		return 0, err
 	}
+	if resp.IsError() {
+		a.ErrorNumber = resp.StatusCode()
+		a.ErrorMessage = resp.String()
+	}
 	result := (resp.Result().(*float64Response))
 	return result.Value, nil
 }
@@ -167,6 +189,10 @@ func (a *Alpaca) GetListUint32(device string, id uint32, api string) ([]uint32, 
 		Get(url)
 	if err != nil {
 		return []uint32{}, err
+	}
+	if resp.IsError() {
+		a.ErrorNumber = resp.StatusCode()
+		a.ErrorMessage = resp.String()
 	}
 	result := (resp.Result().(*listUint32Response))
 	return result.Value, nil
@@ -219,19 +245,10 @@ func (a *Alpaca) Put(device string, id uint32, api string, form map[string]strin
 		return err
 	}
 
-	/*
-		// Explore response object
-		fmt.Println("Response Info:")
-		fmt.Println("  Error      :", err)
-		fmt.Println("  Status Code:", resp.StatusCode())
-		fmt.Println("  Status     :", resp.Status())
-		fmt.Println("  Proto      :", resp.Proto())
-		fmt.Println("  Time       :", resp.Time())
-		fmt.Println("  Received At:", resp.ReceivedAt())
-		fmt.Println("  Body       :\n", resp)
-		fmt.Println()
-	*/
-
+	if resp.IsError() {
+		a.ErrorNumber = resp.StatusCode()
+		a.ErrorMessage = resp.String()
+	}
 	result := (resp.Result().(*putResponse))
 	if result.ErrorNumber != 0 {
 		return fmt.Errorf("%d: %s", result.ErrorNumber, result.ErrorMessage)

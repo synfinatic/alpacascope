@@ -6,6 +6,7 @@ Added:
 
  - Info about viruses and how to build on Windows 
  - Git workflow for building & testing
+ - Add Linux-ARM binary for RasPi
 
 Fixed:
 

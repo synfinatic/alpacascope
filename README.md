@@ -26,6 +26,11 @@ so I decided to write a service which emulates a telescope SkySafari supports
 and talks to Alpaca Remote Server.  The result is that SkySafari can now control
 my Celestron Evolution mount, or any mount that supports the ASCOM standard.
 
+## Install
+
+[Download the latest binary](https://github.com/synfinatic/alpacascope/releases)
+appropriate for your hardware/OS.
+
 ## Usage
 
 So basically, my setup looks sorta like this:

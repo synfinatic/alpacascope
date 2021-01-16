@@ -33,6 +33,7 @@ WINDOWS_BIN               := $(DIST_DIR)$(PROJECT_NAME)-$(PROJECT_VERSION)-windo
 WINDOWS32_BIN             := $(DIST_DIR)$(PROJECT_NAME)-$(PROJECT_VERSION)-windows-386.exe
 LINUX_BIN                 := $(DIST_DIR)$(PROJECT_NAME)-$(PROJECT_VERSION)-linux-amd64
 LINUXARM64_BIN            := $(DIST_DIR)$(PROJECT_NAME)-$(PROJECT_VERSION)-linux-arm64
+LINUXARM32_BIN            := $(DIST_DIR)$(PROJECT_NAME)-$(PROJECT_VERSION)-linux-arm32
 DARWIN_BIN                := $(DIST_DIR)$(PROJECT_NAME)-$(PROJECT_VERSION)-darwin-amd64
 
 
@@ -41,7 +42,7 @@ ALL: $(OUTPUT_NAME) ## Build binary.  Needs to be a supported plaform as defined
 
 include help.mk  # place after ALL target and before all other targets
 
-release: windows windows32 linux linux-arm64 darwin ## Build all our release binaries
+release: windows windows32 linux linux-arm32 linux-arm64 darwin ## Build all our release binaries
 
 .PHONY: run
 run: cmd/*.go  ## build and run cria using $PROGRAM_ARGS
@@ -135,6 +136,12 @@ linux-arm64: $(LINUXARM64_BIN)  ## Build Linux/arm64 binary
 $(LINUXARM64_BIN): $(GO_BUILD_DEPS)
 	GOARCH=arm64 GOOS=linux go build -ldflags='$(LDFLAGS)' -o $(LINUXARM64_BIN) cmd/*.go
 	@echo "Created: $(LINUXARM64_BIN)"
+
+linux-arm32: $(LINUXARM32_BIN)  ## Build Linux/arm64 binary
+
+$(LINUXARM32_BIN): $(GO_BUILD_DEPS)
+	GOARCH=arm GOOS=linux go build -ldflags='$(LDFLAGS)' -o $(LINUXARM32_BIN) cmd/*.go
+	@echo "Created: $(LINUXARM32_BIN)"
 
 darwin: $(DARWIN_BIN)  ## Build MacOS/x86_64 binary
 

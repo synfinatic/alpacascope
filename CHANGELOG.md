@@ -2,11 +2,15 @@
 
 ## Unreleased
 
+## v0.0.4 - 2021-01-16
+
 Added:
 
  - Info about viruses and how to build on Windows 
  - Git workflow for building & testing
  - Add Linux-ARM binary for RasPi
+ - Add support for Alpaca discovery via: --alpaca-host auto
+ - Add support for choosing from between multiple telescopes via --telescope-id
 
 Fixed:
 

@@ -78,7 +78,7 @@ flag.
  * `--alpaca-port`  Specify a custom TCP Port where ASCOM Remote Server is listening
  * `--listen-ip`    Manually set an IP address to listen on
  * `--listen-port`  Override the default port of 4030 to listen on
- * `--mode`         Choose between "nexstar" and "lx200" protocols.
+ * `--mode`         Choose between `nexstar` and `lx200` protocols.  `nexstar` is the default.
  * `--debug`        Print debugging information
 
 ## FAQ
@@ -126,7 +126,7 @@ doesn't support INDI so I have no easy way of developing/testing the code.
 
 #### Does AlpacaScope need to run on the same computer as CWPI/ASCOM?
 No, but that is probably the most common solution.  AlpacaScope just needs
-to be able to talk to the ASCOME Remote Server running on the same computer as the
+to be able to talk to the ASCOM Remote Server running on the same computer as the
 ASCOM driver connected to your telescope mount.
 
 #### My software only supports the Meade LX200 protocol.  Can I use that?
@@ -135,7 +135,7 @@ I believe align/sync should work but it doesn't seem to work with my mount/CWPI.
 Not sure if it's a bug on my end or a limitation with CWPI?
 
 #### How to build on Windows?
-If you wish to build a binary on Windows, you'll need to do:
+If you wish to build your own binary on Windows, you'll need to do:
 
  1. Install GoLang for Windows by following [these instructions](
     https://golangdocs.com/install-go-windows).
@@ -146,3 +146,16 @@ If you wish to build a binary on Windows, you'll need to do:
  1. Using the Git shell (installed in Step #1), from inside of the AlpacaScope
     source tree, run either `make windows` for a 64bit binary or
     `make windows32` for a 32bit binary.
+
+#### How to build on Linux, OSX, etc?
+
+ 1. Install [GoLang](https://golang.org) for your OS.
+ 1. Make sure you have GNU Make installed.  BSD Make will not work out of the box.
+    If you don't want to install GNU Make, you'll have to run the `go build` command
+    manually.
+ 1. Clone this repoistory onto your computer using Git or just downloading the
+    Zip file from Github.
+ 1. Run `make` (or `gmake`) to build a binary for your OS.
+ 1. Run `make help` to get a list of other OS targets you can build.  Note that 
+    GoLang makes cross-compiling easy so no problems building a Windows binary
+    on Linux or MacOS binary on a RaspberryPi. :)

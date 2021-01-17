@@ -48,7 +48,7 @@ func nexstar_command(t *alpaca.Telescope, len int, buf []byte) []byte {
 			strbuf = fmt.Sprintf("%s %d", strbuf, buf[i])
 		}
 		if buf[0] != 'e' {
-			log.Debugf("Received %d bytes [%s]: %c %s", len, string(buf), buf[0], strbuf)
+			log.Debugf("Received %d bytes [%s]: %c %s", len, string(buf[:len]), buf[0], strbuf)
 		}
 	}
 

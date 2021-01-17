@@ -33,6 +33,10 @@ func (a *AlpacaDiscoveryMessage) Bytes() []byte {
 	return buf
 }
 
+func (a AlpacaDiscoveryMessage) String() string {
+	return fmt.Sprintf("%s%c", string(a.Fixed), a.Version)
+}
+
 func NewAlpacaDiscoveryMessage(version int) *AlpacaDiscoveryMessage {
 	a := AlpacaDiscoveryMessage{
 		Fixed:    []byte("alpacadiscovery"),
@@ -92,8 +96,8 @@ func DiscoverServer(tries int) (string, int32, error) {
 		return "", 0, fmt.Errorf("Unable to resolve Alpaca broadcast address: %s", err.Error())
 	}
 
-	msg := NewAlpacaDiscoveryMessage(ALPACA_DISCOVERY_VERSION)
-	msg_bytes := msg.Bytes()
+	adm := NewAlpacaDiscoveryMessage(ALPACA_DISCOVERY_VERSION)
+	msg_bytes := adm.Bytes()
 	buf := make([]byte, 1024)
 
 	for i := 0; i < tries; i++ {
@@ -107,11 +111,11 @@ func DiscoverServer(tries int) (string, int32, error) {
 			pc.SetReadDeadline(deadline)
 			err = nil
 			n, addr, err := pc.ReadFrom(buf)
+			log.Debugf("receved %d bytes", n)
 			if err != nil {
 				log.Warnf("Failed to discover Alpaca server: %s", err.Error())
 				break // don't try reading again this cycle
-			} else if n == 64 || string(buf) == fmt.Sprintf("alpacadiscovery%d", ALPACA_DISCOVERY_VERSION) {
-				log.Debug("Skipping packet we sent")
+			} else if n == 64 && strings.HasPrefix(string(buf[:n]), adm.String()) {
 				continue // this is the message we sent
 			}
 

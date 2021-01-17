@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+## v0.0.5 - 2021-01-17
+
+Changed:
+
+ - Removed --info flag. We now default to Info level instead of Warning.
+
+Added:
+
+ - SkyFi discovery support.  Now SkySafari can auto-discover AlpacaScope as if it
+    was a SkyFi device.
+ - Windows output logging now supports a cleaner/colorized look
+
+Fixed:
+
+ - Debug logging for Nexstar no longer prints the whole buffer
+ - Alpaca discovery comparison logic is now more accurate.
+ - Fixed crash when received invalid messages < 3 bytes in LX200 mode
+
 ## v0.0.4 - 2021-01-16
 
 Added:

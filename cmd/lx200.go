@@ -88,6 +88,9 @@ func lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte, state *LX200Stat
 		case alpaca.AlignmentPolar, alpaca.AlignmentGermanPolar:
 			ret = "P"
 		}
+	} else if cmdlen < 3 {
+		log.Errorf("Unexpected/Invalid command: %s", string(buf[0:cmdlen]))
+		consumed = cmdlen
 	} else {
 		/*
 		 * variable length string commands, all which start with a ':' and end with a '#'.

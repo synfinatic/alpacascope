@@ -1,12 +1,19 @@
 package main
 
+/*
+ * Copyright 2020,2021 Aaron Turner
+ * Licensed under the GPLv3.  See `LICENSE` for details.
+ */
+
 import (
 	"fmt"
 	"net"
 	"os"
 	"strings"
 
+	"github.com/mattn/go-colorable"
 	"github.com/synfinatic/alpacascope/alpaca"
+	"github.com/synfinatic/alpacascope/skyfi"
 
 	log "github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
@@ -29,7 +36,6 @@ func main() {
 	var lip string      // listen IP
 	var clientid uint32 // alpaca client id
 	var debug bool      // enable debugging
-	var info bool       // enable info
 	var sport int32     // Alpaca server port
 	var shost string    // Alpaca server IP
 	var version bool    //  Version info
@@ -43,7 +49,6 @@ func main() {
 	flag.Int32Var(&lport, "listen-port", 4030, "TCP port to listen on for clients")
 	flag.StringVar(&lip, "listen-ip", "0.0.0.0", "IP to listen on for clients")
 	flag.BoolVar(&debug, "debug", false, "Enable debug logging")
-	flag.BoolVar(&info, "info", false, "Enable info logging")
 	flag.BoolVar(&version, "version", false, "Print version and exit")
 	flag.StringVar(&_mode, "mode", "nexstar", "Comms mode: [nexstar|lx200]")
 	flag.Uint32Var(&telescopeId, "telescope-id", 0, "Alpaca Telescope ID")
@@ -54,14 +59,15 @@ func main() {
 	if debug == true {
 		log.SetReportCaller(true)
 		log.SetLevel(log.DebugLevel)
-	} else if info == true {
-		log.SetLevel(log.InfoLevel)
 	} else {
-		log.SetLevel(log.WarnLevel)
+		// pretty console output
+		log.SetLevel(log.InfoLevel)
+		log.SetFormatter(&log.TextFormatter{ForceColors: true})
+		log.SetOutput(colorable.NewColorableStdout())
 	}
 
 	if version == true {
-		fmt.Printf("AlpacaScope Version %s -- Copyright 2020 Aaron Turner\n", Version)
+		fmt.Printf("AlpacaScope Version %s -- Copyright 2021 Aaron Turner\n", Version)
 		fmt.Printf("%s (%s) built at %s\n", CommitID, Tag, Buildinfos)
 		os.Exit(0)
 	}
@@ -79,6 +85,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error listening on %s: %s", listen, err.Error())
 	}
+	defer ln.Close()
 
 	if shost == "auto" {
 		// first look locally since we can't rely on UDP broadcast to work locally on windows
@@ -90,6 +97,9 @@ func main() {
 			}
 		}
 	}
+
+	// Act like a SkyFi for discovery
+	go skyfi.ReplyDiscover()
 
 	a := alpaca.NewAlpaca(clientid, shost, sport)
 	telescope := alpaca.NewTelescope(telescopeId, a)
@@ -131,7 +141,7 @@ func main() {
 		}
 	}
 
-	fmt.Printf("Waiting for %s clients on %s:%d\n", _mode, lip, lport)
+	log.Infof("Waiting for %s clients on %s:%d\n", _mode, lip, lport)
 
 	for {
 		conn, err := ln.Accept()

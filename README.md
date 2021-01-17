@@ -1,5 +1,21 @@
 # AlpacaScope
 
+## What?
+
+Basically AlpacaScope is a lot like the [SCC SkyFi](
+https://www.skysafariastronomy.com/skyfi-3-professional-astronomy-telescope-control.html)
+and Sequence Generator Pro's [WiFi Scope](https://www.sequencegeneratorpro.com/download/wifi-scope/).
+
+The difference is that instead of using a special device you have to buy to control
+your telescope, you can use your Windows computer.  AlpacaScope controls your
+telescope via [ASCOM](https://ascom-standards.org) and [ASCOM Remote Server](
+https://github.com/ASCOMInitiative/ASCOMRemote).
+
+WiFi Scope is probably the closest thing to AlpacaScope- it also runs on Windows and
+ASCOM.  Unfortunately, I've found WiFi Scope buggy (it crashes a lot for me)
+which is why I ended up writing this.  Now AlpacaScope has more features
+than WiFi Scope.
+
 ## Why?
 
 TL;DR: I have a [Celestron Evolution EdgeHD 800](
@@ -42,11 +58,28 @@ Celestron Evolution <-> CWPI <-> ASCOM <-> Alpaca Server <-> AlpacaScope <-> Sky
 ```
 
 Basically, just download the binary for your system (easist to run on the same Windows
-box as ASCOM & the Alpaca Remote Server) and run it.  By default it will try to connect
-to Alpaca Remote Server on the local host (127.0.0.0) on port 11111 and listen on port 4030.
+box as ASCOM & the Alpaca Remote Server) and run it.  It will automatically find
+the ASCOM Remote Server running on your network and connect to it.
 
 Configure SkySafari or other remote control software to connect to AlpacaScope on port
-4030 using the Celestron Nexstar (I use the Nexstar/Advanced GT) protocol.
+4030 using the Celestron Nexstar (I use the Nexstar/Advanced GT) or Meade LX200
+protocol.  AlpacaScope supports both, but defaults to Nexstar.
+
+Note that AlpacaScope now supports the "Auto-Detect SkyFi" feature in SkySafari
+so you should no longer need to enter the IP address of AlpacaScope.
+
+### Command Line Flags
+
+AlpacaScope supports a number of optional CLI options.  For a full list use the `--help`
+flag.
+
+ * `--help`         Built in help
+ * `--alpaca-host`  Manually set the FQDN or IP address of the host running ASCOM Remote Server
+ * `--alpaca-port`  Specify a custom TCP Port where ASCOM Remote Server is listening
+ * `--listen-ip`    Manually set an IP address to listen on
+ * `--listen-port`  Override the default port of 4030 to listen on
+ * `--mode`         Choose between "nexstar" and "lx200" protocols.
+ * `--debug`        Print debugging information
 
 ## FAQ
 
@@ -54,7 +87,7 @@ Configure SkySafari or other remote control software to connect to AlpacaScope o
 
  1. A telescope connected to a Windows machine
  2. ASCOM installed an configured for your mount
- 3. Alpaca Remote Server installed, configured & running
+ 3. ASCOM Remote Server installed, configured & running
  4. AlpacaScope installed and running
  5. Some kind astronomy software which talks the LX200 or Celestron Nexstar protocols
     (SkySafari, etc)
@@ -92,8 +125,8 @@ No it doesn't.  There's probably no reason it can't support INDI, but CWPI
 doesn't support INDI so I have no easy way of developing/testing the code.
 
 #### Does AlpacaScope need to run on the same computer as CWPI/ASCOM?
-No, but that is probably the most common solution.  Alpaca-Gateway just needs
-to be able to talk to the Alpaca Server running on the same computer as the
+No, but that is probably the most common solution.  AlpacaScope just needs
+to be able to talk to the ASCOME Remote Server running on the same computer as the
 ASCOM driver connected to your telescope mount.
 
 #### My software only supports the Meade LX200 protocol.  Can I use that?

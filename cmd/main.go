@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"strings"
 
 	"github.com/mattn/go-colorable"
 	"github.com/synfinatic/alpacascope/alpaca"
@@ -42,6 +41,8 @@ func main() {
 	var _mode string    // Comms mode
 	var mode TeleComms
 	var telescopeId uint32 // Alpaca telescope id.  Usually 0-10
+	var _mount_type string // mount type
+	var tracking_mode alpaca.TrackingMode
 
 	flag.StringVar(&shost, "alpaca-host", "auto", "FQDN or IP address of Alpaca server")
 	flag.Int32Var(&sport, "alpaca-port", 11111, "TCP port of the Alpaca server")
@@ -52,6 +53,7 @@ func main() {
 	flag.BoolVar(&version, "version", false, "Print version and exit")
 	flag.StringVar(&_mode, "mode", "nexstar", "Comms mode: [nexstar|lx200]")
 	flag.Uint32Var(&telescopeId, "telescope-id", 0, "Alpaca Telescope ID")
+	flag.StringVar(&_mount_type, "mount-type", "altaz", "Mount type: [altaz|eqn|eqs]")
 
 	flag.Parse()
 
@@ -72,12 +74,24 @@ func main() {
 		os.Exit(0)
 	}
 
-	if strings.Compare(_mode, "nexstar") == 0 {
+	switch _mode {
+	case "nexstar":
 		mode = NexStar
-	} else if strings.Compare(_mode, "lx200") == 0 {
+	case "lx200":
 		mode = LX200
-	} else {
+	default:
 		log.Fatalf("Invalid mode: %s", _mode)
+	}
+
+	switch _mount_type {
+	case "altaz":
+		tracking_mode = alpaca.Alt_Az
+	case "eqn":
+		tracking_mode = alpaca.EQ_North
+	case "eqs":
+		tracking_mode = alpaca.EQ_South
+	default:
+		log.Fatalf("Invalid mount type: %s", _mount_type)
 	}
 
 	listen := fmt.Sprintf("%s:%d", lip, lport)
@@ -102,7 +116,7 @@ func main() {
 	go skyfi.ReplyDiscover()
 
 	a := alpaca.NewAlpaca(clientid, shost, sport)
-	telescope := alpaca.NewTelescope(telescopeId, a)
+	telescope := alpaca.NewTelescope(telescopeId, tracking_mode, a)
 
 	connected, err := telescope.GetConnected()
 	if err != nil {

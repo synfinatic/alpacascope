@@ -159,3 +159,15 @@ If you wish to build your own binary on Windows, you'll need to do:
  1. Run `make help` to get a list of other OS targets you can build.  Note that 
     GoLang makes cross-compiling easy so no problems building a Windows binary
     on Linux or MacOS binary on a RaspberryPi. :)
+
+#### What is the purpose of the --mount-type flag?
+
+The Celestron Nexstar protocol supports the concept of different tracking modes:
+AltAz, EQ North, EQ South and Off.  Typically this would be used with a AltAz 
+fork mount which can optionally have a wedge.  The result is the mount must be 
+told to change it's tracking mode.
+
+However, Alpaca/ASCOM does not support this- it only allows you to turn on & 
+off tracking.  Hence, AlpacaScope allows you to specify the mount type at startup,
+and then when SkySafari/etc queries the current tracking mode it will get the
+correct answer.

@@ -7,9 +7,14 @@ package main
 
 import (
 	"fmt"
+	"html/template"
+	"io"
 	"net"
 	"os"
+	"strings"
 
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/mattn/go-colorable"
 	"github.com/synfinatic/alpacascope/alpaca"
 	"github.com/synfinatic/alpacascope/skyfi"
@@ -30,6 +35,17 @@ const (
 	LX200
 )
 
+/*
+ * Webpage rendering is done via html/template
+ */
+type Template struct {
+	templates *template.Template
+}
+
+func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+	return t.templates.ExecuteTemplate(w, name, data)
+}
+
 func main() {
 	var lport int32     // listen port
 	var lip string      // listen IP
@@ -43,6 +59,7 @@ func main() {
 	var telescopeId uint32 // Alpaca telescope id.  Usually 0-10
 	var _mount_type string // mount type
 	var tracking_mode alpaca.TrackingMode
+	var webport uint16
 
 	flag.StringVar(&shost, "alpaca-host", "auto", "FQDN or IP address of Alpaca server")
 	flag.Int32Var(&sport, "alpaca-port", 11111, "TCP port of the Alpaca server")
@@ -54,6 +71,7 @@ func main() {
 	flag.StringVar(&_mode, "mode", "nexstar", "Comms mode: [nexstar|lx200]")
 	flag.Uint32Var(&telescopeId, "telescope-id", 0, "Alpaca Telescope ID")
 	flag.StringVar(&_mount_type, "mount-type", "altaz", "Mount type: [altaz|eqn|eqs]")
+	flag.Uint16Var(&webport, "web-port", 80, "Enable web config on port")
 
 	flag.Parse()
 
@@ -73,6 +91,17 @@ func main() {
 		fmt.Printf("%s (%s) built at %s\n", CommitID, Tag, Buildinfos)
 		os.Exit(0)
 	}
+
+	e := echo.New()
+	e.Use(middleware.Logger())
+	e.Static("/static", "static")
+	funcMap := template.FuncMap{
+		"StringsJoin": strings.Join,
+	}
+	t := &Template{
+		templates: template.Must(template.New("main").Funcs(funcMap).ParseGlob("templates/*.html")),
+	}
+	e.Renderer = t
 
 	switch _mode {
 	case "nexstar":
@@ -155,6 +184,10 @@ func main() {
 			UTCOffset:      100000, // number is out of range
 		}
 	}
+
+	httplisten := fmt.Sprintf("0.0.0.0:%d", webport)
+	log.Printf("Webserver listening on %s", httplisten)
+	go e.Start(httplisten)
 
 	log.Infof("Waiting for %s clients on %s:%d\n", _mode, lip, lport)
 

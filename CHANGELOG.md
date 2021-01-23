@@ -2,11 +2,21 @@
 
 ## Unreleased
 
+## v1.0.0 - 2021-01-23
+
 Added:
 
  - Support for Nexstar tracking commands: t and T
+ - Add date/time processing for LX200 GPS
+
+Fixed:
+
  - Fix crash when setting Lat/Long due to index out of range
- - Clean up Nexstar cmd processing
+
+Changed:
+
+ - Clean up NexStar cmd processing to be cleaner
+ - Huge update to README.md
 
 ## v0.0.5 - 2021-01-17
 

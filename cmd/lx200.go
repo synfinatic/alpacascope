@@ -18,6 +18,15 @@ type LX200State struct {
 	MaxSlew        float64
 	MinSlew        float64
 	SlewRate       int
+	UTCOffset      float64
+	have_time      bool
+	have_date      bool
+	hour           int
+	minute         int
+	second         int
+	day            int
+	month          int
+	year           int
 }
 
 func handleLX200Conn(conn net.Conn, t *alpaca.Telescope, state *LX200State) {
@@ -137,7 +146,6 @@ func lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte, state *LX200Stat
 		 * :h - home position commands
 		 * :I - initialize scope
 		 * :L - object library commands
-		 * :MS - slew to target // ??
 		 * :$Q - PEC control
 		 *
 		 * :r - field derotator
@@ -335,13 +343,13 @@ func lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte, state *LX200Stat
 			// Set target Declination
 			var degrees, min, sec int
 			var sign byte
-			var err error
 			var dms telescope.DMS
 			if state.HighPrecision {
 				// sDD:MM:SS
 				_, err = fmt.Sscanf(cmd, ":Sd%c%02d*%02d:%02d#", &sign, &degrees, &min, &sec)
 				if err != nil {
 					log.Errorf("Error parsing '%s': %s", cmd, err.Error())
+					ret = "0"
 				}
 				if sign == 0x45 { // look for '-'
 					degrees *= -1
@@ -352,29 +360,111 @@ func lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte, state *LX200Stat
 				_, err = fmt.Sscanf(cmd, ":Sd%c%02d*%02d#", &sign, &degrees, &min)
 				if err != nil {
 					log.Errorf("Error parsing '%s': %s", cmd, err.Error())
+					ret = "0"
 				}
 				if sign == 0x45 { // look for '-'
 					degrees *= -1
 				}
 				dms = telescope.NewDMSShort(degrees, float64(min))
 			}
-			err = t.PutTargetDeclination(dms.Float)
+			if ret == "" {
+				err = t.PutTargetDeclination(dms.Float)
+				if err != nil {
+					ret = "0"
+				} else {
+					ret = "1"
+				}
+			}
+
+		case ":Sg":
+			// Set site longitude: :SgDDD*MM#
+			var deg, min int
+			_, err = fmt.Sscanf(cmd, ":Sg%03d*%02d#", &deg, &min)
 			if err != nil {
+				log.Errorf("Error parsing '%s': %s", cmd, err.Error())
 				ret = "0"
 			} else {
-				ret = "1"
+				dms := telescope.NewDMS(deg, min, 0)
+				err = t.PutSiteLongitude(dms.FloatPositive)
+				if err != nil {
+					ret = "0"
+				} else {
+					ret = "1"
+				}
+			}
+
+		/*
+		 * LX200 uses 3 different commands to set date and time where Alpaca uses
+		 * only one.  This means we have to assume that SkySafari/etc will send
+		 * all three.  Pretty sure :SC must be last, but who knows?
+		 *
+		 * If SkySafari uses "LX200 Classic" then setting date/time will cause
+		 * SkySafari to hang for about 30sec until it times out.  LX200 GPS
+		 * does not seem to have this issue.
+		 */
+		case ":SG":
+			// set TZ offset hours: :SGsHH.H
+			var sign byte
+			var hrs_float float64
+			var hrs_int int
+
+			ret = "1"
+
+			// this is what the docs say
+			_, err = fmt.Sscanf(cmd, ":SG%c%2.1f#", &sign, &hrs_float)
+			if err != nil {
+				// and this is what SkySafari actually sends :(
+				_, err = fmt.Sscanf(cmd, ":SG%c%02d#", &sign, &hrs_int)
+				if err != nil {
+					log.Errorf("Error parsing '%s': %s", cmd, err.Error())
+					ret = "0"
+				} else {
+					hrs_float = float64(hrs_int)
+				}
+			}
+			if err == nil {
+				if sign == '-' {
+					hrs_float *= -1
+				}
+				state.UTCOffset = hrs_float
+				err = state.SendDateTime(t)
+			}
+
+		case ":SC":
+			// set local date: :SCMM/DD/YY#
+			ret = "1Updating Planetary Data#" // LOL, WTF is this???
+			_, err = fmt.Sscanf(cmd, ":SC%02d/%02d/%02d#", &state.month, &state.day, &state.year)
+			if err != nil {
+				err = fmt.Errorf("Unable to parse time '%s': %s", cmd, err.Error())
+				ret = "0"
+			} else {
+				state.have_date = true
+				state.year += 2000
+				err = state.SendDateTime(t)
+			}
+
+		case ":SL":
+			// set local time: :SLHH:MM:SS in 24hr format
+			ret = "1"
+			_, err = fmt.Sscanf(cmd, ":SL%02d:%02d:%02d#", &state.hour, &state.minute, &state.second)
+			if err != nil {
+				err = fmt.Errorf("Unable to parse time '%s': %s", cmd, err.Error())
+				ret = "0"
+			} else {
+				state.have_time = true
+				err = state.SendDateTime(t)
 			}
 
 		case ":Sr":
 			// Set target RA
 			var hour, min, sec int
-			var err error
 			var hms telescope.HMS
 			if state.HighPrecision {
 				// HH:MM:SS
 				_, err = fmt.Sscanf(cmd, ":Sr%02d:%02d:%02d#", &hour, &min, &sec)
 				if err != nil {
 					log.Errorf("Error parsing '%s': %s", cmd, err.Error())
+					ret = "0"
 				}
 				hms = telescope.NewHMS(hour, min, float64(sec))
 			} else {
@@ -382,15 +472,40 @@ func lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte, state *LX200Stat
 				_, err = fmt.Sscanf(cmd, ":Sr%02d:%02d.%d#", &hour, &min, &sec)
 				if err != nil {
 					log.Errorf("Error parsing '%s': %s", cmd, err.Error())
+					ret = "0"
 				}
 				min_float := float64(min) + (float64(sec) / 10.0)
 				hms = telescope.NewHMSShort(hour, min_float)
 			}
-			err = t.PutTargetRightAscension(hms.Float)
+
+			if ret == "" {
+				err = t.PutTargetRightAscension(hms.Float)
+				if err != nil {
+					ret = "0"
+				} else {
+					ret = "1"
+				}
+			}
+
+		case ":St":
+			// Set site latitude: :StsDD*MM#
+			var sign byte
+			var deg, min int
+			_, err = fmt.Sscanf(cmd, ":St%c%02d*%02d#", &sign, &deg, &min)
 			if err != nil {
+				log.Errorf("Error parsing '%s': %s", cmd, err.Error())
 				ret = "0"
 			} else {
-				ret = "1"
+				if sign == '-' {
+					deg *= -1
+				}
+				dms := telescope.NewDMS(deg, min, 0)
+				err = t.PutSiteLatitude(dms.Float)
+				if err != nil {
+					ret = "0"
+				} else {
+					ret = "1"
+				}
 			}
 
 		default:
@@ -406,6 +521,7 @@ func lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte, state *LX200Stat
 	if ret != "" {
 		ret_val = []byte(ret)
 	}
+	log.Debugf("sending ret_val = %v, %d bytes consumed", ret_val, consumed)
 	return ret_val, consumed
 }
 
@@ -457,4 +573,22 @@ func DegreesToLat(deg float64) string {
 	remain := deg - math.Floor(deg)
 	mm := int(remain * 60.0)
 	return fmt.Sprintf("%c%02d*%02d", sign, dd, mm)
+}
+
+/*
+ * Function called by :SC, :SL and SG to see if we can
+ * send the current time to Alpaca
+ */
+func (state *LX200State) SendDateTime(t *alpaca.Telescope) error {
+	if state.UTCOffset > 24.0 || state.have_time == false || state.have_date == false {
+		log.Debugf("Skipping SendDateTime()")
+		return nil // nothing to do
+	}
+
+	location, _ := time.LoadLocation("UTC")
+	date := time.Date(state.year, time.Month(state.month), state.day,
+		state.hour, state.minute, state.second, 0, location)
+	date = date.Add(time.Hour * time.Duration(state.UTCOffset))
+	log.Debugf("calling PutUTCDate: %v", date)
+	return t.PutUTCDate(date)
 }

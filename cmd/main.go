@@ -152,6 +152,7 @@ func main() {
 			MaxSlew:        minmax["Maximum"],
 			MinSlew:        minmax["Minimum"],
 			SlewRate:       int(minmax["Maximum"]),
+			UTCOffset:      100000, // number is out of range
 		}
 	}
 

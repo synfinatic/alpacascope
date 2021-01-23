@@ -5,6 +5,8 @@
 Added:
 
  - Support for Nexstar tracking commands: t and T
+ - Fix crash when setting Lat/Long due to index out of range
+ - Clean up Nexstar cmd processing
 
 ## v0.0.5 - 2021-01-17
 

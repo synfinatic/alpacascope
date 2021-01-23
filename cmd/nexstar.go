@@ -62,61 +62,55 @@ func nexstar_command(t *alpaca.Telescope, len int, buf []byte) []byte {
 		ra, dec, err := t.GetRaDec()
 		if err != nil {
 			log.Errorf("Unable to get RA/DEC: %s", err.Error())
-			break
-		}
-		radec := telescope.Coordinates{
-			RA:  ra,
-			Dec: dec,
-		}
+		} else {
+			radec := telescope.Coordinates{
+				RA:  ra,
+				Dec: dec,
+			}
 
-		high_precision := true
-		if buf[0] == 'E' {
-			high_precision = false
+			high_precision := true
+			if buf[0] == 'E' {
+				high_precision = false
+			}
+			ret = fmt.Sprintf("%s#", radec.Nexstar(high_precision))
 		}
-		ret = fmt.Sprintf("%s#", radec.Nexstar(high_precision))
 
 	case 'Z':
 		// Get AZM/ALT.  Note that AZM is 0->360, while Alt is -90->90
 		azm, alt, err := t.GetAzmAlt()
 		if err != nil {
 			log.Errorf("Unable to get AZM/ALT: %s", err.Error())
-			break
+		} else {
+			azm_int := uint32(azm / 360.0 * math.Pow(2, 16))
+			alt_int := uint32(alt / 360.0 * math.Pow(2, 16))
+			ret = fmt.Sprintf("%04X,%04X#", azm_int, alt_int)
 		}
-
-		azm_int := uint32(azm / 360.0 * math.Pow(2, 16))
-		alt_int := uint32(alt / 360.0 * math.Pow(2, 16))
-		ret = fmt.Sprintf("%04X,%04X#", azm_int, alt_int)
 
 	case 'z':
 		// Get Precise AZM/ALT
 		azm, alt, err := t.GetAzmAlt()
 		if err != nil {
 			log.Errorf("Unable to get AZM/ALT: %s", err.Error())
-			break
+		} else {
+			azm_int := uint32(azm / 360.0 * 4294967296.0)
+			alt_int := uint32(alt / 360.0 * 4294967296.0)
+			ret = fmt.Sprintf("%08X,%08X#", azm_int, alt_int)
 		}
-
-		azm_int := uint32(azm / 360.0 * 4294967296.0)
-		alt_int := uint32(alt / 360.0 * 4294967296.0)
-		ret = fmt.Sprintf("%08X,%08X#", azm_int, alt_int)
 
 	case 't':
 		// get tracking mode
 		mode, err := t.GetTracking()
 		if err != nil {
 			log.Errorf("Unable to get tracking mode: %s", err.Error())
-			break
+		} else {
+			ret = fmt.Sprintf("%d#", mode)
 		}
-		ret = fmt.Sprintf("%d#", mode)
 
 	case 'T':
 		// set tracking mode
 		var tracking_mode alpaca.TrackingMode
 		fmt.Sscanf(string(buf[1]), "%d", &tracking_mode)
-		err := t.PutTracking(tracking_mode)
-		if err != nil {
-			log.Errorf("Unable to set tracking mode: %s", err.Error())
-			break
-		}
+		err = t.PutTracking(tracking_mode)
 		ret = "#"
 
 	case 'V':
@@ -126,10 +120,6 @@ func nexstar_command(t *alpaca.Telescope, len int, buf []byte) []byte {
 	case 'P':
 		// Slew
 		err = executeSlew(t, buf)
-		if err != nil {
-			log.Errorf("Unable to slew: %s", err.Error())
-			break
-		}
 		ret = "#"
 
 	case 's':
@@ -158,31 +148,33 @@ func nexstar_command(t *alpaca.Telescope, len int, buf []byte) []byte {
 
 	case 'w':
 		// get location
+		failed := false
 		lat, err := t.GetSiteLatitude()
 		if err != nil {
-			break
+			log.Errorf("Error talking to scope: %s", err.Error())
+			failed = true
 		}
 
 		long, err := t.GetSiteLatitude()
 		if err != nil {
-			break
+			// logged at the end
+			failed = true
 		}
-		ret_val = LatLongToNexstar(lat, long)
-		ret_val = append(ret_val, '#')
+
+		if !failed {
+			ret_val = LatLongToNexstar(lat, long)
+			ret_val = append(ret_val, '#')
+		}
 
 	case 'W':
 		// set location
-		lat, long := NexstarToLatLong(buf[1:8])
+		lat, long := NexstarToLatLong(buf[1:9])
 		err = t.PutSiteLatitude(lat)
 		if err != nil {
-			log.Errorf("Error setting site latitude: %s", err.Error())
-			break
+			log.Errorf("Error talking to scope: %s", err.Error())
 		}
 		err = t.PutSiteLongitude(long)
-		if err != nil {
-			log.Errorf("Error setting site longitude: %s", err.Error())
-			break
-		}
+		// logged at the end
 		ret = "#"
 
 	case 'H':

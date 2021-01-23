@@ -9,7 +9,7 @@ endif
 BUILDINFOSDET ?=
 PROGRAM_ARGS ?=
 
-PROJECT_VERSION           := 0.0.6
+PROJECT_VERSION           := 1.0.0
 DOCKER_REPO               := synfinatic
 PROJECT_NAME              := alpacascope
 PROJECT_TAG               := $(shell git describe --tags 2>/dev/null $(git rev-list --tags --max-count=1))

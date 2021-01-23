@@ -9,11 +9,12 @@ and Sequence Generator Pro's [WiFi Scope](https://www.sequencegeneratorpro.com/d
 The difference is that instead of using a special device you have to buy to control
 your telescope, you can use your Windows computer.  AlpacaScope controls your
 telescope via [ASCOM](https://ascom-standards.org) and [ASCOM Remote Server](
-https://github.com/ASCOMInitiative/ASCOMRemote).
+https://github.com/ASCOMInitiative/ASCOMRemote) or via [Alpaca](
+https://ascom-standards.org/Developer/Alpaca.htm) directly.
 
-WiFi Scope is probably the closest thing to AlpacaScope- it also runs on Windows and
-ASCOM.  Unfortunately, I've found WiFi Scope buggy (it crashes a lot for me)
-which is why I ended up writing this.  Now AlpacaScope has more features
+WiFi Scope is probably the closest thing to AlpacaScope- it also runs on Windows
+and uses ASCOM.  Unfortunately, I've found WiFi Scope buggy (it crashes a lot
+for me) which is why I ended up writing this.  Now AlpacaScope has more features
 than WiFi Scope.
 
 ## Why?
@@ -40,7 +41,8 @@ https://ascom-standards.org/Developer/Alpaca.htm) which via
 exposes the ASCOM API via REST.  Of course, SkySafari doesn't support this (yet)
 so I decided to write a service which emulates a telescope SkySafari supports
 and talks to Alpaca Remote Server.  The result is that SkySafari can now control
-my Celestron Evolution mount, or any mount that supports the ASCOM standard.
+my Celestron Evolution mount, or any mount that supports the ASCOM or
+Alpaca standards.
 
 ## Install
 
@@ -62,8 +64,8 @@ box as ASCOM & the Alpaca Remote Server) and run it.  It will automatically find
 the ASCOM Remote Server running on your network and connect to it.
 
 Configure SkySafari or other remote control software to connect to AlpacaScope on port
-4030 using the Celestron Nexstar (I use the Nexstar/Advanced GT) or Meade LX200
-protocol.  AlpacaScope supports both, but defaults to Nexstar.
+4030 using the Celestron NexStar (I use the NexStar/Advanced GT) or Meade LX200 GPS
+protocol.  AlpacaScope supports both, but defaults to NexStar.
 
 Note that AlpacaScope now supports the "Auto-Detect SkyFi" feature in SkySafari
 so you should no longer need to enter the IP address of AlpacaScope.
@@ -83,18 +85,30 @@ flag.
 
 ## FAQ
 
+#### Does this only work with NexStar and LX200 series telescopes?
+
+No!  AlpacaScope works with any telescope / mount supported by Alpaca or
+ASCOM.  The LX200 and NexStar protocols are only for communicating with software
+like SkySafari.  You can even use the LX200 protocol with your Celestron scope
+if you want because AlpacaScope does all the translating between the different
+protocols.
+
 #### What do I need at minimum?
 
- 1. A telescope connected to a Windows machine
- 2. ASCOM installed an configured for your mount
- 3. ASCOM Remote Server installed, configured & running
- 4. AlpacaScope installed and running
- 5. Some kind astronomy software which talks the LX200 or Celestron Nexstar protocols
+ 1. A telescope mount with an ASCOM or Alpaca driver.
+ 1. The ASCOM/Alpaca driver configured on a computer.
+ 1. If your mount only has an ASCOM driver, you will need ASCOM Remote Server installed, configured & running
+ 1. AlpacaScope installed and running
+ 1. Some kind astronomy software which talks the LX200 or Celestron NexStar protocols
     (SkySafari, etc)
 
-#### Does this support SkySafari on Mac, iPad, Windows, Android, etc?
+#### Does this support SkySafari on Mac, iPad, Android, etc?
 Yes, this supports all versions of SkySafari which allow for controlling telescopes.
 Typically this is SkySafari Plus and Pro.
+
+#### What about other astronomy software?
+Yep, anything that can do Celestron NexStar or LX200 protocols over TCP/IP
+should work.
 
 #### Why do I get a virus warning for alpacascope?
 Unfortunately, this is a [known issue with GoLang programs](
@@ -109,30 +123,44 @@ with 71 different AV engines via Google VirusTotal and as you can see, only
 For the record, I build all the release binaries on a Mac- so the chances of
 a Windows virus infecting the binaries is pretty much zero.
 
-#### What about other astronomy software?
-Yep, anything that can do Celestron Nexstar or LX200 protocols over TCP/IP
-should work.
-
-#### What features work?
+#### What features work with SkySafari?
 
  * Manual slewing
  * Controlling slew speed
  * Goto a target
- * Align on target (maybe?)
+ * Align on target
+ * Set time and location of observing site
+
+#### I'm using something other than SkySafari and it has more feature than that?
+AlpacaScope can support any command supported by both the [Alpaca API](
+https://ascom-standards.org/api/?urls.primaryName=ASCOM%20Alpaca%20Device%20API#/)
+and the LX200/NexStar command sets.  If you have a need for another command,
+please open a feature request on GitHub.
+
+#### What about focuser, filter wheel, etc support?
+The NexStar and LX200 protocols don't support that.
 
 #### Does AlpacaScope support [INDI](https://www.indilib.org)?
-No it doesn't.  There's probably no reason it can't support INDI, but CWPI
-doesn't support INDI so I have no easy way of developing/testing the code.
+No it doesn't.  There's probably no reason it can't support INDI since I believe
+it is cross-platform, but I haven't looked into it yet.
 
-#### Does AlpacaScope need to run on the same computer as CWPI/ASCOM?
+#### Does AlpacaScope need to run on the same computer as Alpaca or ASCOM Remote?
 No, but that is probably the most common solution.  AlpacaScope just needs
 to be able to talk to the ASCOM Remote Server running on the same computer as the
 ASCOM driver connected to your telescope mount.
 
-#### My software only supports the Meade LX200 protocol.  Can I use that?
-Yes!  Slewing and GoTo works.  Be sure to specify `--mode lx200`.
-I believe align/sync should work but it doesn't seem to work with my mount/CWPI.
-Not sure if it's a bug on my end or a limitation with CWPI?
+#### My telescope mount has an Alpaca driver.  Can I use that instead of going through ASCOM?
+Yes!  Over time I expect more telescope mounts to have native Alpaca support
+and not require using ASCOM and ASCOM Remote.
+
+#### For the LX200 protocol should I select "LX200 Classic" or "LX200 GPS"?
+SkySafari users should use "LX200 GPS/ACF LX600" as there seems to be at least
+[one issue](https://github.com/synfinatic/alpacascope/issues/20)
+with using LX200 Classic mode.
+
+#### For the NexStar protocol, which scope type should I select?
+SkySafari users should probably use "Celestron NexStar/Advanced GT" as that's
+what I've done most of my testing.
 
 #### How to build on Windows?
 If you wish to build your own binary on Windows, you'll need to do:
@@ -156,18 +184,18 @@ If you wish to build your own binary on Windows, you'll need to do:
  1. Clone this repoistory onto your computer using Git or just downloading the
     Zip file from Github.
  1. Run `make` (or `gmake`) to build a binary for your OS.
- 1. Run `make help` to get a list of other OS targets you can build.  Note that 
+ 1. Run `make help` to get a list of other OS targets you can build.  Note that
     GoLang makes cross-compiling easy so no problems building a Windows binary
     on Linux or MacOS binary on a RaspberryPi. :)
 
 #### What is the purpose of the --mount-type flag?
 
-The Celestron Nexstar protocol supports the concept of different tracking modes:
-AltAz, EQ North, EQ South and Off.  Typically this would be used with a AltAz 
-fork mount which can optionally have a wedge.  The result is the mount must be 
+The Celestron NexStar protocol supports the concept of different tracking modes:
+AltAz, EQ North, EQ South and Off.  Typically this would be used with a AltAz
+fork mount which can optionally have a wedge.  The result is the mount must be
 told to change it's tracking mode.
 
-However, Alpaca/ASCOM does not support this- it only allows you to turn on & 
+However, Alpaca/ASCOM does not support this- it only allows you to turn on &
 off tracking.  Hence, AlpacaScope allows you to specify the mount type at startup,
 and then when SkySafari/etc queries the current tracking mode it will get the
 correct answer.

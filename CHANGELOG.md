@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+Added:
+
+ - Support for Nexstar tracking commands: t and T
+
 ## v0.0.5 - 2021-01-17
 
 Changed:

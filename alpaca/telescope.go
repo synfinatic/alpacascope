@@ -9,6 +9,15 @@ import (
 	"time"
 )
 
+type TrackingMode int
+
+const (
+	NotTracking TrackingMode = iota
+	Alt_Az
+	EQ_North
+	EQ_South
+)
+
 type AlignmentMode int32
 
 const (
@@ -26,14 +35,16 @@ const (
 )
 
 type Telescope struct {
-	alpaca *Alpaca
-	Id     uint32
+	alpaca   *Alpaca
+	Id       uint32
+	Tracking TrackingMode
 }
 
-func NewTelescope(id uint32, alpaca *Alpaca) *Telescope {
+func NewTelescope(id uint32, tm TrackingMode, alpaca *Alpaca) *Telescope {
 	t := Telescope{
-		alpaca: alpaca,
-		Id:     id,
+		alpaca:   alpaca,
+		Id:       id,
+		Tracking: tm,
 	}
 	return &t
 }
@@ -118,6 +129,17 @@ func (t *Telescope) GetTargetDeclination() (float64, error) {
 
 func (t *Telescope) GetTargetAltitude() (float64, error) {
 	return t.alpaca.GetFloat64("telescope", t.Id, "targetrightascension")
+}
+
+func (t *Telescope) GetTracking() (TrackingMode, error) {
+	tracking, err := t.alpaca.GetBool("telescope", t.Id, "tracking")
+	if err != nil {
+		return NotTracking, err
+	}
+	if !tracking {
+		return NotTracking, nil
+	}
+	return t.Tracking, nil
 }
 
 func (t *Telescope) GetUTCDate() (time.Time, error) {
@@ -276,6 +298,20 @@ func (t *Telescope) PutSyncToTarget() error {
 		"ClientTransactionID": fmt.Sprintf("%d", t.alpaca.GetNextTransactionId()),
 	}
 	err := t.alpaca.Put("telescope", t.Id, "synctotarget", form)
+	return err
+}
+
+func (t *Telescope) PutTracking(tracking TrackingMode) error {
+	enable_tracking := false
+	if tracking != NotTracking {
+		enable_tracking = true
+	}
+	var form map[string]string = map[string]string{
+		"Tracking":            fmt.Sprintf("%v", enable_tracking),
+		"ClientID":            fmt.Sprintf("%d", t.alpaca.ClientId),
+		"ClientTransactionID": fmt.Sprintf("%d", t.alpaca.GetNextTransactionId()),
+	}
+	err := t.alpaca.Put("telescope", t.Id, "tracking", form)
 	return err
 }
 

@@ -99,8 +99,24 @@ func nexstar_command(t *alpaca.Telescope, len int, buf []byte) []byte {
 		alt_int := uint32(alt / 360.0 * 4294967296.0)
 		ret = fmt.Sprintf("%08X,%08X#", azm_int, alt_int)
 
-	case 't', 'T':
-		log.Errorf("Tracking commands (%c) are not supported by ASCOM", buf[0])
+	case 't':
+		// get tracking mode
+		mode, err := t.GetTracking()
+		if err != nil {
+			log.Errorf("Unable to get tracking mode: %s", err.Error())
+			break
+		}
+		ret = fmt.Sprintf("%d#", mode)
+
+	case 'T':
+		// set tracking mode
+		var tracking_mode alpaca.TrackingMode
+		fmt.Sscanf(string(buf[1]), "%d", &tracking_mode)
+		err := t.PutTracking(tracking_mode)
+		if err != nil {
+			log.Errorf("Unable to set tracking mode: %s", err.Error())
+			break
+		}
 		ret = "#"
 
 	case 'V':

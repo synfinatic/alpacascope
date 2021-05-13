@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+Added:
+
+ - All releases will now be cryptographically signed with GPG
+
 ## v1.0.0 - 2021-01-23
 
 Added:

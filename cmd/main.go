@@ -22,6 +22,7 @@ var Version = "unknown"
 var Buildinfos = "unknown"
 var Tag = "NO-TAG"
 var CommitID = "unknown"
+var Delta = ""
 
 type TeleComms int
 
@@ -69,8 +70,13 @@ func main() {
 	}
 
 	if version == true {
+		delta := ""
+		if len(Delta) > 0 {
+			delta = fmt.Sprintf(" [%s delta]", Delta)
+			Tag = "Unknown"
+		}
 		fmt.Printf("AlpacaScope Version %s -- Copyright 2021 Aaron Turner\n", Version)
-		fmt.Printf("%s (%s) built at %s\n", CommitID, Tag, Buildinfos)
+		fmt.Printf("%s (%s)%s built at %s\n", CommitID, Tag, delta, Buildinfos)
 		os.Exit(0)
 	}
 

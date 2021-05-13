@@ -20,13 +20,14 @@ PROJECT_COMMIT            := $(shell git rev-parse HEAD)
 ifeq ($(PROJECT_COMMIT),)
 PROJECT_COMMIT            := NO-CommitID
 endif
+PROJECT_DELTA             := $(shell DELTA_LINES=$$(git diff | wc -l); if [ $${DELTA_LINES} -ne 0 ]; then echo $${DELTA_LINES} ; else echo "''" ; fi)
 VERSION_PKG               := $(shell echo $(PROJECT_VERSION) | sed 's/^v//g')
 LICENSE                   := GPLv3
 URL                       := https://github.com/$(DOCKER_REPO)/$(PROJECT_NAME)
 DESCRIPTION               := AlpacaScope: Alpaca to Telescope Protocol Proxy
 BUILDINFOS                := $(shell date +%FT%T%z)$(BUILDINFOSDET)
 HOSTNAME                  := $(shell hostname)
-LDFLAGS                   := -X "main.Version=$(PROJECT_VERSION)" -X "main.Buildinfos=$(BUILDINFOS)" -X "main.Tag=$(PROJECT_TAG)" -X "main.CommitID=$(PROJECT_COMMIT)"
+LDFLAGS                   := -X "main.Version=$(PROJECT_VERSION)" -X "main.Delta=$(PROJECT_DELTA)" -X "main.Buildinfos=$(BUILDINFOS)" -X "main.Tag=$(PROJECT_TAG)" -X "main.CommitID=$(PROJECT_COMMIT)"
 OUTPUT_NAME               := $(DIST_DIR)$(PROJECT_NAME)-$(PROJECT_VERSION)-$(GOOS)-$(GOARCH)  # default for current platform
 # supported platforms for `make release`
 WINDOWS_BIN               := $(DIST_DIR)$(PROJECT_NAME)-$(PROJECT_VERSION)-windows-amd64.exe
@@ -42,7 +43,10 @@ ALL: $(OUTPUT_NAME) ## Build binary.  Needs to be a supported plaform as defined
 
 include help.mk  # place after ALL target and before all other targets
 
-release: windows windows32 linux linux-arm32 linux-arm64 darwin ## Build all our release binaries
+release: clean build-release
+	cd dist && shasum -a 256 * | gpg --clear-sign >release.sig
+
+build-release: windows windows32 linux linux-arm32 linux-arm64 darwin ## Build all our release binaries
 
 .PHONY: run
 run: cmd/*.go  ## build and run cria using $PROGRAM_ARGS

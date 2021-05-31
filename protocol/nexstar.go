@@ -1,4 +1,4 @@
-package main
+package protocol
 
 import (
 	"fmt"
@@ -12,7 +12,14 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func handleNexstar(conn net.Conn, t *alpaca.Telescope) {
+type NexStar struct {
+}
+
+func NewNexStar() *NexStar {
+	return &NexStar{}
+}
+
+func (n *NexStar) HandleConnection(conn net.Conn, t *alpaca.Telescope) {
 	buf := make([]byte, 1024)
 
 	defer conn.Close() // make sure we close connection before we leave

@@ -1,4 +1,4 @@
-package protocol
+package telescope
 
 import (
 	"fmt"
@@ -9,7 +9,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/synfinatic/alpacascope/alpaca"
-	"github.com/synfinatic/alpacascope/telescope"
 )
 
 type LX200 struct {
@@ -355,7 +354,7 @@ func lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte, state *LX200) ([
 			// Set target Declination
 			var degrees, min, sec int
 			var sign byte
-			var dms telescope.DMS
+			var dms DMS
 			if state.HighPrecision {
 				// sDD:MM:SS
 				_, err = fmt.Sscanf(cmd, ":Sd%c%02d*%02d:%02d#", &sign, &degrees, &min, &sec)
@@ -366,7 +365,7 @@ func lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte, state *LX200) ([
 				if sign == 0x45 { // look for '-'
 					degrees *= -1
 				}
-				dms = telescope.NewDMS(degrees, min, float64(sec))
+				dms = NewDMS(degrees, min, float64(sec))
 			} else {
 				// sDD:MM
 				_, err = fmt.Sscanf(cmd, ":Sd%c%02d*%02d#", &sign, &degrees, &min)
@@ -377,7 +376,7 @@ func lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte, state *LX200) ([
 				if sign == 0x45 { // look for '-'
 					degrees *= -1
 				}
-				dms = telescope.NewDMSShort(degrees, float64(min))
+				dms = NewDMSShort(degrees, float64(min))
 			}
 			if ret == "" {
 				err = t.PutTargetDeclination(dms.Float)
@@ -396,7 +395,7 @@ func lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte, state *LX200) ([
 				log.Errorf("Error parsing '%s': %s", cmd, err.Error())
 				ret = "0"
 			} else {
-				dms := telescope.NewDMS(deg, min, 0)
+				dms := NewDMS(deg, min, 0)
 				err = t.PutSiteLongitude(dms.FloatPositive)
 				if err != nil {
 					ret = "0"
@@ -470,7 +469,7 @@ func lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte, state *LX200) ([
 		case ":Sr":
 			// Set target RA
 			var hour, min, sec int
-			var hms telescope.HMS
+			var hms HMS
 			if state.HighPrecision {
 				// HH:MM:SS
 				_, err = fmt.Sscanf(cmd, ":Sr%02d:%02d:%02d#", &hour, &min, &sec)
@@ -478,7 +477,7 @@ func lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte, state *LX200) ([
 					log.Errorf("Error parsing '%s': %s", cmd, err.Error())
 					ret = "0"
 				}
-				hms = telescope.NewHMS(hour, min, float64(sec))
+				hms = NewHMS(hour, min, float64(sec))
 			} else {
 				// HH:MM.T  not sure what T is.  Assuming is tenth of sec?
 				_, err = fmt.Sscanf(cmd, ":Sr%02d:%02d.%d#", &hour, &min, &sec)
@@ -487,7 +486,7 @@ func lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte, state *LX200) ([
 					ret = "0"
 				}
 				min_float := float64(min) + (float64(sec) / 10.0)
-				hms = telescope.NewHMSShort(hour, min_float)
+				hms = NewHMSShort(hour, min_float)
 			}
 
 			if ret == "" {
@@ -511,7 +510,7 @@ func lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte, state *LX200) ([
 				if sign == '-' {
 					deg *= -1
 				}
-				dms := telescope.NewDMS(deg, min, 0)
+				dms := NewDMS(deg, min, 0)
 				err = t.PutSiteLatitude(dms.Float)
 				if err != nil {
 					ret = "0"

@@ -1,4 +1,4 @@
-package main
+package protocol
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ import (
 	"github.com/synfinatic/alpacascope/telescope"
 )
 
-type LX200State struct {
+type LX200 struct {
 	HighPrecision  bool
 	TwentyFourHour bool // :H#
 	MaxSlew        float64
@@ -29,7 +29,19 @@ type LX200State struct {
 	year           int
 }
 
-func handleLX200Conn(conn net.Conn, t *alpaca.Telescope, state *LX200State) {
+func NewLX200(highPrecision, twentyfourhr bool, rates map[string]float64, utcoffset float64) *LX200 {
+	state := LX200{
+		HighPrecision:  highPrecision,
+		TwentyFourHour: twentyfourhr,
+		MaxSlew:        rates["Maximum"],
+		MinSlew:        rates["Minimum"],
+		SlewRate:       int(rates["Maximum"]),
+		UTCOffset:      utcoffset,
+	}
+	return &state
+}
+
+func (state *LX200) HandleConnection(conn net.Conn, t *alpaca.Telescope) {
 	buf := make([]byte, 1024)
 
 	defer conn.Close()
@@ -68,7 +80,7 @@ func handleLX200Conn(conn net.Conn, t *alpaca.Telescope, state *LX200State) {
 	}
 }
 
-func lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte, state *LX200State) ([]byte, int) {
+func lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte, state *LX200) ([]byte, int) {
 	var consumed int = 0
 	var ret_val []byte
 	ret := ""
@@ -271,28 +283,28 @@ func lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte, state *LX200Stat
 		case ":Me":
 			// slew east (+ long)
 			axis := alpaca.AxisAzmRa
-			rate := lx200_rate_to_ascom(state, false)
+			rate := state.rateToAscom(false)
 			err = t.PutMoveAxis(axis, rate)
 			// returns nothing
 
 		case ":Mw":
 			// slew west (- long)
 			axis := alpaca.AxisAzmRa
-			rate := lx200_rate_to_ascom(state, true)
+			rate := state.rateToAscom(true)
 			err = t.PutMoveAxis(axis, rate)
 			// returns nothing
 			//
 		case ":Mn":
 			// slew north (+ long)
 			axis := alpaca.AxisAltDec
-			rate := lx200_rate_to_ascom(state, true)
+			rate := state.rateToAscom(true)
 			err = t.PutMoveAxis(axis, rate)
 			// returns nothing
 
 		case ":Ms":
 			// slew south (-lat)
 			axis := alpaca.AxisAltDec
-			rate := lx200_rate_to_ascom(state, false)
+			rate := state.rateToAscom(false)
 			err = t.PutMoveAxis(axis, rate)
 			// returns nothing
 
@@ -525,7 +537,7 @@ func lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte, state *LX200Stat
 	return ret_val, consumed
 }
 
-func lx200_rate_to_ascom(state *LX200State, move_positive bool) int {
+func (state *LX200) rateToAscom(move_positive bool) int {
 	ret := state.SlewRate
 	if !move_positive {
 		ret *= -1
@@ -579,7 +591,7 @@ func DegreesToLat(deg float64) string {
  * Function called by :SC, :SL and SG to see if we can
  * send the current time to Alpaca
  */
-func (state *LX200State) SendDateTime(t *alpaca.Telescope) error {
+func (state *LX200) SendDateTime(t *alpaca.Telescope) error {
 	if state.UTCOffset > 24.0 || state.have_time == false || state.have_date == false {
 		log.Debugf("Skipping SendDateTime()")
 		return nil // nothing to do

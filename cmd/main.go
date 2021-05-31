@@ -12,6 +12,7 @@ import (
 
 	"github.com/mattn/go-colorable"
 	"github.com/synfinatic/alpacascope/alpaca"
+	"github.com/synfinatic/alpacascope/protocol"
 	"github.com/synfinatic/alpacascope/skyfi"
 
 	log "github.com/sirupsen/logrus"
@@ -88,7 +89,6 @@ func main() {
 	default:
 		log.Fatalf("Invalid mode: %s", _mode)
 	}
-
 	switch _mount_type {
 	case "altaz":
 		tracking_mode = alpaca.Alt_Az
@@ -146,20 +146,18 @@ func main() {
 	}
 	log.Debugf("SupportedActions: %s", actions)
 
-	var lxstate LX200State
-	if mode == LX200 {
+	var scope protocol.TelescopeProtocol
+	switch mode {
+	case LX200:
 		minmax, err := telescope.GetAxisRates(alpaca.AxisAzmRa)
 		if err != nil {
 			log.Errorf("Unable to query axis rates: %s", err.Error())
 		}
-		lxstate = LX200State{
-			HighPrecision:  true,
-			TwentyFourHour: true,
-			MaxSlew:        minmax["Maximum"],
-			MinSlew:        minmax["Minimum"],
-			SlewRate:       int(minmax["Maximum"]),
-			UTCOffset:      100000, // number is out of range
-		}
+		scope = protocol.NewLX200(true, true, minmax, 100000)
+	case NexStar:
+		scope = protocol.NewNexStar()
+	default:
+		log.Fatalf("Unsupported mode value: %d", mode)
 	}
 
 	log.Infof("Waiting for %s clients on %s:%d\n", _mode, lip, lport)
@@ -171,13 +169,8 @@ func main() {
 			continue
 		}
 
-		if mode == LX200 {
-			go handleLX200Conn(conn, telescope, &lxstate)
-		} else if mode == NexStar {
-			go handleNexstar(conn, telescope)
-		} else {
-			log.Fatalf("Unsupported mode value: %d", mode)
-		}
+		scope.HandleConnection(conn, telescope)
+
 		clientid += 1
 	}
 }

@@ -12,8 +12,8 @@ import (
 
 	"github.com/mattn/go-colorable"
 	"github.com/synfinatic/alpacascope/alpaca"
-	"github.com/synfinatic/alpacascope/protocol"
 	"github.com/synfinatic/alpacascope/skyfi"
+	"github.com/synfinatic/alpacascope/telescope"
 
 	log "github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
@@ -122,9 +122,9 @@ func main() {
 	go skyfi.ReplyDiscover()
 
 	a := alpaca.NewAlpaca(clientid, shost, sport)
-	telescope := alpaca.NewTelescope(telescopeId, tracking_mode, a)
+	scope := alpaca.NewTelescope(telescopeId, tracking_mode, a)
 
-	connected, err := telescope.GetConnected()
+	connected, err := scope.GetConnected()
 	if err != nil {
 		log.Fatalf("Unable to determine status of telescope: %s", err.Error())
 	}
@@ -133,29 +133,29 @@ func main() {
 		log.Fatalf("Unable to connect to telescope ID %d: %s", telescopeId, a.ErrorMessage)
 	}
 
-	name, err := telescope.GetName()
+	name, err := scope.GetName()
 	if err != nil {
 		log.Warnf("Unable to determine name of telescope: %s", err.Error())
 	} else {
 		log.Infof("Connected to telescope %d: %s", telescopeId, name)
 	}
 
-	actions, err := telescope.GetSupportedActions()
+	actions, err := scope.GetSupportedActions()
 	if err != nil {
 		log.Fatalf("Unable to determine supportedactions of telescope: %s", err.Error())
 	}
 	log.Debugf("SupportedActions: %s", actions)
 
-	var scope protocol.TelescopeProtocol
+	var tscope telescope.TelescopeProtocol
 	switch mode {
 	case LX200:
-		minmax, err := telescope.GetAxisRates(alpaca.AxisAzmRa)
+		minmax, err := scope.GetAxisRates(alpaca.AxisAzmRa)
 		if err != nil {
 			log.Errorf("Unable to query axis rates: %s", err.Error())
 		}
-		scope = protocol.NewLX200(true, true, minmax, 100000)
+		tscope = telescope.NewLX200(true, true, minmax, 100000)
 	case NexStar:
-		scope = protocol.NewNexStar()
+		tscope = telescope.NewNexStar()
 	default:
 		log.Fatalf("Unsupported mode value: %d", mode)
 	}
@@ -169,7 +169,7 @@ func main() {
 			continue
 		}
 
-		scope.HandleConnection(conn, telescope)
+		tscope.HandleConnection(conn, scope)
 
 		clientid += 1
 	}

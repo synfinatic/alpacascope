@@ -49,7 +49,7 @@ func findIPinCIDR(ip string) (string, error) {
 }
 
 /*
- * Go Routine for handleing SkyFi Discovery
+ * Go Routine for handling SkyFi Discovery
  */
 func ReplyDiscover() {
 	pc, err := net.ListenPacket("udp4", fmt.Sprintf(":%d", SKYFI_PORT))
@@ -93,6 +93,87 @@ func ReplyDiscover() {
 		_, err = pc.WriteTo(send_buf, addr)
 		if err != nil {
 			log.Errorf("Unable to send SkyFi discovery reply: %s", err.Error())
+		}
+	}
+}
+
+type DiscoveryPacket struct {
+	Buff []byte
+	Len  int
+	Addr net.Addr
+}
+
+/*
+ * Go Routine for handling SkyFi Discovery with shutdown
+ */
+func ReplyDiscoverWithShutdown(shutdown chan bool) error {
+	quit := false
+	pc, err := net.ListenPacket("udp4", fmt.Sprintf(":%d", SKYFI_PORT))
+	if err != nil {
+		return fmt.Errorf("Unable to start SkyFi discovery: %s", err.Error())
+	}
+
+	defer pc.Close()
+	log.Infof("Starting SkyFi Discovery service on UDP/%d", SKYFI_PORT)
+
+	discoChan := make(chan DiscoveryPacket)
+
+	// goroutine to read packets
+	go func(pc net.PacketConn) {
+		buf := make([]byte, 1024)
+		for {
+			n, addr, err := pc.ReadFrom(buf)
+			if quit {
+				return
+			}
+			if err != nil {
+				log.Warnf("Unable to read from SkyFi discovery listen socket: %s", err.Error())
+				continue
+			}
+			log.Errorf("Received SkyFi packet")
+			discoChan <- DiscoveryPacket{
+				Buff: buf,
+				Len:  n,
+				Addr: addr,
+			}
+		}
+	}(pc)
+
+	for {
+		select {
+		case <-shutdown:
+			log.Errorf("Shutting down SkyFi")
+			quit = true
+			return nil
+
+		case disco := <-discoChan:
+			n := disco.Len
+			bufs := string(disco.Buff)
+			if !strings.HasPrefix(bufs, "skyfi") {
+				log.Warnf("Unexpected query of %d bytes from %s: %s", n, disco.Addr.String(), bufs)
+				continue
+			}
+
+			// replace the '?' at the end with a '@'
+			if disco.Buff[n-1] == 0x3f {
+				disco.Buff[n-1] = 0x40
+			}
+			send_buf := []byte{}
+			send_buf = append(send_buf, disco.Buff[:n]...)
+
+			// figure out our local IP to thie client and append to end of reply
+			client := strings.Split(disco.Addr.String(), ":")
+			ip, err := findIPinCIDR(client[0])
+			if err != nil {
+				log.Errorf("%s", err.Error())
+				continue
+			}
+			send_buf = append(send_buf, []byte(ip)...)
+
+			_, err = pc.WriteTo(send_buf, disco.Addr)
+			if err != nil {
+				log.Errorf("Unable to send SkyFi discovery reply: %s", err.Error())
+			}
 		}
 	}
 }

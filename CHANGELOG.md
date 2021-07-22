@@ -2,8 +2,11 @@
 
 ## Unreleased
 
+## v2.0.0 - 2021-07-24
+
 Added:
 
+ - Add GUI option for Windows & OSX users
  - All releases will now be cryptographically signed with GPG
 
 ## v1.0.0 - 2021-01-23

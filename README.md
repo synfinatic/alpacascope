@@ -49,6 +49,9 @@ Alpaca standards.
 [Download the latest binary](https://github.com/synfinatic/alpacascope/releases)
 appropriate for your hardware/OS.
 
+Note there are now CLI and GUI versions of AlpacaScope!  Please download the
+version which works for you. :)
+
 ## Usage
 
 So basically, my setup looks sorta like this:
@@ -80,8 +83,22 @@ flag.
  * `--alpaca-port`  Specify a custom TCP Port where ASCOM Remote Server is listening
  * `--listen-ip`    Manually set an IP address to listen on
  * `--listen-port`  Override the default port of 4030 to listen on
+ * `--mount-type`   Specify your mount type: `altaz`, `eqn`, or `eqs`. `altaz` is the default.
  * `--mode`         Choose between `nexstar` and `lx200` protocols.  `nexstar` is the default.
  * `--debug`        Print debugging information
+
+### Graphical User Interface
+
+![](https://user-images.githubusercontent.com/1075352/126884358-f10c1bc5-770d-459e-a916-69fbfbfdd3eb.png)
+
+Hopefully the above is pretty self-explainatory.  In general, the defaults (other than the
+mount type) should work 99% of the time and you can just press `Start AlpacaScope Services`.  This
+will then:
+
+ * If 'Auto Discover ASCOM Remote' is enabled, it will try to find it on your local network
+ * Attempt to connect to ASCOM Remote 
+ * Start SkyFi auto-discovery for SkySafari
+ * Listen for new connections on the ListenIP/ListenPort
 
 ## FAQ
 

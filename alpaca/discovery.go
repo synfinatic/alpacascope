@@ -12,6 +12,8 @@ import (
 
 const (
 	ALPACA_DISCOVERY_VERSION = 1
+	DEFAULT_PORT             = 11111
+	DEFAULT_PORT_STR         = "11111"
 )
 
 type AlpacaDiscoveryMessage struct {

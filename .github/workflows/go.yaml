@@ -7,17 +7,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
+    - name: Install X11
+      run: sudo apt-get install -y xorg-dev
+
     - name: Set up Go 1.15
       uses: actions/setup-go@v1
       with:
         go-version: 1.15
       id: go
 
+    - name: Install Fyne tool
+      run: go get fyne.io/fyne/v2/cmd/fyne
+        
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
 
     - name: Tests
       run: make test
-
-    - name: Build all binaries
-      run: make build-release
+  
+    - name: Build test binaries
+      run: PATH=${PATH}:~/go/bin make .build-test-binaries

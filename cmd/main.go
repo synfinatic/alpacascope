@@ -1,19 +1,34 @@
 package main
 
 /*
- * Copyright 2020,2021 Aaron Turner
- * Licensed under the GPLv3.  See `LICENSE` for details.
+ * AlpacaScope
+ * Copyright (c) 2020-2021 Aaron Turner  <synfinatic at gmail dot com>
+ *
+ * This program is free software: you can redistribute it
+ * and/or modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or with the authors permission any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import (
 	"fmt"
 	"net"
 	"os"
+	"strings"
 
 	"github.com/mattn/go-colorable"
 	"github.com/synfinatic/alpacascope/alpaca"
 	"github.com/synfinatic/alpacascope/skyfi"
 	"github.com/synfinatic/alpacascope/telescope"
+	"github.com/synfinatic/alpacascope/utils"
 
 	log "github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
@@ -68,6 +83,13 @@ func main() {
 		log.SetLevel(log.InfoLevel)
 		log.SetFormatter(&log.TextFormatter{ForceColors: true})
 		log.SetOutput(colorable.NewColorableStdout())
+	}
+
+	ips, err := utils.GetLocalIPs()
+	if err != nil {
+		log.WithError(err).Errorf("Unable to GetLocalIPs()")
+	} else {
+		log.Errorf("found ips: %s", strings.Join(ips, ", "))
 	}
 
 	if version == true {

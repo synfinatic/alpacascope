@@ -89,7 +89,7 @@ flag.
 
 ### Graphical User Interface
 
-![](https://user-images.githubusercontent.com/1075352/126884358-f10c1bc5-770d-459e-a916-69fbfbfdd3eb.png)
+![](https://user-images.githubusercontent.com/1075352/126884700-13caa5e7-fca7-4fc2-8c1e-33dad1ca353d.png)
 
 Hopefully the above is pretty self-explainatory.  In general, the defaults (other than the
 mount type) should work 99% of the time and you can just press `Start AlpacaScope Services`.  This

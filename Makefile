@@ -192,7 +192,7 @@ $(DARWIN_RELEASE_GUI): $(GO_FILES) | .build-gui-check .prepare
 	@fyne package -appID net.synfin.alpacascope -name AlpacaScope \
 		-appVersion $(PROJECT_VERSION) \
 		-os darwin -sourceDir gui -icon $(shell pwd)/Icon.png && \
-		zip $(DARWIN_RELEASE_GUI) AlpacaScope.app && \
+		zip -r $(DARWIN_RELEASE_GUI) AlpacaScope.app && \
 		rm -rf AlpacaScope.app
 		
 
@@ -211,10 +211,10 @@ windows-release: $(WINDOWS_RELEASE_GUI)  ## Build Windows/x86_64 release GUI
 
 $(WINDOWS_RELEASE_GUI): $(GO_FILES) | .build-windows-check .prepare
 	@rm -f dist/AlpacaScope-$(PROJECT_VERSION).exe && \
-		fyne package -appID net.synfin.AlpacaScope -name net.synfin.AlpacaScope \
-			-appVersion $(PROJECT_VERSION) -appBuild $(BUILD_ID) -os windows -release \
-			-sourceDir gui -icon $(shell pwd)/Icon.png && \
-			mv gui/gui.exe $(WINDOWS_RELEASE_GUI)
+	fyne package -appID net.synfin.AlpacaScope -name net.synfin.AlpacaScope \
+		-appVersion $(PROJECT_VERSION) -appBuild $(BUILD_ID) -os windows -release \
+		-sourceDir gui -icon $(shell pwd)/Icon.png && \
+		mv gui/gui.exe $(WINDOWS_RELEASE_GUI)
 
 linux-gui: $(LINUX_GUI)  ## Build Linux/x86_64 GUI
 

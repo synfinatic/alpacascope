@@ -10,6 +10,11 @@ Changed:
  - Updated makefile targets
  - Updated readme
 
+Fixed:
+
+ - Moved the Icon.png to the standard Fyne location for better compatibility
+    with Fyne tooling
+
 ## v2.0.0 - 2021-07-24
 
 Added:

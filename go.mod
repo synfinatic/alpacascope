@@ -4,6 +4,7 @@ go 1.15
 
 require (
 	fyne.io/fyne/v2 v2.0.3
+	github.com/fyne-io/fyne-cross v1.1.0 // indirect
 	github.com/go-resty/resty/v2 v2.3.0
 	github.com/kr/text v0.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.8

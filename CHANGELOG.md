@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## v2.0.1 - 2021-07-26
+
+Changed:
+
+ - Selecting mount type is only supported with NexStar protocol 
+ - Updated makefile targets
+ - Updated readme
+
 ## v2.0.0 - 2021-07-24
 
 Added:

@@ -68,13 +68,6 @@ func main() {
 	sbox = NewStatusBox(6)
 	w := app.NewWindow("AlpacaScope")
 
-	protocolDropdown := widget.NewSelect([]string{"NexStar", "LX200"},
-		func(proto string) {
-			config.TelescopeProtocol = proto
-		},
-	)
-	protocolDropdown.Selected = config.TelescopeProtocol
-
 	mountType := widget.NewSelect(
 		[]string{"Alt-Az", "EQ North", "EQ South"},
 		func(val string) {
@@ -82,6 +75,19 @@ func main() {
 		},
 	)
 	mountType.Selected = config.TelescopeMount
+
+	protocolDropdown := widget.NewSelect([]string{"NexStar", "LX200"},
+		func(proto string) {
+			config.TelescopeProtocol = proto
+			if proto == "NexStar" {
+				mountType.Enable()
+			} else {
+				// only NexStar supports the mountType
+				mountType.Disable()
+			}
+		},
+	)
+	protocolDropdown.Selected = config.TelescopeProtocol
 
 	ips, err := utils.GetLocalIPs()
 	if err != nil {

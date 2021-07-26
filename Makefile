@@ -9,7 +9,7 @@ endif
 BUILDINFOSDET ?=
 PROGRAM_ARGS ?=
 
-PROJECT_VERSION           := 2.0.0
+PROJECT_VERSION           := 2.0.1
 BUILD_ID                  := 1
 DOCKER_REPO               := synfinatic
 PROJECT_NAME              := alpacascope
@@ -31,17 +31,15 @@ HOSTNAME                  := $(shell hostname)
 LDFLAGS                   := -X "main.Version=$(PROJECT_VERSION)" -X "main.Delta=$(PROJECT_DELTA)" -X "main.Buildinfos=$(BUILDINFOS)" -X "main.Tag=$(PROJECT_TAG)" -X "main.CommitID=$(PROJECT_COMMIT)"
 OUTPUT_NAME               := $(DIST_DIR)/$(PROJECT_NAME)-$(PROJECT_VERSION)-$(GOOS)-$(GOARCH)  # default for current platform
 # supported platforms for `make release`
-WINDOWS_BIN               := $(DIST_DIR)/$(PROJECT_NAME)-$(PROJECT_VERSION)-windows-amd64.exe
-WINDOWS32_BIN             := $(DIST_DIR)/$(PROJECT_NAME)-$(PROJECT_VERSION)-windows-386.exe
 LINUX_BIN                 := $(DIST_DIR)/$(PROJECT_NAME)-$(PROJECT_VERSION)-linux-amd64
 LINUXARM64_BIN            := $(DIST_DIR)/$(PROJECT_NAME)-$(PROJECT_VERSION)-linux-arm64
 LINUXARM32_BIN            := $(DIST_DIR)/$(PROJECT_NAME)-$(PROJECT_VERSION)-linux-arm32
+LINUX_GUI                 := $(DIST_DIR)/$(PROJECT_NAME)-gui-$(PROJECT_VERSION)-linux-amd64
 DARWIN_BIN                := $(DIST_DIR)/$(PROJECT_NAME)-$(PROJECT_VERSION)-darwin-amd64
 DARWIN_RELEASE_GUI        := $(DIST_DIR)/AlpacaScope-$(PROJECT_VERSION).app.zip
-DARWIN_GUI                := $(DIST_DIR)/alpacascope-gui-$(PROJECT_VERSION)-darwin-amd64
-WINDOWS_RELEASE_GUI       := $(DIST_DIR)/AlpacaScope-$(PROJECT_VERSION).exe
-WINDOWS_GUI               := $(DIST_DIR)/AlpacaScope-Debug-$(PROJECT_VERSION).exe
-LINUX_GUI                 := $(DIST_DIR)/$(PROJECT_NAME)-gui-$(PROJECT_VERSION)-linux-amd64
+DARWIN_GUI                := $(DIST_DIR)/$(PROJECT_NAME)-gui-$(PROJECT_VERSION)-darwin-amd64
+WINDOWS_RELEASE           := $(DIST_DIR)/AlpacaScope.exe
+WINDOWS                   := $(DIST_DIR)/AlpacaScope-Debug-$(PROJECT_VERSION).exe
 
 GO_FILES = $(shell find . -type f -name '*.go' | grep -v _test.go)
 
@@ -57,15 +55,16 @@ sign-release: $(DIST_DIR)/release.sig ## Sign release
 
 .PHONY:
 .verify_windows:
-	@if test ! -f $(WINDOWS_RELEASE_GUI); then echo "Missing Windows release binary"; exit 1; fi
+	@if test ! -f $(WINDOWS_RELEASE); then echo "Missing Windows release binary"; exit 1; fi
 
 $(DIST_DIR)/release.sig: .build-release .verify_windows
 	cd dist && shasum -a 256 * | gpg --clear-sign >release.sig
 
+# This target builds anywhere
 .build-release: $(LINUX_BIN) $(LINUXARM64_BIN) $(LINUXARM32_BIN) $(DARWIN_BIN) $(DARWIN_GUI) $(DARWIN_RELEASE_GUI)
 
 # this targets only build on MacOS
-build-gui: darwin-gui darwin-release-gui windows-gui linux-gui ## Build non-release GUI binaries
+build-gui: darwin-gui darwin-release-gui windows linux-gui ## Build GUI binaries
 
 .build-gui-check:
 	@if test $(GOOS) != "darwin" ; then echo "$(MAKECMDGOALS) requires building on MacOS" ; exit 1 ; fi
@@ -77,10 +76,11 @@ build-gui: darwin-gui darwin-release-gui windows-gui linux-gui ## Build non-rele
 # Install fyne binary in $GOPATh/bin
 .PHONY: .fyne
 .fyne:
-	@if test -z "`which fyne`"; then echo "Please install fyne: go get fyne.io/fyne/v2/cmd/fyne" ; exit 1 ; fi
+	@if test -z "`which fyne`"; then echo "Please install fyne: go get fyne.io/fyne/v2/cmd/fyne" ; exit 1 ; fi ; \
+	if test -z "`which fyne-cross`"; then echo "Please install fyne-cross: go get github.com/fyne-io/fyne-cross" ; exit 1 ; fi
 
 # used by our github action to test building the release binaries + GUI on Linux
-.build-test-binaries: $(LINUX_BIN) $(DARWIN_BIN) $(WINDOWS_BIN)
+.build-test-binaries: $(LINUX_BIN) $(DARWIN_BIN) $(WINDOWS)
 
 .PHONY: run
 run: cmd/*.go  ## build and run cria using $PROGRAM_ARGS
@@ -149,18 +149,6 @@ precheck: test test-fmt test-tidy  ## Run all tests that happen in a PR
 
 
 # Build targets for our supported plaforms
-windows: $(WINDOWS_BIN)  ## Build 64bit Windows CLI
-
-$(WINDOWS_BIN): $(wildcard */*.go) .prepare
-	GOARCH=amd64 GOOS=windows go build -ldflags='$(LDFLAGS)' -o $(WINDOWS_BIN) cmd/*.go
-	@echo "Created: $(WINDOWS_BIN)"
-
-windows32: $(WINDOWS32_BIN)  ## Build 32bit Windows CLI
-
-$(WINDOWS32_BIN): $(wildcard */*.go) .prepare
-	GOARCH=386 GOOS=windows go build -ldflags='$(LDFLAGS)' -o $(WINDOWS32_BIN) cmd/*.go
-	@echo "Created: $(WINDOWS32_BIN)"
-
 linux: $(LINUX_BIN)  ## Build Linux/x86_64 CLI
 
 $(LINUX_BIN): $(GO_FILES) | .prepare
@@ -188,9 +176,9 @@ $(DARWIN_BIN): $(GO_FILES) | .prepare
 darwin-gui: $(DARWIN_GUI)  ## Build MacOS/x86_64 GUI
 darwin-release-gui: $(DARWIN_RELEASE_GUI)  ## Build MacOS/x86_64 Release GUI
 
-$(DARWIN_RELEASE_GUI): $(GO_FILES) | .build-gui-check .prepare
+$(DARWIN_RELEASE_GUI): $(GO_FILES) | .build-gui-check .prepare .fyne
 	@fyne package -appID net.synfin.alpacascope -name AlpacaScope \
-		-appVersion $(PROJECT_VERSION) \
+		-appVersion $(PROJECT_VERSION) -appBuild $(BUILD_ID) \
 		-os darwin -sourceDir gui -icon $(shell pwd)/Icon.png && \
 		zip -r $(DARWIN_RELEASE_GUI) AlpacaScope.app && \
 		rm -rf AlpacaScope.app
@@ -199,28 +187,27 @@ $(DARWIN_RELEASE_GUI): $(GO_FILES) | .build-gui-check .prepare
 $(DARWIN_GUI): $(GO_FILES) | .build-gui-check .prepare
 	@go build -ldflags='$(LDFLAGS)' -o $(DARWIN_GUI) gui/*.go
 
-windows-gui: $(WINDOWS_GUI)  ## Build Windows/x86_64 GUI
+windows: $(WINDOWS)  ## Build Windows/x86_64 GUI
 
-$(WINDOWS_GUI): $(GO_FILES) | .build-gui-check .prepare
+$(WINDOWS): $(GO_FILES) | .fyne .prepare
 	@fyne-cross windows -app-id net.synfin.alpacascope -developer "Aaron Turner" \
 		-app-version $(PROJECT_VERSION) -ldflags '$(LDFLAGS)' \
 		-name AlpacaScope.exe $(shell pwd)/gui && \
-		mv fyne-cross/bin/windows-amd64/AlpacaScope.exe $(WINDOWS_GUI)
+		mv fyne-cross/bin/windows-amd64/AlpacaScope.exe $(WINDOWS)
 
-windows-release: $(WINDOWS_RELEASE_GUI)  ## Build Windows/x86_64 release GUI
+windows-release: $(WINDOWS_RELEASE)  ## Build Windows/x86_64 release GUI
 
-$(WINDOWS_RELEASE_GUI): $(GO_FILES) | .build-windows-check .prepare
+$(WINDOWS_RELEASE): $(GO_FILES) | .build-windows-check .prepare .fyne
 	@rm -f dist/AlpacaScope-$(PROJECT_VERSION).exe && \
 	fyne package -appID net.synfin.AlpacaScope -name net.synfin.AlpacaScope \
 		-appVersion $(PROJECT_VERSION) -appBuild $(BUILD_ID) -os windows -release \
 		-sourceDir gui -icon $(shell pwd)/Icon.png && \
-		mv gui/gui.exe $(WINDOWS_RELEASE_GUI)
+		mv gui/gui.exe $(WINDOWS_RELEASE)
 
 linux-gui: $(LINUX_GUI)  ## Build Linux/x86_64 GUI
 
-$(LINUX_GUI): $(GO_FILES) | .build-gui-check .prepare
+$(LINUX_GUI): $(GO_FILES) | .prepare .fyne
 	@fyne-cross linux -app-id net.synfin.alpacascope \
 		-app-version $(PROJECT_VERSION) -ldflags '$(LDFLAGS)' \
 		-name alpacascope $(shell pwd)/gui && \
 		mv fyne-cross/bin/linux-amd64/alpacascope $(LINUX_GUI)
-

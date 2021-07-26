@@ -36,7 +36,8 @@ LINUXARM64_BIN            := $(DIST_DIR)/$(PROJECT_NAME)-$(PROJECT_VERSION)-linu
 LINUXARM32_BIN            := $(DIST_DIR)/$(PROJECT_NAME)-$(PROJECT_VERSION)-linux-arm32
 LINUX_GUI                 := $(DIST_DIR)/$(PROJECT_NAME)-gui-$(PROJECT_VERSION)-linux-amd64
 DARWIN_BIN                := $(DIST_DIR)/$(PROJECT_NAME)-$(PROJECT_VERSION)-darwin-amd64
-DARWIN_RELEASE_GUI        := $(DIST_DIR)/AlpacaScope-$(PROJECT_VERSION).app.zip
+DARWIN_RELEASE_GUI        := $(DIST_DIR)/AlpacaScope.app
+DARWIN_RELEASE_ZIP        := $(DIST_DIR)/AlpacaScope-$(PROJECT_VERSION).app.zip
 DARWIN_GUI                := $(DIST_DIR)/$(PROJECT_NAME)-gui-$(PROJECT_VERSION)-darwin-amd64
 WINDOWS_RELEASE           := $(DIST_DIR)/AlpacaScope.exe
 WINDOWS                   := $(DIST_DIR)/AlpacaScope-Debug-$(PROJECT_VERSION).exe
@@ -57,7 +58,7 @@ sign-release: $(DIST_DIR)/release.sig ## Sign release
 .verify_windows:
 	@if test ! -f $(WINDOWS_RELEASE); then echo "Missing Windows release binary"; exit 1; fi
 
-$(DIST_DIR)/release.sig: .build-release .verify_windows
+$(DIST_DIR)/release.sig: .build-release $(DARWIN_RELEASE_ZIP) .verify_windows
 	cd dist && shasum -a 256 * | gpg --clear-sign >release.sig
 
 # This target builds anywhere
@@ -179,10 +180,12 @@ darwin-release-gui: $(DARWIN_RELEASE_GUI)  ## Build MacOS/x86_64 Release GUI
 $(DARWIN_RELEASE_GUI): $(GO_FILES) | .build-gui-check .prepare .fyne
 	@fyne package -appID net.synfin.alpacascope -name AlpacaScope \
 		-appVersion $(PROJECT_VERSION) -appBuild $(BUILD_ID) \
-		-os darwin -sourceDir gui -icon $(shell pwd)/Icon.png && \
-		zip -r $(DARWIN_RELEASE_GUI) AlpacaScope.app && \
-		rm -rf AlpacaScope.app
-		
+		-os darwin -sourceDir gui && \
+		rm -rf $(DARWIN_RELEASE_GUI) && mv AlpacaScope.app $(DARWIN_RELEASE_GUI)
+
+$(DARWIN_RELEASE_ZIP): $(DARWIN_RELEASE_GUI)
+	@zip -mr $(DARWIN_RELEASE_ZIP) $(DARWIN_RELEASE_GUI)
+
 
 $(DARWIN_GUI): $(GO_FILES) | .build-gui-check .prepare
 	@go build -ldflags='$(LDFLAGS)' -o $(DARWIN_GUI) gui/*.go
@@ -201,7 +204,7 @@ $(WINDOWS_RELEASE): $(GO_FILES) | .build-windows-check .prepare .fyne
 	@rm -f dist/AlpacaScope-$(PROJECT_VERSION).exe && \
 	fyne package -appID net.synfin.AlpacaScope -name net.synfin.AlpacaScope \
 		-appVersion $(PROJECT_VERSION) -appBuild $(BUILD_ID) -os windows -release \
-		-sourceDir gui -icon $(shell pwd)/Icon.png && \
+		-sourceDir gui && \
 		mv gui/gui.exe $(WINDOWS_RELEASE)
 
 linux-gui: $(LINUX_GUI)  ## Build Linux/x86_64 GUI

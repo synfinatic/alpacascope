@@ -54,7 +54,9 @@ version which works for you. :)
 
 ## Usage
 
-So basically, my setup looks sorta like this:
+[Configure.md](Step-by-setup instructions to use AlpacaScope with SkySafari).
+
+My setup looks like this:
 
 ```
 Celestron Evolution <-> CWPI <-> ASCOM <-> ASCOM Remote <-> AlpacaScope <-> SkySafari

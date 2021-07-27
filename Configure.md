@@ -22,7 +22,7 @@ be happy to help you.
 
 1. Connect your telescope mount to your PC as usual and start up whatever ASCOM 
     driver you normally use. (For the purposes of this documentation, I will be
-    using the ASCOM Telescope Emulator.)
+    using the ASCOM Telescope Simulator.)
 2. Download and install [ASCOM Remote](https://github.com/ASCOMInitiative/ASCOMRemote/releases).
 3. Start ASCOM Remote and click "Setup"
 	![](https://user-images.githubusercontent.com/1075352/127172229-8550cf99-98f1-4b5b-8eaf-fa48f05fec7f.png)

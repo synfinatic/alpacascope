@@ -75,9 +75,11 @@ build-gui: darwin-gui darwin-release-gui windows linux-gui ## Build GUI binaries
 
 
 # Install fyne binary in $GOPATh/bin
-.PHONY: .fyne
+.PHONY: .fyne .fyne-cross
 .fyne:
-	@if test -z "`which fyne`"; then echo "Please install fyne: go get fyne.io/fyne/v2/cmd/fyne" ; exit 1 ; fi ; \
+	@if test -z "`which fyne`"; then echo "Please install fyne: go get fyne.io/fyne/v2/cmd/fyne" ; exit 1 ; fi
+
+.fyne-cross:
 	if test -z "`which fyne-cross`"; then echo "Please install fyne-cross: go get github.com/fyne-io/fyne-cross" ; exit 1 ; fi
 
 # used by our github action to test building the release binaries + GUI on Linux
@@ -192,7 +194,7 @@ $(DARWIN_GUI): $(GO_FILES) | .build-gui-check .prepare
 
 windows: $(WINDOWS)  ## Build Windows/x86_64 GUI
 
-$(WINDOWS): $(GO_FILES) | .fyne .prepare
+$(WINDOWS): $(GO_FILES) | .fyne-cross .prepare
 	@fyne-cross windows -app-id net.synfin.alpacascope -developer "Aaron Turner" \
 		-app-version $(PROJECT_VERSION) -ldflags '$(LDFLAGS)' \
 		-name AlpacaScope.exe $(shell pwd)/gui && \
@@ -209,7 +211,7 @@ $(WINDOWS_RELEASE): $(GO_FILES) | .build-windows-check .prepare .fyne
 
 linux-gui: $(LINUX_GUI)  ## Build Linux/x86_64 GUI
 
-$(LINUX_GUI): $(GO_FILES) | .prepare .fyne
+$(LINUX_GUI): $(GO_FILES) | .prepare .fyne-cross
 	@fyne-cross linux -app-id net.synfin.alpacascope \
 		-app-version $(PROJECT_VERSION) -ldflags '$(LDFLAGS)' \
 		-name alpacascope $(shell pwd)/gui && \

@@ -4,24 +4,85 @@
 
 Basically AlpacaScope is a lot like the [SCC SkyFi](
 https://www.skysafariastronomy.com/skyfi-3-professional-astronomy-telescope-control.html)
-and Sequence Generator Pro's [WiFi Scope](https://www.sequencegeneratorpro.com/download/wifi-scope/).
+and Sequence Generator Pro's [WiFi Scope](
+https://www.sequencegeneratorpro.com/download/wifi-scope/).
 
 Unlike the SkyFi, there is no special device you have to buy to control
-your telescope; you can just use your Windows, Mac or Linux computer.  AlpacaScope controls 
-your telescope via [ASCOM](https://ascom-standards.org) and [ASCOM Remote Server](
-https://github.com/ASCOMInitiative/ASCOMRemote) or via [Alpaca](
-https://ascom-standards.org/Developer/Alpaca.htm) directly.
+your telescope; you can just use your Windows, Mac or Linux computer.
+AlpacaScope controls your telescope via [ASCOM Alpaca](
+https://ascom-standards.org/Developer/Alpaca.htm)
+which is an open source and open standard for astronomy software.
 
-WiFi Scope is probably the closest thing to AlpacaScope- it also runs on Windows
-and uses ASCOM.  Unfortunately, I've found WiFi Scope buggy (it crashes a lot
-for me) which is why I ended up writing this.  Now AlpacaScope has more features
-than WiFi Scope.
+If your telescope does not yet support Alpaca, there is good news: you can use
+[ASCOM Remote Server](https://github.com/ASCOMInitiative/ASCOMRemote) to bridge
+Alpaca to the older [ASCOM](https://ascom-standards.org) platform.
+
+## Install
+
+[Download the latest binary](https://github.com/synfinatic/alpacascope/releases)
+appropriate for your hardware/OS.
+
+Note there are now CLI and GUI versions of AlpacaScope!  Please download the
+version which works for you. :)
+
+## Usage
+
+[Configure.md](Step-by-setup instructions to use AlpacaScope with SkySafari).
+
+My setup looks like this:
+
+```
+Celestron Evolution <-> CWPI <-> ASCOM <-> ASCOM Remote <-> AlpacaScope <-> SkySafari
+             Focuser  <-'           `-> Sharp Cap
+                                     `-> ZWO Camera
+```
+
+Basically, just download the binary for your system (easist to run on the same
+Windows box as ASCOM & the ASCOM Remote Server) and run it.  It will
+automatically find the ASCOM Remote Server running on your network and connect
+to it.
+
+Configure SkySafari or other remote control software to connect to AlpacaScope
+ on port 4030 using the Celestron NexStar (I use the NexStar/Advanced GT) or
+Meade LX200 GPS protocol.  AlpacaScope supports both, but defaults to NexStar.
+
+AlpacaScope supports the "Auto-Detect SkyFi" feature in SkySafari so you should
+not need to enter the IP address of your computer running AlpacaScope.
+
+### Graphical User Interface
+
+![](https://user-images.githubusercontent.com/1075352/126884700-13caa5e7-fca7-4fc2-8c1e-33dad1ca353d.png)
+
+Hopefully the above is pretty self-explainatory.  In general, the defaults
+(other than the mount type) should work 99% of the time and you can just press
+`Start AlpacaScope Services`.  This will then:
+
+ * If 'Auto Discover ASCOM Remote' is enabled, it will try to find it on your
+    local network
+ * Attempt to connect to ASCOM Remote
+ * Start SkyFi auto-discovery for SkySafari
+ * Listen for new connections on the ListenIP/ListenPort
+
+### Command Line Flags
+
+AlpacaScope supports a number of optional CLI options.  For a full list use the
+`--help` flag.
+
+ * `--help`         Built in help
+ * `--alpaca-host`  Manually set the FQDN or IP address of the host running ASCOM Remote Server
+ * `--alpaca-port`  Specify a custom TCP Port where ASCOM Remote Server is listening
+ * `--listen-ip`    Manually set an IP address to listen on
+ * `--listen-port`  Override the default port of 4030 to listen on
+ * `--mount-type`   Specify your mount type: `altaz`, `eqn`, or `eqs`. `altaz` is the default.
+ * `--mode`         Choose between `nexstar` and `lx200` protocols.  `nexstar` is the default.
+ * `--debug`        Print debugging information
 
 ## Why?
 
 TL;DR: I have a [Celestron Evolution EdgeHD 800](
 https://www.celestron.com/products/nexstar-evolution-8-hd-telescope-with-starsense)
-and I'd like to be able to control it via [SkySafari](https://skysafariastronomy.com).
+and I'd like to be able to control it via [SkySafari](
+https://skysafariastronomy.com).
 
 Unfortunately, the WiFi on the Evolution mount is known to be a bit flakey and
 it's annoying when it drops out and you have to exit the app, reconnect to WiFi,
@@ -44,65 +105,6 @@ and talks to Alpaca Remote Server.  The result is that SkySafari can now control
 my Celestron Evolution mount, or any mount that supports the ASCOM or
 Alpaca standards.
 
-## Install
-
-[Download the latest binary](https://github.com/synfinatic/alpacascope/releases)
-appropriate for your hardware/OS.
-
-Note there are now CLI and GUI versions of AlpacaScope!  Please download the
-version which works for you. :)
-
-## Usage
-
-[Configure.md](Step-by-setup instructions to use AlpacaScope with SkySafari).
-
-My setup looks like this:
-
-```
-Celestron Evolution <-> CWPI <-> ASCOM <-> ASCOM Remote <-> AlpacaScope <-> SkySafari
-             Focuser  <-'           `-> Sharp Cap
-                                     `-> ZWO Camera
-```
-
-Basically, just download the binary for your system (easist to run on the same Windows
-box as ASCOM & the ASCOM Remote Server) and run it.  It will automatically find
-the ASCOM Remote Server running on your network and connect to it.
-
-Configure SkySafari or other remote control software to connect to AlpacaScope on port
-4030 using the Celestron NexStar (I use the NexStar/Advanced GT) or Meade LX200 GPS
-protocol.  AlpacaScope supports both, but defaults to NexStar.
-
-AlpacaScope supports the "Auto-Detect SkyFi" feature in SkySafari so you should not need
-to enter the IP address of your computer running AlpacaScope.
-
-### Graphical User Interface
-
-![](https://user-images.githubusercontent.com/1075352/126884700-13caa5e7-fca7-4fc2-8c1e-33dad1ca353d.png)
-
-Hopefully the above is pretty self-explainatory.  In general, the defaults (other than the
-mount type) should work 99% of the time and you can just press `Start AlpacaScope Services`.  This
-will then:
-
- * If 'Auto Discover ASCOM Remote' is enabled, it will try to find it on your local network
- * Attempt to connect to ASCOM Remote 
- * Start SkyFi auto-discovery for SkySafari
- * Listen for new connections on the ListenIP/ListenPort
-
-### Command Line Flags
-
-AlpacaScope supports a number of optional CLI options.  For a full list use the `--help`
-flag.
-
- * `--help`         Built in help
- * `--alpaca-host`  Manually set the FQDN or IP address of the host running ASCOM Remote Server
- * `--alpaca-port`  Specify a custom TCP Port where ASCOM Remote Server is listening
- * `--listen-ip`    Manually set an IP address to listen on
- * `--listen-port`  Override the default port of 4030 to listen on
- * `--mount-type`   Specify your mount type: `altaz`, `eqn`, or `eqs`. `altaz` is the default.
- * `--mode`         Choose between `nexstar` and `lx200` protocols.  `nexstar` is the default.
- * `--debug`        Print debugging information
-
-
 ## FAQ
 
 #### Does this only work with NexStar and LX200 series telescopes?
@@ -117,14 +119,19 @@ protocols.
 
  1. A telescope mount with an ASCOM or Alpaca driver.
  1. The ASCOM/Alpaca driver configured on a computer.
- 1. If your mount only has an ASCOM driver, you will need ASCOM Remote Server installed, configured & running
+ 1. If your mount only has an ASCOM driver, you will need ASCOM Remote Server
+    installed, configured & running
  1. AlpacaScope installed and running
- 1. Some kind astronomy software which talks the Meade LX200 or Celestron NexStar protocols
-    (SkySafari, etc)
+ 1. Some kind astronomy software which talks the Meade LX200 or Celestron
+    NexStar protocols (SkySafari, etc)
+
+#### How do I configure AlpacaScope and ASCOM Remote Server?
+[This document](Configure.md) provides step-by-step instructions to configure
+everything.
 
 #### Does this support SkySafari on Mac, iPad, Android, etc?
-Yes, this supports all versions of SkySafari which allow for controlling telescopes.
-Typically this is SkySafari Plus and Pro.
+Yes, this supports all versions of SkySafari which allow for controlling
+telescopes.  Typically this is SkySafari Plus and Pro.
 
 #### What about other astronomy software?
 Yep, anything that can do Celestron NexStar or LX200 protocols over TCP/IP
@@ -144,9 +151,10 @@ For the record, I build all the release binaries on a Mac- so the chances of
 a Windows virus infecting the binaries is pretty much zero.
 
 #### Windows says AlpacaScope was published by an unknown author?
-Yes, I haven't yet paid Microsoft a fee so you will get this warning.  If you have downloaded
-the AlpacaScope binary from github.com it should be safe, but if you want to be extra careful
-you can verify the GPG signature I include with every release.
+Yes, I haven't yet paid Microsoft a fee so you will get this warning.  If you
+have downloaded the AlpacaScope binary from github.com it should be safe, but
+if you want to be extra careful you can verify the GPG signature I include
+with every release.
 
 #### What features work with SkySafari?
 
@@ -171,8 +179,8 @@ it is cross-platform, but I haven't looked into it yet.
 
 #### Does AlpacaScope need to run on the same computer as Alpaca or ASCOM Remote?
 No, but that is probably the most common solution.  AlpacaScope just needs
-to be able to talk to the ASCOM Remote Server running on the same computer as the
-ASCOM driver connected to your telescope mount.
+to be able to talk to the ASCOM Remote Server running on the same computer as
+the ASCOM driver connected to your telescope mount.
 
 #### My telescope mount has an Alpaca driver.  Can I use that instead of going through ASCOM Remote?
 Yes!  Over time I expect more telescope mounts to have native Alpaca support
@@ -194,17 +202,19 @@ If you wish to build your own binary on Windows, you'll need to do:
     https://golangdocs.com/install-go-windows).
  1. Install GNU Make for Windows/Git by following [these instructions](
     https://gist.github.com/evanwill/0207876c3243bbb6863e65ec5dc3f058#make)
+ 1. Install [TDC GCC](https://jmeubank.github.io/tdm-gcc/).
  1. Clone this repoistory onto your computer using Git or just downloading the
     Zip file from Github.
  1. Using the Git shell (installed in Step #1), from inside of the AlpacaScope
-    source tree, run `make windows-gui` or `make windows-release` to build a binary.
+    source tree, run `make windows-gui` or `make windows-release` to build a
+    binary.
 
 #### How to build on Linux, OSX, etc?
 
  1. Install [GoLang](https://golang.org) for your OS.
- 1. Make sure you have GNU Make installed.  BSD Make will not work out of the box.
-    If you don't want to install GNU Make, you'll have to run the `go build` command
-    manually.
+ 1. Make sure you have GNU Make installed.  BSD Make will not work out of the
+    box.  If you don't want to install GNU Make, you'll have to run the
+    `go build` command manually.
  1. Clone this repoistory onto your computer using Git or just downloading the
     Zip file from Github.
  1. Run `make` (or `gmake`) to build a binary for your OS.
@@ -220,6 +230,6 @@ fork mount which can optionally have a wedge.  The result is the mount must be
 told to change it's tracking mode.
 
 However, Alpaca/ASCOM does not support this- it only allows you to turn on &
-off tracking.  Hence, AlpacaScope allows you to specify the mount type at startup,
-and then when SkySafari/etc queries the current tracking mode it will get the
-correct answer.
+off tracking.  Hence, AlpacaScope allows you to specify the mount type at
+startup, and then when SkySafari/etc queries the current tracking mode it will
+get the correct answer.

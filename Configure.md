@@ -6,8 +6,9 @@ SkySafari for the most common use cases.
 ## What you need
 
  * Your telescope mount configured in [ASCOM](https://ascom-standards.org).
- * Download & install [ASCOM Remote](https://github.com/ASCOMInitiative/ASCOMRemote/releases)
-    to convert ASCOM to Alpaca.
+ * Download & install [ASCOM Remote Server](
+    https://github.com/ASCOMInitiative/ASCOMRemote/releases) to convert ASCOM
+    to Alpaca.
  * [AlpacaScope](https://github.com/synfinatic/alpacascope/releases) downloaded
     for your computer to convert Alpaca to NexStar/LX200.
  * SkySafari or some other astronomy software which speaks Celestron NexStar or
@@ -15,16 +16,16 @@ SkySafari for the most common use cases.
 
 This document will assume you have your telescope mount already setup via ASCOM
 and walk you through configuring ASCOM Remote, AlpacaScope and SkySafari. If 
-your mount is supported natively via Alpaca please reach out to me and I will
-be happy to help you.
+your mount is supported natively via Alpaca you can skip to step #7!
 
 ## Let's Go!
 
 1. Connect your telescope mount to your PC as usual and start up whatever ASCOM 
     driver you normally use. (For the purposes of this documentation, I will be
     using the ASCOM Telescope Simulator.)
-2. Download and install [ASCOM Remote](https://github.com/ASCOMInitiative/ASCOMRemote/releases).
-3. Start ASCOM Remote and click "Setup"
+2. Download and install [ASCOM Remote Server](
+    https://github.com/ASCOMInitiative/ASCOMRemote/releases).
+3. Start ASCOM Remote Server and click "Setup"
 	![](https://user-images.githubusercontent.com/1075352/127172229-8550cf99-98f1-4b5b-8eaf-fa48f05fec7f.png)
 4. Configure your telescope as shown:
    ![](https://user-images.githubusercontent.com/1075352/127172241-aca0e0ea-620d-4135-a5fd-542cd58449a7.png)
@@ -33,17 +34,17 @@ be happy to help you.
 6. Choose which network interface to listen on:
   * `localhost` - More secure. Use if running AlpacaScope on the same computer
   * `+` - Less secure. Use if running AlpacaScope on a different computer
-    (remote observatory, etc)
+    (remote observatory, etc).
   ![](https://user-images.githubusercontent.com/1075352/127172250-e9376f78-77fc-4d09-9826-51c06ba28632.png)
 7. Start AlpacaScope:
-  * `Telescope Protocol` - This must match your setting in SkySafari
-  * `Mount Type` - Only for NexStar. Set to your mount type
+  * `Telescope Protocol` - This must match your setting in SkySafari.
+  * `Mount Type` - Only for NexStar. Set to your mount type.
   * `Listen IP` - Default is to listen on all interfaces so you can use
         SkySafari on a remote device (iPad, Android tablet, etc). Change if
         you wish.
-  * `Listen Port` - 4030 is the default port SkySafari uses
+  * `Listen Port` - 4030 is the default port SkySafari uses.
   * `Auto Discover ASCOM Remote` - Keep checked unless you have a complex
-        network setup (then you can manually set the values)
+        network setup (then you can manually set the values).
   * `ASCOM Telescope ID` - Must match the telescope ID set in Step #4.
   * `Start AlpacaScope Services` - Click this when settings are correct!
      You should then see the following messages in the box below showing it is

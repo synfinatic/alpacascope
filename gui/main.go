@@ -39,21 +39,21 @@ import (
 var sbox *StatusBox
 
 type AlpacaScopeConfig struct {
-	TelescopeProtocol string
-	TelescopeMount    string
-	ListenIp          string
-	ListenPort        string
-	AscomAuto         bool
-	AscomIp           string
-	AscomPort         string
-	AscomTelescope    string
+	TelescopeProtocol string `json:"TelescoeProtocol"`
+	TelescopeMount    string `json:"TelescopeMount"`
+	ListenIp          string `json:"ListenIp"`
+	ListenPort        string `json:"ListenPort"`
+	AscomAuto         bool   `json:"AscomAuto"`
+	AscomIp           string `json:"AscomIp"`
+	AscomPort         string `json:"AscomPort"`
+	AscomTelescope    string `json:"AscomTelescope"`
 	isRunning         bool
 	Quit              chan bool
 }
 
-func main() {
-	app := app.New()
-	config := &AlpacaScopeConfig{
+// Crates a new AlpacaScopeConfig with our defaults
+func NewAlpacaScopeConfig() *AlpacaScopeConfig {
+	return &AlpacaScopeConfig{
 		TelescopeProtocol: "NexStar",
 		TelescopeMount:    "Alt-Az",
 		AscomAuto:         true,
@@ -64,8 +64,20 @@ func main() {
 		AscomTelescope:    "0",
 		Quit:              make(chan bool),
 	}
+}
 
+func main() {
+	store, err := NewSettingsStore()
+	config := NewAlpacaScopeConfig()
 	sbox = NewStatusBox(6)
+	if err == nil {
+		err = store.GetSettings(config)
+		if err != nil {
+			sbox.AddLine(fmt.Sprintf("Using default settings"))
+		}
+	}
+
+	app := app.New()
 	w := app.NewWindow("AlpacaScope")
 
 	mountType := widget.NewSelect(

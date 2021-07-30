@@ -80,14 +80,14 @@ build-gui: darwin-gui darwin-release-gui windows linux-gui ## Build GUI binaries
 	@if test -z "`which fyne`"; then echo "Please install fyne: go get fyne.io/fyne/v2/cmd/fyne" ; exit 1 ; fi
 
 .fyne-cross:
-	if test -z "`which fyne-cross`"; then echo "Please install fyne-cross: go get github.com/fyne-io/fyne-cross" ; exit 1 ; fi
+	@if test -z "`which fyne-cross`"; then echo "Please install fyne-cross: go get github.com/fyne-io/fyne-cross" ; exit 1 ; fi
 
 # used by our github action to test building the release binaries + GUI on Linux
 .build-test-binaries: $(LINUX_BIN) $(DARWIN_BIN) $(WINDOWS)
 
 .PHONY: run
 run: cmd/*.go  ## build and run cria using $PROGRAM_ARGS
-	go run cmd/*.go $(PROGRAM_ARGS)
+	go run ./cmd/... $(PROGRAM_ARGS)
 
 clean-all: clean ## clean _everything_
 
@@ -102,10 +102,11 @@ go-get:  ## Get our go modules
 
 .PHONY: build-race
 build-race: .prepare ## Build race detection binary
-	go build -race -ldflags='$(LDFLAGS)' -o $(OUTPUT_NAME) cmd/*.go
+	go build -race -ldflags='$(LDFLAGS)' -o $(OUTPUT_NAME) ./cmd/...
+	go build -race -ldflags='$(LDFLAGS)' -o $(OUTPUT_NAME) ./gui/...
 
 debug: .prepare ## Run debug in dlv
-	dlv debug cmd/*.go
+	dlv debug ./cmd/...
 
 .PHONY: unittest
 unittest: ## Run go unit tests
@@ -155,25 +156,25 @@ precheck: test test-fmt test-tidy  ## Run all tests that happen in a PR
 linux: $(LINUX_BIN)  ## Build Linux/x86_64 CLI
 
 $(LINUX_BIN): $(GO_FILES) | .prepare
-	GOARCH=amd64 GOOS=linux go build -ldflags='$(LDFLAGS)' -o $(LINUX_BIN) cmd/*.go
+	GOARCH=amd64 GOOS=linux go build -ldflags='$(LDFLAGS)' -o $(LINUX_BIN) ./cmd/...
 	@echo "Created: $(LINUX_BIN)"
 
 linux-arm64: $(LINUXARM64_BIN)  ## Build Linux/arm64 CLI
 
 $(LINUXARM64_BIN): $(GO_FILES) | .prepare
-	GOARCH=arm64 GOOS=linux go build -ldflags='$(LDFLAGS)' -o $(LINUXARM64_BIN) cmd/*.go
+	GOARCH=arm64 GOOS=linux go build -ldflags='$(LDFLAGS)' -o $(LINUXARM64_BIN) ./cmd/...
 	@echo "Created: $(LINUXARM64_BIN)"
 
 linux-arm32: $(LINUXARM32_BIN)  ## Build Linux/arm64 CLI
 
 $(LINUXARM32_BIN): $(GO_FILES) | .prepare
-	GOARCH=arm GOOS=linux go build -ldflags='$(LDFLAGS)' -o $(LINUXARM32_BIN) cmd/*.go
+	GOARCH=arm GOOS=linux go build -ldflags='$(LDFLAGS)' -o $(LINUXARM32_BIN) ./cmd/...
 	@echo "Created: $(LINUXARM32_BIN)"
 
 darwin: $(DARWIN_BIN)  ## Build MacOS/x86_64 CLI
 
 $(DARWIN_BIN): $(GO_FILES) | .prepare
-	GOARCH=amd64 GOOS=darwin go build -ldflags='$(LDFLAGS)' -o $(DARWIN_BIN) cmd/*.go
+	GOARCH=amd64 GOOS=darwin go build -ldflags='$(LDFLAGS)' -o $(DARWIN_BIN) ./cmd/...
 	@echo "Created: $(DARWIN_BIN)"
 
 darwin-gui: $(DARWIN_GUI)  ## Build MacOS/x86_64 GUI
@@ -190,7 +191,7 @@ $(DARWIN_RELEASE_ZIP): $(DARWIN_RELEASE_GUI)
 
 
 $(DARWIN_GUI): $(GO_FILES) | .build-gui-check .prepare
-	@go build -ldflags='$(LDFLAGS)' -o $(DARWIN_GUI) gui/*.go
+	go build -ldflags='$(LDFLAGS)' -o $(DARWIN_GUI) ./gui/...
 
 windows: $(WINDOWS)  ## Build Windows/x86_64 GUI
 
@@ -201,6 +202,10 @@ $(WINDOWS): $(GO_FILES) | .fyne-cross .prepare
 		mv fyne-cross/bin/windows-amd64/AlpacaScope.exe $(WINDOWS)
 
 windows-release: $(WINDOWS_RELEASE)  ## Build Windows/x86_64 release GUI
+
+windows-test:
+	GOARCH=amd64 GOOS=windows go build -ldflags='$(LDFLAGS)' -o dist/windows.exe ./gui/...
+
 
 $(WINDOWS_RELEASE): $(GO_FILES) | .build-windows-check .prepare .fyne
 	@rm -f dist/AlpacaScope-$(PROJECT_VERSION).exe && \

@@ -45,6 +45,7 @@ func main() {
 	sbox = NewStatusBox(6)
 	config, err := NewAlpacaScopeConfig()
 	if err != nil {
+		sbox.AddLine(err.Error())
 		sbox.AddLine("Using default settings.")
 	} else {
 		sbox.AddLine("Loaded your saved settings.")
@@ -70,29 +71,43 @@ func main() {
 		},
 	)
 	protocolDropdown.Selected = config.TelescopeProtocol
+	if config.TelescopeProtocol == "LX200" {
+		mountType.Disable()
+	}
 
 	ips, err := utils.GetLocalIPs()
 	if err != nil {
 		ips = []string{config.ListenIp}
 		sbox.AddLine(fmt.Sprintf("Unable to detect interfaces: %s", err.Error()))
 	}
-	ipEntry := widget.NewSelect(ips, func(ip string) {})
+	ipEntry := widget.NewSelect(ips, func(ip string) {
+		config.ListenIp = ip
+	})
 	ipEntry.Selected = config.ListenIp
 
 	portEntry := widget.NewEntry()
 	portEntry.SetText(config.ListenPort)
 	portEntry.Validator = validation.NewRegexp("^[1-9][0-9]+$",
 		"Invalid TCP Port number")
+	portEntry.OnChanged = func(val string) {
+		config.ListenPort = val
+	}
 
 	ascomEntryIP := widget.NewEntry()
 	ascomEntryIP.SetText(config.AscomIp)
 	ascomEntryIP.Validator = validation.NewRegexp("^([0-9]+\\.){3}[0-9]+$",
 		"Must be a valid IPv4 address")
+	ascomEntryIP.OnChanged = func(val string) {
+		config.AscomIp = val
+	}
 
 	ascomEntryPort := widget.NewEntry()
 	ascomEntryPort.SetText(config.AscomPort)
 	ascomEntryPort.Validator = validation.NewRegexp("^[1-9][0-9]+$",
 		"Must be a valid integer > 1")
+	ascomEntryPort.OnChanged = func(val string) {
+		config.AscomPort = val
+	}
 
 	autodiscover := widget.NewCheck("", func(enabled bool) {
 		switch enabled {
@@ -134,7 +149,6 @@ func main() {
 		widget.NewFormItem("ASCOM Telescope ID", telescopeId),
 	)
 	top.OnSubmit = func() {
-		config.Validate()
 		go config.Run()
 	}
 	top.OnCancel = func() {
@@ -155,10 +169,21 @@ func main() {
 		err := config.Save()
 		if err != nil {
 			sbox.AddLine(err.Error())
+		} else {
+			sbox.AddLine("Saved config settings.")
+		}
+	})
+	delete := widget.NewButton("Reset Settings", func() {
+		err := config.Delete()
+		if err != nil {
+			sbox.AddLine(err.Error())
+		} else {
+			sbox.AddLine("Deleted custom config settings.")
+			sbox.AddLine("Please restart AlpacaScope.")
 		}
 	})
 
-	bottom := container.NewHBox(spacer, save, spacer, quit, spacer)
+	bottom := container.NewHBox(delete, save, spacer, quit, spacer)
 
 	w.SetContent(container.NewPadded(
 		container.NewBorder(
@@ -270,7 +295,7 @@ func (c *AlpacaScopeConfig) Run() {
 
 	newConns := make(chan net.Conn)
 
-	listen := fmt.Sprintf("%s:%s", c.ListenIp, c.ListenPort)
+	listen := fmt.Sprintf("%s:%s", c.ListenIpAddress(), c.ListenPort)
 	ln, err := net.Listen("tcp", listen)
 	if err != nil {
 		sbox.AddLine(fmt.Sprintf("Error listening on %s: %s", listen, err.Error()))

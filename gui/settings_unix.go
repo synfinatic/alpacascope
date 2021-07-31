@@ -38,28 +38,26 @@ func getPath(path string) string {
 }
 
 type SettingsStore struct {
-	path  string
-	jdata []byte
+	path string
 }
 
-func NewSettingsStore() (*SettingsStore, error) {
+func NewSettingsStore() *SettingsStore {
 	os.MkdirAll(getPath(STORE_DIR), 0755)
 	path := getPath(path.Join(STORE_DIR, STORE_FILE))
 
-	settingBytes, err := ioutil.ReadFile(path)
+	return &SettingsStore{
+		path: path,
+	}
+}
+
+func (ss *SettingsStore) GetSettings(config *AlpacaScopeConfig) error {
+	settingBytes, err := ioutil.ReadFile(ss.path)
 	if err != nil {
 		// missing file
 		settingBytes = []byte("")
 	}
 
-	return &SettingsStore{
-		path:  path,
-		jdata: settingBytes,
-	}, nil
-}
-
-func (ss *SettingsStore) GetSettings(config *AlpacaScopeConfig) error {
-	return json.Unmarshal(ss.jdata, config)
+	return json.Unmarshal(settingBytes, config)
 }
 
 func (ss *SettingsStore) SaveSettings(config *AlpacaScopeConfig) error {
@@ -67,8 +65,7 @@ func (ss *SettingsStore) SaveSettings(config *AlpacaScopeConfig) error {
 	if err != nil {
 		return err
 	}
-	ss.jdata = jdata
-	return ioutil.WriteFile(ss.path, ss.jdata, 0600)
+	return ioutil.WriteFile(ss.path, jdata, 0600)
 }
 
 func (ss *SettingsStore) Delete() error {

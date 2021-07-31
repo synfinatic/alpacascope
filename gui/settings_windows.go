@@ -19,92 +19,111 @@ package main
  */
 
 import (
-	"encoding/json"
 	"fmt"
+	"reflect"
 
 	"golang.org/x/sys/windows/registry"
 )
 
 const (
 	REGISTRY_PATH = `SOFTWARE\AlpacaScope`
-	JSON_KEY      = `JSON_CONFIG`
 )
 
-type SettingsStore struct {
-	jdata string
-}
+type SettingsStore struct{}
 
-func NewSettingsStore() (*SettingsStore, error) {
-	store := &SettingsStore{}
-	key, err := store.GetKey()
-	if err != nil {
-		return store, err
-	}
-	defer key.Close()
-
-	val, valtype, err := key.GetStringValue(JSON_KEY)
-	switch err {
-	case registry.ErrNotExist:
-		return store, fmt.Errorf("No saved settings")
-
-	case nil:
-		break
-
-	default:
-		return store, err
-	}
-
-	// correct value type?
-	if valtype != registry.SZ {
-		return store, fmt.Errorf(`Invalid registry type for %s\%s\%s: 0x%04x`,
-			"CURRENT_USER", REGISTRY_PATH, JSON_KEY, valtype)
-	}
-
-	return &SettingsStore{
-		jdata: val,
-	}, nil
+func NewSettingsStore() *SettingsStore {
+	return &SettingsStore{}
 }
 
 // Loads our settings from the Registry or our defaults.  Returns
 // and error if there was a problem loading the Registry
 func (ss *SettingsStore) GetSettings(config *AlpacaScopeConfig) error {
-	return json.Unmarshal([]byte(ss.jdata), config)
+	key, err := ss.GetKey()
+	if err != nil {
+		return fmt.Errorf("GetKey: %s", err.Error())
+	}
+	defer key.Close()
+
+	s := reflect.ValueOf(config).Elem()
+	for i := 0; i < s.NumField(); i++ {
+		field := s.Type().Field(i).Name
+		kind := s.Type().Field(i).Type.Kind()
+		val, valtype, err := key.GetStringValue(field)
+		if err != nil || valtype != registry.SZ {
+			continue // skip errors
+		}
+		switch kind {
+		case reflect.String:
+			s.Field(i).SetString(val)
+
+		case reflect.Bool:
+			switch val {
+			case "true":
+				s.Field(i).SetBool(true)
+			default:
+				s.Field(i).SetBool(false)
+			}
+		default:
+			return fmt.Errorf("Unsupported type for %s: %v", field, kind)
+		}
+	}
+
+	return nil
 }
 
 func (ss *SettingsStore) SaveSettings(config *AlpacaScopeConfig) error {
-	bytes, err := json.Marshal(config)
-	if err != nil {
-		return err
-	}
-
 	key, err := ss.GetKey()
 	if err != nil {
-		return err
+		return fmt.Errorf("GetKey: %s", err)
 	}
 	defer key.Close()
 
-	return key.SetStringValue(JSON_KEY, string(bytes))
+	s := reflect.ValueOf(config).Elem()
+	for i := 0; i < s.NumField(); i++ {
+		n := s.Type().Field(i).Name
+		t := s.Type().Field(i).Type
+
+		tag := string(s.Type().Field(i).Tag.Get("json"))
+		if tag == "" || tag == "-" {
+			continue // skip fields without the `json` tag
+		}
+
+		switch t.Kind() {
+		case reflect.String:
+			err = key.SetStringValue(n, s.Field(i).String())
+			if err != nil {
+				return fmt.Errorf("Set %s = %s", n, s.Field(i).String())
+			}
+		case reflect.Bool:
+			if s.Field(i).Bool() {
+				err = key.SetStringValue(n, "true")
+			} else {
+				err = key.SetStringValue(n, "false")
+			}
+
+		default:
+			return fmt.Errorf("Unsupported type for field %s: %v", n, t.Kind())
+		}
+
+		if err != nil {
+			return fmt.Errorf("Unable to save %s in settings %s", n, err.Error())
+		}
+	}
+
+	return nil
 }
 
 func (ss *SettingsStore) Delete() error {
-	key, err := ss.GetKey()
-	if err != nil {
-		return err
-	}
-	defer key.Close()
-	return key.DeleteValue(JSON_KEY)
+	return registry.DeleteKey(registry.CURRENT_USER, REGISTRY_PATH)
 }
 
 func (ss *SettingsStore) GetKey() (registry.Key, error) {
 	key, err := registry.OpenKey(registry.CURRENT_USER, REGISTRY_PATH,
 		registry.ALL_ACCESS)
-	if err != registry.ErrNotExist {
+
+	if err != nil {
 		key, _, err = registry.CreateKey(registry.CURRENT_USER,
 			REGISTRY_PATH, registry.ALL_ACCESS)
-		if err != nil {
-			return key, fmt.Errorf(`Unable to open registry: %s\%s`,
-				"CURRENT_USER", REGISTRY_PATH)
-		}
 	}
 
 	return key, nil

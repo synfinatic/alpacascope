@@ -27,7 +27,7 @@ import (
 
 // Our actual application config
 type AlpacaScopeConfig struct {
-	TelescopeProtocol string `json:"TelescoeProtocol"`
+	TelescopeProtocol string `json:"TelescopeProtocol"`
 	TelescopeMount    string `json:"TelescopeMount"`
 	ListenIp          string `json:"ListenIp"`
 	ListenPort        string `json:"ListenPort"`
@@ -57,14 +57,10 @@ func NewAlpacaScopeConfig() (*AlpacaScopeConfig, error) {
 		store:             nil,
 	}
 
-	s, err := NewSettingsStore()
-	if err != nil {
-		// error saving!
-		return config, fmt.Errorf("Unable to open SettingsStore: %s", err.Error())
-	}
+	s := NewSettingsStore()
 
 	// load config.  maybe it worked?  Don't care really....
-	err = s.GetSettings(config)
+	err := s.GetSettings(config)
 	config.SetStore(s)
 
 	return config, err
@@ -85,14 +81,12 @@ func (a *AlpacaScopeConfig) Delete() error {
 	return fmt.Errorf("No valid SettingsStore")
 }
 
-// Fix any values
-func (c *AlpacaScopeConfig) Validate() {
+func (c *AlpacaScopeConfig) ListenIpAddress() string {
 	ips := strings.SplitN(c.ListenIp, "/", 2)
 	if len(ips) == 2 {
-		c.ListenIp = ips[1]
-	} else {
-		c.ListenIp = ips[0]
+		return ips[1]
 	}
+	return ips[0]
 }
 
 func (c *AlpacaScopeConfig) IsRunning() bool {

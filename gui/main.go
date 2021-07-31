@@ -38,47 +38,17 @@ import (
 
 var sbox *StatusBox
 
-type AlpacaScopeConfig struct {
-	TelescopeProtocol string `json:"TelescoeProtocol"`
-	TelescopeMount    string `json:"TelescopeMount"`
-	ListenIp          string `json:"ListenIp"`
-	ListenPort        string `json:"ListenPort"`
-	AscomAuto         bool   `json:"AscomAuto"`
-	AscomIp           string `json:"AscomIp"`
-	AscomPort         string `json:"AscomPort"`
-	AscomTelescope    string `json:"AscomTelescope"`
-	isRunning         bool
-	Quit              chan bool
-}
-
-// Crates a new AlpacaScopeConfig with our defaults
-func NewAlpacaScopeConfig() *AlpacaScopeConfig {
-	return &AlpacaScopeConfig{
-		TelescopeProtocol: "NexStar",
-		TelescopeMount:    "Alt-Az",
-		AscomAuto:         true,
-		ListenIp:          "All-Interfaces/0.0.0.0",
-		ListenPort:        "4030",
-		AscomIp:           "127.0.0.1",
-		AscomPort:         alpaca.DEFAULT_PORT_STR,
-		AscomTelescope:    "0",
-		Quit:              make(chan bool),
-	}
-}
-
 func main() {
-	store, err := NewSettingsStore()
-	config := NewAlpacaScopeConfig()
-	sbox = NewStatusBox(6)
-	if err == nil {
-		err = store.GetSettings(config)
-		if err != nil {
-			sbox.AddLine(fmt.Sprintf("Using default settings"))
-		}
-	}
-
 	app := app.New()
 	w := app.NewWindow("AlpacaScope")
+
+	sbox = NewStatusBox(6)
+	config, err := NewAlpacaScopeConfig()
+	if err != nil {
+		sbox.AddLine("Using default settings.")
+	} else {
+		sbox.AddLine("Loaded your saved settings.")
+	}
 
 	mountType := widget.NewSelect(
 		[]string{"Alt-Az", "EQ North", "EQ South"},
@@ -118,13 +88,11 @@ func main() {
 	ascomEntryIP.SetText(config.AscomIp)
 	ascomEntryIP.Validator = validation.NewRegexp("^([0-9]+\\.){3}[0-9]+$",
 		"Must be a valid IPv4 address")
-	ascomEntryIP.Disable()
 
 	ascomEntryPort := widget.NewEntry()
 	ascomEntryPort.SetText(config.AscomPort)
 	ascomEntryPort.Validator = validation.NewRegexp("^[1-9][0-9]+$",
 		"Must be a valid integer > 1")
-	ascomEntryPort.Disable()
 
 	autodiscover := widget.NewCheck("", func(enabled bool) {
 		switch enabled {
@@ -140,6 +108,10 @@ func main() {
 
 	})
 	autodiscover.Checked = config.AscomAuto
+	if config.AscomAuto {
+		ascomEntryIP.Disable()
+		ascomEntryPort.Disable()
+	}
 
 	telescopeId := widget.NewSelect(
 		[]string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"},
@@ -179,7 +151,14 @@ func main() {
 	spacer := layout.NewSpacer()
 
 	quit := widget.NewButton("Quit", func() { os.Exit(0) })
-	bottom := container.NewHBox(spacer, quit, spacer)
+	save := widget.NewButton("Save Settings", func() {
+		err := config.Save()
+		if err != nil {
+			sbox.AddLine(err.Error())
+		}
+	})
+
+	bottom := container.NewHBox(spacer, save, spacer, quit, spacer)
 
 	w.SetContent(container.NewPadded(
 		container.NewBorder(
@@ -188,20 +167,6 @@ func main() {
 		)))
 
 	w.ShowAndRun()
-}
-
-// Fix any values
-func (c *AlpacaScopeConfig) Validate() {
-	ips := strings.SplitN(c.ListenIp, "/", 2)
-	if len(ips) == 2 {
-		c.ListenIp = ips[1]
-	} else {
-		c.ListenIp = ips[0]
-	}
-}
-
-func (c *AlpacaScopeConfig) IsRunning() bool {
-	return c.isRunning
 }
 
 func (c *AlpacaScopeConfig) Run() {

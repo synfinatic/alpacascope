@@ -1,4 +1,5 @@
-// +build darwin linux freebsd netbsd openbsd
+// +build !windows
+
 package main
 
 /*
@@ -20,40 +21,56 @@ package main
  */
 
 import (
-//	"encoding/json"
-//	"fmt"
-//	"path/filepath"
+	"encoding/json"
+	"io/ioutil"
+	"os"
+	"path"
+	"strings"
 )
 
 const (
-	STORE_FILE = "~/.alpacascope/config.json"
+	STORE_DIR  = "~/.alpacascope"
+	STORE_FILE = "config.json"
 )
 
+func getPath(path string) string {
+	return strings.Replace(path, "~", os.Getenv("HOME"), 1)
+}
+
 type SettingsStore struct {
-	path string
+	path  string
+	jdata []byte
 }
 
 func NewSettingsStore() (*SettingsStore, error) {
+	os.MkdirAll(getPath(STORE_DIR), 0755)
+	path := getPath(path.Join(STORE_DIR, STORE_FILE))
 
-	return &SettingsStore{}, nil
+	settingBytes, err := ioutil.ReadFile(path)
+	if err != nil {
+		// missing file
+		settingBytes = []byte("")
+	}
+
+	return &SettingsStore{
+		path:  path,
+		jdata: settingBytes,
+	}, nil
 }
 
-func (ss *SettingsStore) GetSettings(*AlpacaScopeConfig) error {
-
-	return nil
+func (ss *SettingsStore) GetSettings(config *AlpacaScopeConfig) error {
+	return json.Unmarshal(ss.jdata, config)
 }
 
-func (ss *SettingsStore) SetSettings(*AlpacaScopeConfig) error {
-
-	return nil
+func (ss *SettingsStore) SaveSettings(config *AlpacaScopeConfig) error {
+	jdata, err := json.Marshal(config)
+	if err != nil {
+		return err
+	}
+	ss.jdata = jdata
+	return ioutil.WriteFile(ss.path, ss.jdata, 0600)
 }
 
 func (ss *SettingsStore) Delete() error {
-
-	return nil
-}
-
-func (ss *SettingsStore) Close() error {
-
-	return nil
+	return os.Remove(ss.path)
 }

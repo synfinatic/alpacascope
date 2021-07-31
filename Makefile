@@ -198,14 +198,11 @@ windows: $(WINDOWS)  ## Build Windows/x86_64 GUI
 $(WINDOWS): $(GO_FILES) | .fyne-cross .prepare
 	@fyne-cross windows -app-id net.synfin.alpacascope -developer "Aaron Turner" \
 		-app-version $(PROJECT_VERSION) -ldflags '$(LDFLAGS)' \
+		-icon $(shell pwd)/gui/Icon.png \
 		-name AlpacaScope.exe $(shell pwd)/gui && \
 		mv fyne-cross/bin/windows-amd64/AlpacaScope.exe $(WINDOWS)
 
 windows-release: $(WINDOWS_RELEASE)  ## Build Windows/x86_64 release GUI
-
-windows-test:
-	GOARCH=amd64 GOOS=windows go build -ldflags='$(LDFLAGS)' -o dist/windows.exe ./gui/...
-
 
 $(WINDOWS_RELEASE): $(GO_FILES) | .build-windows-check .prepare .fyne
 	@rm -f dist/AlpacaScope-$(PROJECT_VERSION).exe && \
@@ -219,5 +216,6 @@ linux-gui: $(LINUX_GUI)  ## Build Linux/x86_64 GUI
 $(LINUX_GUI): $(GO_FILES) | .prepare .fyne-cross
 	@fyne-cross linux -app-id net.synfin.alpacascope \
 		-app-version $(PROJECT_VERSION) -ldflags '$(LDFLAGS)' \
+		-icon $(shell pwd)/gui/Icon.png \
 		-name alpacascope $(shell pwd)/gui && \
 		mv fyne-cross/bin/linux-amd64/alpacascope $(LINUX_GUI)

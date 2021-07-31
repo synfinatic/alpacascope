@@ -27,70 +27,85 @@ import (
 
 const (
 	REGISTRY_PATH = `SOFTWARE\AlpacaScope`
-	JSON_KEY      = `SOFTWARE\AlpacaScope\Json`
+	JSON_KEY      = `JSON_CONFIG`
 )
 
 type SettingsStore struct {
-	key registry.Key
+	jdata string
 }
 
-func NewSettingsStore() (SettingsStore, error) {
-	key, err := registry.OpenKey(registry.CURRENT_USER,
-		REGISTRY_PATH, registry.ALL_ACCESS)
+func NewSettingsStore() (*SettingsStore, error) {
+	store := &SettingsStore{}
+	key, err := store.GetKey()
 	if err != nil {
-		key, err = registry.CreateKey(registry.CURRENT_USER,
-			REGISTRY_PATH, registry.ALL_ACCESS)
-		if err != nil {
-			return nil, err
-		}
+		return store, err
+	}
+	defer key.Close()
+
+	val, valtype, err := key.GetStringValue(JSON_KEY)
+	switch err {
+	case registry.ErrNotExist:
+		return store, fmt.Errorf("No saved settings")
+
+	case nil:
+		break
+
+	default:
+		return store, err
 	}
 
-	return SettingsStore{
-		key: key,
+	// correct value type?
+	if valtype != registry.SZ {
+		return store, fmt.Errorf(`Invalid registry type for %s\%s\%s: 0x%04x`,
+			"CURRENT_USER", REGISTRY_PATH, JSON_KEY, valtype)
+	}
+
+	return &SettingsStore{
+		jdata: val,
 	}, nil
 }
 
 // Loads our settings from the Registry or our defaults.  Returns
 // and error if there was a problem loading the Registry
 func (ss *SettingsStore) GetSettings(config *AlpacaScopeConfig) error {
-	val, valtype, err := ss.key.GetStringValue(JSON_KEY)
-	switch err {
-	case registry.ErrNotExist:
-		return nil
-
-	case nil:
-		break
-
-	default:
-		return err
-	}
-
-	if valtype != registry.SZ {
-		return config, fmt.Errorf("Invalid registry type for %s: 0x%04x",
-			JSON_KEy, valtype)
-	}
-
-	err = json.Unmarshal([]byte(val), config)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return json.Unmarshal([]byte(ss.jdata), config)
 }
 
-func (ss *SettingsStore) SetSettings(settings *AlpacaScopeConfig) error {
-	bytes, err := json.Marshal(settings)
+func (ss *SettingsStore) SaveSettings(config *AlpacaScopeConfig) error {
+	bytes, err := json.Marshal(config)
 	if err != nil {
 		return err
 	}
 
-	return ss.key.SetStringValue(JSON_KEY, string(bytes))
+	key, err := ss.GetKey()
+	if err != nil {
+		return err
+	}
+	defer key.Close()
+
+	return key.SetStringValue(JSON_KEY, string(bytes))
 }
 
 func (ss *SettingsStore) Delete() error {
-	return ssn.key.DeleteValue(JSON_KEY)
+	key, err := ss.GetKey()
+	if err != nil {
+		return err
+	}
+	defer key.Close()
+	return key.DeleteValue(JSON_KEY)
 }
 
-func (ss *SettingsStore) Close() error {
-	return ss.key.Close()
+func (ss *SettingsStore) GetKey() (registry.Key, error) {
+	key, err := registry.OpenKey(registry.CURRENT_USER, REGISTRY_PATH,
+		registry.ALL_ACCESS)
+	if err != registry.ErrNotExist {
+		key, _, err = registry.CreateKey(registry.CURRENT_USER,
+			REGISTRY_PATH, registry.ALL_ACCESS)
+		if err != nil {
+			return key, fmt.Errorf(`Unable to open registry: %s\%s`,
+				"CURRENT_USER", REGISTRY_PATH)
+		}
+	}
+
+	return key, nil
 }

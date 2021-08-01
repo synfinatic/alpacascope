@@ -37,6 +37,7 @@ type AlpacaScopeConfig struct {
 	AscomTelescope    string `json:"AscomTelescope"`
 	isRunning         bool
 	Quit              chan bool      `json:"-"` // have to hide since public
+	EnableButtons     chan bool      `json:"-"`
 	store             *SettingsStore // platform specific
 }
 
@@ -54,6 +55,7 @@ func NewAlpacaScopeConfig() (*AlpacaScopeConfig, error) {
 		AscomPort:         alpaca.DEFAULT_PORT_STR,
 		AscomTelescope:    "0",
 		Quit:              make(chan bool),
+		EnableButtons:     make(chan bool),
 		store:             nil,
 	}
 

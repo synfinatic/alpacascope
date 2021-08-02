@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v2.2.0 - 2021-08-02
+
 Added:
 
  - SkySafari's "Stop" action will disable tracking which for some mounts

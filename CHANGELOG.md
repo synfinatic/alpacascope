@@ -9,6 +9,11 @@ Added:
     will now optionally check for this situation and re-enable tracking 
     for goto's to be successful.
 
+Fixed:
+
+ - "Reset Settings" no longer deletes your saved settings. If you want to
+	reset your saved settings, please re-save your settings. #40
+
 ## v2.1.0 - 2021-07-31
 
 Added:

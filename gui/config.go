@@ -45,7 +45,7 @@ type AlpacaScopeConfig struct {
 // Loads the config from our SettingsStore (if it exists),
 // otherwise will return our defaults.  Errors are informational
 // so you know why loading settings failed.
-func NewAlpacaScopeConfig() (*AlpacaScopeConfig, error) {
+func NewAlpacaScopeConfig() *AlpacaScopeConfig {
 	config := &AlpacaScopeConfig{
 		TelescopeProtocol: "NexStar",
 		TelescopeMount:    "Alt-Az",
@@ -58,16 +58,20 @@ func NewAlpacaScopeConfig() (*AlpacaScopeConfig, error) {
 		AscomTelescope:    "0",
 		Quit:              make(chan bool),
 		EnableButtons:     make(chan bool),
-		store:             nil,
+		store:             NewSettingsStore(),
 	}
 
+	return config
+}
+
+// Loads our saved settings
+func (a *AlpacaScopeConfig) Load() error {
 	s := NewSettingsStore()
 
 	// load config.  maybe it worked?  Don't care really....
-	err := s.GetSettings(config)
-	config.SetStore(s)
-
-	return config, err
+	err := s.GetSettings(a)
+	a.SetStore(s)
+	return err
 }
 
 // pass through these call to the underlying SettingsStore

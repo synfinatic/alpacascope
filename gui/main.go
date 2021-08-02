@@ -64,7 +64,8 @@ func main() {
 	w := app.NewWindow("AlpacaScope")
 
 	sbox = NewStatusBox(6)
-	config, err := NewAlpacaScopeConfig()
+	config := NewAlpacaScopeConfig()
+	err := config.Load()
 	if err != nil {
 		sbox.AddLine(err.Error())
 		sbox.AddLine("Using default settings.")
@@ -96,13 +97,9 @@ func main() {
 		}
 	})
 	ourWidgets.Delete = widget.NewButton("Reset Settings", func() {
-		err = config.Delete()
-		if err != nil {
-			sbox.AddLine(err.Error())
-		} else {
-			config, _ = NewAlpacaScopeConfig()
-			ourWidgets.Set(config)
-		}
+		config = NewAlpacaScopeConfig()
+		ourWidgets.Set(config)
+		sbox.AddLine("Current settings reset to defaults.")
 	})
 
 	top.OnSubmit = func() {
@@ -487,6 +484,7 @@ func NewWidgets(config *AlpacaScopeConfig) *Widgets {
 func (w *Widgets) Set(config *AlpacaScopeConfig) {
 	w.TelescopeProtocol.SetSelected(config.TelescopeProtocol)
 	w.TelescopeMount.SetSelected(config.TelescopeMount)
+	w.AutoTracking.SetChecked(config.AutoTracking)
 	w.ListenIp.SetSelected(config.ListenIp)
 	w.ListenPort.SetText(config.ListenPort)
 	w.AscomAuto.SetChecked(config.AscomAuto)

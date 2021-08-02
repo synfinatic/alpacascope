@@ -29,6 +29,7 @@ import (
 type AlpacaScopeConfig struct {
 	TelescopeProtocol string `json:"TelescopeProtocol"`
 	TelescopeMount    string `json:"TelescopeMount"`
+	AutoTracking      bool   `json:"AutoTracking"`
 	ListenIp          string `json:"ListenIp"`
 	ListenPort        string `json:"ListenPort"`
 	AscomAuto         bool   `json:"AscomAuto"`
@@ -48,6 +49,7 @@ func NewAlpacaScopeConfig() (*AlpacaScopeConfig, error) {
 	config := &AlpacaScopeConfig{
 		TelescopeProtocol: "NexStar",
 		TelescopeMount:    "Alt-Az",
+		AutoTracking:      true,
 		AscomAuto:         true,
 		ListenIp:          "All-Interfaces/0.0.0.0",
 		ListenPort:        "4030",

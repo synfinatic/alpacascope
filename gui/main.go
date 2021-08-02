@@ -47,6 +47,7 @@ var sbox *StatusBox
 type Widgets struct {
 	TelescopeProtocol *widget.Select
 	TelescopeMount    *widget.Select
+	AutoTracking      *widget.Check
 	ListenIp          *widget.Select
 	ListenPort        *widget.Entry
 	AscomAuto         *widget.Check
@@ -77,6 +78,7 @@ func main() {
 	top := widget.NewForm(
 		widget.NewFormItem("Telescope Protocol", ourWidgets.TelescopeProtocol),
 		widget.NewFormItem("Mount Type", ourWidgets.TelescopeMount),
+		widget.NewFormItem("Auto Tracking", ourWidgets.AutoTracking),
 		widget.NewFormItem("Listen IP", ourWidgets.ListenIp),
 		widget.NewFormItem("Listen Port", ourWidgets.ListenPort),
 		widget.NewFormItem("Auto Discover ASCOM Remote", ourWidgets.AscomAuto),
@@ -249,10 +251,10 @@ func (c *AlpacaScopeConfig) Run() {
 		if err != nil {
 			sbox.AddLine(fmt.Sprintf("Unable to query axis rates: %s", err.Error()))
 		}
-		tscope = telescope.NewLX200(true, true, minmax, 100000)
+		tscope = telescope.NewLX200(c.AutoTracking, true, true, minmax, 100000)
 
 	case "NexStar":
-		tscope = telescope.NewNexStar()
+		tscope = telescope.NewNexStar(c.AutoTracking)
 	}
 
 	// Act like SkyFi
@@ -396,6 +398,18 @@ func NewWidgets(config *AlpacaScopeConfig) *Widgets {
 	if config.TelescopeProtocol == "LX200" {
 		w.TelescopeMount.Disable()
 	}
+
+	// AutoTracking
+	w.AutoTracking = widget.NewCheck("", func(enabled bool) {
+		switch enabled {
+		case true:
+			config.AutoTracking = true
+		case false:
+			config.AutoTracking = false
+		}
+
+	})
+	w.AutoTracking.Checked = config.AutoTracking
 
 	// ListenIp
 	ips, err := utils.GetLocalIPs()

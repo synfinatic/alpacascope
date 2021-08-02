@@ -9,7 +9,7 @@ endif
 BUILDINFOSDET ?=
 PROGRAM_ARGS ?=
 
-PROJECT_VERSION           := 2.1.0
+PROJECT_VERSION           := 2.2.0
 BUILD_ID                  := 1
 DOCKER_REPO               := synfinatic
 PROJECT_NAME              := alpacascope

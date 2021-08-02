@@ -7,7 +7,11 @@ Added:
  - SkySafari's "Stop" action will disable tracking which for some mounts
     will prevent future goto's until tracking is re-enabled.  AlpacaScope 
     will now optionally check for this situation and re-enable tracking 
-    for goto's to be successful.
+    for goto's to be successful. #41
+
+Changed:
+
+ - Use more correct "Alpaca Mount" terminology instead of "ASCOM Remote" #38
 
 ## v2.1.0 - 2021-07-31
 

@@ -81,7 +81,7 @@ func main() {
 		widget.NewFormItem("Auto Tracking", ourWidgets.AutoTracking),
 		widget.NewFormItem("Listen IP", ourWidgets.ListenIp),
 		widget.NewFormItem("Listen Port", ourWidgets.ListenPort),
-		widget.NewFormItem("Auto Discover ASCOM Remote", ourWidgets.AscomAuto),
+		widget.NewFormItem("Auto Discover Alpaca Mount", ourWidgets.AscomAuto),
 		widget.NewFormItem("ASCOM Remote Server IP", ourWidgets.AscomIp),
 		widget.NewFormItem("ASCOM Remote Port", ourWidgets.AscomPort),
 		widget.NewFormItem("ASCOM Telescope ID", ourWidgets.AscomTelescope),

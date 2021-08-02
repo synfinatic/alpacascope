@@ -15,7 +15,7 @@ which is an open source and open standard for astronomy software.
 
 If your telescope does not yet support Alpaca, there is good news: you can use
 [ASCOM Remote Server](https://github.com/ASCOMInitiative/ASCOMRemote) to bridge
-Alpaca to the older [ASCOM](https://ascom-standards.org) platform.
+Alpaca to the older Windows-only [ASCOM](https://ascom-standards.org) platform.
 
 ## Install
 
@@ -43,7 +43,7 @@ automatically find the ASCOM Remote Server running on your network and connect
 to it.
 
 Configure SkySafari or other remote control software to connect to AlpacaScope
- on port 4030 using the Celestron NexStar (I use the NexStar/Advanced GT) or
+on port 4030 using the Celestron NexStar (I use the NexStar/Advanced GT) or
 Meade LX200 GPS protocol.  AlpacaScope supports both, but defaults to NexStar.
 
 AlpacaScope supports the "Auto-Detect SkyFi" feature in SkySafari so you should
@@ -57,9 +57,9 @@ Hopefully the above is pretty self-explainatory.  In general, the defaults
 (other than the mount type) should work 99% of the time and you can just press
 `Start AlpacaScope Services`.  This will then:
 
- * If 'Auto Discover ASCOM Remote' is enabled, it will try to find it on your
+ * If 'Auto Discover Alpaca Mount' is enabled, it will try to find it on your
     local network
- * Attempt to connect to ASCOM Remote
+ * Attempt to connect to ASCOM Remote or your Alpaca mount directly
  * Start SkyFi auto-discovery for SkySafari
  * Listen for new connections on the ListenIP/ListenPort
 

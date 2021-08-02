@@ -56,6 +56,7 @@ func main() {
 	var shost string    // Alpaca server IP
 	var version bool    //  Version info
 	var _mode string    // Comms mode
+	var noAutoTrack bool
 	var mode TeleComms
 	var telescopeId uint32 // Alpaca telescope id.  Usually 0-10
 	var _mount_type string // mount type
@@ -71,6 +72,7 @@ func main() {
 	flag.StringVar(&_mode, "mode", "nexstar", "Comms mode: [nexstar|lx200]")
 	flag.Uint32Var(&telescopeId, "telescope-id", 0, "Alpaca Telescope ID")
 	flag.StringVar(&_mount_type, "mount-type", "altaz", "Mount type: [altaz|eqn|eqs]")
+	flag.BoolVar(&noAutoTrack, "no-auto-track", false, "Do not enable auto-track")
 
 	flag.Parse()
 
@@ -175,9 +177,9 @@ func main() {
 		if err != nil {
 			log.Errorf("Unable to query axis rates: %s", err.Error())
 		}
-		tscope = telescope.NewLX200(true, true, minmax, 100000)
+		tscope = telescope.NewLX200(!noAutoTrack, true, true, minmax, 100000)
 	case NexStar:
-		tscope = telescope.NewNexStar()
+		tscope = telescope.NewNexStar(!noAutoTrack)
 	default:
 		log.Fatalf("Unsupported mode value: %d", mode)
 	}

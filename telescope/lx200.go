@@ -12,6 +12,7 @@ import (
 )
 
 type LX200 struct {
+	AutoTrack      bool // ensure tracking is enabled for goto
 	HighPrecision  bool
 	TwentyFourHour bool // :H#
 	MaxSlew        float64
@@ -28,8 +29,9 @@ type LX200 struct {
 	year           int
 }
 
-func NewLX200(highPrecision, twentyfourhr bool, rates map[string]float64, utcoffset float64) *LX200 {
+func NewLX200(autoTrack bool, highPrecision, twentyfourhr bool, rates map[string]float64, utcoffset float64) *LX200 {
 	state := LX200{
+		AutoTrack:      autoTrack,
 		HighPrecision:  highPrecision,
 		TwentyFourHour: twentyfourhr,
 		MaxSlew:        rates["Maximum"],
@@ -55,7 +57,7 @@ func (state *LX200) HandleConnection(conn net.Conn, t *alpaca.Telescope) {
 		 * multiple commands at once :-/
 		 */
 		for rlen > 0 {
-			reply, consumed := lx200_command(t, rlen, buf, state)
+			reply, consumed := state.lx200_command(t, rlen, buf)
 			if len(reply) > 0 {
 				_, err = conn.Write(reply)
 				if err != nil {
@@ -79,7 +81,7 @@ func (state *LX200) HandleConnection(conn net.Conn, t *alpaca.Telescope) {
 	}
 }
 
-func lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte, state *LX200) ([]byte, int) {
+func (state *LX200) lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte) ([]byte, int) {
 	var consumed int = 0
 	var ret_val []byte
 	ret := ""
@@ -148,7 +150,7 @@ func lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte, state *LX200) ([
 		 * :GM, :GN, :GO, :GP - get site (1, 2, 3, 4) name
 		 * :Go - Get lower limit
 		 * :Gq - Get minimum quality for find operation
-		 * :GVD - get firmware date
+		 * :GVD - Get firmware date
 		 * :GVN - Get firmware version
 		 * :GVP - Get product name
 		 * :GVT - Get firmware time
@@ -216,7 +218,7 @@ func lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte, state *LX200) ([
 			// telescope azimuth baesd on precision config
 			az, err := t.GetAzimuth()
 			if err != nil {
-				log.Errorf("Unable to tget telescope azimuth (:GZ#): %s", err.Error())
+				log.Errorf("Unable to get telescope azimuth (:GZ#): %s", err.Error())
 				az = 0.0
 			}
 			ret = DegreesToStr(az, state.HighPrecision) + "#"
@@ -309,6 +311,21 @@ func lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte, state *LX200) ([
 
 		case ":MS":
 			// slew to target
+			if state.AutoTrack {
+				// auto-enable tracking?
+				mode, err := t.GetTracking()
+				if err != nil {
+					log.Errorf("Unable to get tracking mode: %s", err.Error())
+				} else {
+					if mode == alpaca.NotTracking {
+						err = t.PutTracking(alpaca.Alt_Az) // need any non-NotTracking value for true
+						if err != nil {
+							log.Errorf("Unable to auto-enable tracking: %s", err.Error())
+						}
+					}
+
+				}
+			}
 			err = t.PutSlewToTargetAsync()
 			// we don't get any good/bad answer from Alpaca, so always say success
 			ret = "0"

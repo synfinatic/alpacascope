@@ -12,10 +12,13 @@ import (
 )
 
 type NexStar struct {
+	AutoTrack bool // ensure tracking is enabled for goto
 }
 
-func NewNexStar() *NexStar {
-	return &NexStar{}
+func NewNexStar(autoTrack bool) *NexStar {
+	return &NexStar{
+		AutoTrack: autoTrack,
+	}
 }
 
 func (n *NexStar) HandleConnection(conn net.Conn, t *alpaca.Telescope) {
@@ -27,7 +30,7 @@ func (n *NexStar) HandleConnection(conn net.Conn, t *alpaca.Telescope) {
 		if err != nil {
 			break
 		}
-		reply := nexstar_command(t, rlen, buf)
+		reply := n.nexstar_command(t, rlen, buf)
 		if len(reply) > 0 {
 			_, err = conn.Write(reply)
 			if err != nil {
@@ -44,7 +47,7 @@ func (n *NexStar) HandleConnection(conn net.Conn, t *alpaca.Telescope) {
 	}
 }
 
-func nexstar_command(t *alpaca.Telescope, len int, buf []byte) []byte {
+func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []byte {
 	var ret_val []byte
 	ret := ""
 	var err error
@@ -142,12 +145,42 @@ func nexstar_command(t *alpaca.Telescope, len int, buf []byte) []byte {
 
 	case 'r':
 		// precise goto Ra/Dec values.  RA is in hours, Dec in deg
+		if n.AutoTrack {
+			// auto-enable tracking?
+			mode, err := t.GetTracking()
+			if err != nil {
+				log.Errorf("Unable to get tracking mode: %s", err.Error())
+			} else {
+				if mode == alpaca.NotTracking {
+					err = t.PutTracking(alpaca.Alt_Az) // need any non-NotTracking value for true
+					if err != nil {
+						log.Errorf("Unable to auto-enable tracking: %s", err.Error())
+					}
+				}
+
+			}
+		}
 		radec := NewCoordinateNexstar(buf[1:9], buf[10:18], true)
 		err = t.PutSlewToCoordinatestAsync(radec.RA, radec.Dec)
 		ret = "#"
 
 	case 'R':
 		// goto Ra/Dec values
+		if n.AutoTrack {
+			// auto-enable tracking?
+			mode, err := t.GetTracking()
+			if err != nil {
+				log.Errorf("Unable to get tracking mode: %s", err.Error())
+			} else {
+				if mode == alpaca.NotTracking {
+					err = t.PutTracking(alpaca.Alt_Az) // need any non-NotTracking value for true
+					if err != nil {
+						log.Errorf("Unable to auto-enable tracking: %s", err.Error())
+					}
+				}
+
+			}
+		}
 		radec := NewCoordinateNexstar(buf[1:5], buf[6:10], false)
 		err = t.PutSlewToCoordinatestAsync(radec.RA, radec.Dec)
 		ret = "#"

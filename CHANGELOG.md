@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+Added:
+
+ - SkySafari's "Stop" action will disable tracking which for some mounts
+    will prevent future goto's until tracking is re-enabled.  AlpacaScope 
+    will now optionally check for this situation and re-enable tracking 
+    for goto's to be successful.
+
+## v2.1.0 - 2021-07-31
+
+Added:
+
+ - Ability to save/read configuration settings across executions.
+
 Changed:
 
  - Selecting mount type is only supported with NexStar protocol 

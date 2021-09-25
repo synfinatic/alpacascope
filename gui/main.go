@@ -20,6 +20,7 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"net"
 	"os"
 	"strconv"
@@ -162,10 +163,12 @@ func (w *Widgets) Manager(config *AlpacaScopeConfig) {
 
 func (c *AlpacaScopeConfig) Run() {
 	accptedFirstConnection := false
-	var clientid uint32 = 1
+	var clientid uint32 = rand.Uint32()
 	var sport int32
 	var shost string
 	var err error
+
+	sbox.AddLine(fmt.Sprintf("Using Alpaca ClientID: %d", clientid))
 
 	c.isRunning = true
 
@@ -196,7 +199,7 @@ func (c *AlpacaScopeConfig) Run() {
 	}
 
 	if shost == "" {
-		sbox.AddLine("Unable to auto-discover ASCOM Remote Server")
+		sbox.AddLine("Unable to auto-discover Alpaca/ASCOM Remote Server")
 		sbox.AddLine(CHECK)
 		c.isRunning = false
 		c.EnableButtons <- true
@@ -219,7 +222,8 @@ func (c *AlpacaScopeConfig) Run() {
 
 	connected, err := scope.GetConnected()
 	if err != nil {
-		sbox.AddLine(fmt.Sprintf("Unable to determine status of telescope: %s", err.Error()))
+		sbox.AddLine(fmt.Sprintf("Unable to determine status of telescope ID %s: %s",
+			c.AscomTelescope, err.Error()))
 		sbox.AddLine(CHECK)
 		c.isRunning = false
 		c.EnableButtons <- true
@@ -227,11 +231,15 @@ func (c *AlpacaScopeConfig) Run() {
 	}
 
 	if !connected {
-		sbox.AddLine(fmt.Sprintf("Unable to connect to telescope ID %s: %s", c.AscomTelescope, a.ErrorMessage))
-		sbox.AddLine(CHECK)
-		c.isRunning = false
-		c.EnableButtons <- true
-		return
+		err = scope.PutConnected(true)
+		if err != nil {
+			sbox.AddLine(fmt.Sprintf("Unable to connect to telescope ID %s: %s",
+				c.AscomTelescope, err.Error()))
+			sbox.AddLine(CHECK)
+			c.isRunning = false
+			c.EnableButtons <- true
+			return
+		}
 	}
 
 	name, err := scope.GetName()

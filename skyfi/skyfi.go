@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	reuse "github.com/libp2p/go-reuseport"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -52,7 +53,7 @@ func findIPinCIDR(ip string) (string, error) {
  * Go Routine for handling SkyFi Discovery
  */
 func ReplyDiscover() {
-	pc, err := net.ListenPacket("udp4", fmt.Sprintf(":%d", SKYFI_PORT))
+	pc, err := reuse.ListenPacket("udp4", fmt.Sprintf(":%d", SKYFI_PORT))
 	if err != nil {
 		log.Errorf("Unable to open SkyFi discovery listen socket: %s", err.Error())
 		return
@@ -108,7 +109,7 @@ type DiscoveryPacket struct {
  */
 func ReplyDiscoverWithShutdown(shutdown chan bool) error {
 	quit := false
-	pc, err := net.ListenPacket("udp4", fmt.Sprintf(":%d", SKYFI_PORT))
+	pc, err := reuse.ListenPacket("udp4", fmt.Sprintf(":%d", SKYFI_PORT))
 	if err != nil {
 		return fmt.Errorf("Unable to start SkyFi discovery: %s", err.Error())
 	}
@@ -183,7 +184,7 @@ func ReplyDiscoverWithShutdown(shutdown chan bool) error {
  * enough of the client side SkyFi protocol to get a SkyFi device to respond
  */
 func GetDiscover(name string, tries int) ([]byte, error) {
-	pc, err := net.ListenPacket("udp4", fmt.Sprintf(":%d", SKYFI_PORT))
+	pc, err := reuse.ListenPacket("udp4", fmt.Sprintf(":%d", SKYFI_PORT))
 	if err != nil {
 		return []byte{}, fmt.Errorf("Unable to open SkyFi discovery listen socket: %s", err.Error())
 	}

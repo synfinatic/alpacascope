@@ -173,6 +173,20 @@ func (t *Telescope) GetAxisRates(axis AxisType) (map[string]float64, error) {
 	return result.Value[0], nil
 }
 
+func (t *Telescope) PutConnected(connected bool) error {
+	c := "true"
+	if !connected {
+		c = "false"
+	}
+	var form map[string]string = map[string]string{
+		"Connected":           c,
+		"ClientID":            fmt.Sprintf("%d", t.alpaca.ClientId),
+		"ClientTransactionID": fmt.Sprintf("%d", t.alpaca.GetNextTransactionId()),
+	}
+	err := t.alpaca.Put("telescope", t.Id, "connected", form)
+	return err
+}
+
 type putMoveAxis struct {
 	Axis                AxisType `json:"Axis"`
 	Rate                int      `json:"Rate"`

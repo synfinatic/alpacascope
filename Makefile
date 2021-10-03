@@ -9,7 +9,7 @@ endif
 BUILDINFOSDET ?=
 PROGRAM_ARGS ?=
 
-PROJECT_VERSION           := 2.2.0
+PROJECT_VERSION           := 2.2.1
 BUILD_ID                  := 1
 DOCKER_REPO               := synfinatic
 PROJECT_NAME              := alpacascope
@@ -42,7 +42,7 @@ DARWIN_GUI                := $(DIST_DIR)/$(PROJECT_NAME)-gui-$(PROJECT_VERSION)-
 WINDOWS_RELEASE           := $(DIST_DIR)/AlpacaScope.exe
 WINDOWS                   := $(DIST_DIR)/AlpacaScope-Debug-$(PROJECT_VERSION).exe
 
-GO_FILES = $(shell find . -type f -name '*.go' | grep -v _test.go)
+GO_FILES = $(shell find . -type f -name '*.go' | grep -v _test.go) Makefile
 
 ALL: $(OUTPUT_NAME) ## Build binary.  Needs to be a supported plaform as defined above
 

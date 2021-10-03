@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+Changed:
+
+ - ClientId is now randomized per Alpaca protocol spec
+ - Will attempt to Connect to the telescope if Alpaca reports the connected
+    state is false.
+ - Update to Fyne 2.1.0
+
 ## v2.2.0 - 2021-08-02
 
 Added:

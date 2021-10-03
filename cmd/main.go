@@ -20,6 +20,7 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"net"
 	"os"
 	"strings"
@@ -64,7 +65,7 @@ func main() {
 
 	flag.StringVar(&shost, "alpaca-host", "auto", "FQDN or IP address of Alpaca server")
 	flag.Int32Var(&sport, "alpaca-port", 11111, "TCP port of the Alpaca server")
-	flag.Uint32Var(&clientid, "clientid", 1, "Alpaca ClientID used for debugging")
+	flag.Uint32Var(&clientid, "clientid", 0, "Override Alpaca ClientID used for debugging")
 	flag.Int32Var(&lport, "listen-port", 4030, "TCP port to listen on for clients")
 	flag.StringVar(&lip, "listen-ip", "0.0.0.0", "IP to listen on for clients")
 	flag.BoolVar(&debug, "debug", false, "Enable debug logging")
@@ -75,6 +76,11 @@ func main() {
 	flag.BoolVar(&noAutoTrack, "no-auto-track", false, "Do not enable auto-track")
 
 	flag.Parse()
+
+	if clientid == 0 {
+		clientid = rand.Uint32()
+		log.Debugf("Selecting random ClientID: %d", clientid)
+	}
 
 	// turn on debugging?
 	if debug == true {
@@ -154,7 +160,10 @@ func main() {
 	}
 
 	if !connected {
-		log.Fatalf("Unable to connect to telescope ID %d: %s", telescopeId, a.ErrorMessage)
+		err = scope.PutConnected(true)
+		if err != nil {
+			log.Fatalf("Unable to connect to telescope ID %d: %s", telescopeId, err.Error())
+		}
 	}
 
 	name, err := scope.GetName()

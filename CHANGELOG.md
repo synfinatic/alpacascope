@@ -1,6 +1,6 @@
 # AlpacaScope Changelog
 
-## Unreleased
+## v2.2.1 - 2021-10-03
 
 Changed:
 
@@ -8,6 +8,7 @@ Changed:
  - Will attempt to Connect to the telescope if Alpaca reports the connected
     state is false.
  - Update to Fyne 2.1.0
+ - Use SO_REUSEPORT to avoid bugs. #44
 
 ## v2.2.0 - 2021-08-02
 

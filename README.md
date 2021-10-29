@@ -23,7 +23,8 @@ Alpaca to the older Windows-only [ASCOM](https://ascom-standards.org) platform.
 appropriate for your hardware/OS.
 
 Note there are now CLI and GUI versions of AlpacaScope!  Please download the
-version which works for you. :)
+version which works for you. :)  Please note that the GUI version requires
+an OpenGL video card/driver.
 
 ## Usage
 

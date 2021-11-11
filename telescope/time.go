@@ -1,6 +1,7 @@
 package telescope
 
 /*
+ * Note that all of these functions are NOT used by AlpacaScope!
  * Formulas from https://thecynster.home.blog/2019/11/04/calculating-sidereal-time/
  */
 import (

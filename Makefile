@@ -9,7 +9,7 @@ endif
 BUILDINFOSDET ?=
 PROGRAM_ARGS ?=
 
-PROJECT_VERSION           := 2.2.1
+PROJECT_VERSION           := 2.2.2
 BUILD_ID                  := 1
 DOCKER_REPO               := synfinatic
 PROJECT_NAME              := alpacascope
@@ -40,6 +40,7 @@ DARWIN_RELEASE_GUI        := $(DIST_DIR)/AlpacaScope.app
 DARWIN_RELEASE_ZIP        := $(DIST_DIR)/AlpacaScope-$(PROJECT_VERSION).app.zip
 DARWIN_GUI                := $(DIST_DIR)/$(PROJECT_NAME)-gui-$(PROJECT_VERSION)-darwin-amd64
 WINDOWS_RELEASE           := $(DIST_DIR)/AlpacaScope.exe
+WINDOWS_CLI               := $(DIST_DIR)/AlpacaScope-CLI-$(PROJECT_VERSION).exe
 WINDOWS                   := $(DIST_DIR)/AlpacaScope-Debug-$(PROJECT_VERSION).exe
 
 GO_FILES = $(shell find . -type f -name '*.go' | grep -v _test.go) Makefile
@@ -62,7 +63,7 @@ $(DIST_DIR)/release.sig: .build-release $(DARWIN_RELEASE_ZIP) .verify_windows
 	cd dist && shasum -a 256 * | gpg --clear-sign >release.sig
 
 # This target builds anywhere
-.build-release: $(LINUX_BIN) $(LINUXARM64_BIN) $(LINUXARM32_BIN) $(DARWIN_BIN) $(DARWIN_GUI) $(DARWIN_RELEASE_GUI)
+.build-release: $(LINUX_BIN) $(LINUXARM64_BIN) $(LINUXARM32_BIN) $(DARWIN_BIN) $(DARWIN_GUI) $(DARWIN_RELEASE_GUI) $(WINDOWS_CLI)
 
 # this targets only build on MacOS
 build-gui: darwin-gui darwin-release-gui windows linux-gui ## Build GUI binaries
@@ -210,6 +211,12 @@ $(WINDOWS_RELEASE): $(GO_FILES) | .build-windows-check .prepare .fyne
 		-appVersion $(PROJECT_VERSION) -appBuild $(BUILD_ID) -os windows -release \
 		-sourceDir gui && \
 		mv gui/gui.exe $(WINDOWS_RELEASE)
+
+windows-cli: $(WINDOWS_CLI)  ## Build Windows/amd64 CLI
+
+$(WINDOWS_CLI): $(GO_FILES) | .prepare
+	GOARCH=amd64 GOOS=windows go build -ldflags='$(LDFLAGS)' -o $(WINDOWS_CLI) ./cmd/...
+	@echo "Created: $(WINDOWS_CLI)"
 
 linux-gui: $(LINUX_GUI)  ## Build Linux/x86_64 GUI
 

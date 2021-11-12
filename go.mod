@@ -1,9 +1,9 @@
 module github.com/synfinatic/alpacascope
 
-go 1.15
+go 1.16
 
 require (
-	fyne.io/fyne/v2 v2.1.0
+	fyne.io/fyne/v2 v2.1.1
 	github.com/go-resty/resty/v2 v2.3.0
 	github.com/kr/text v0.2.0 // indirect
 	github.com/libp2p/go-reuseport v0.1.0

@@ -1,5 +1,12 @@
 # AlpacaScope Changelog
 
+## v2.2.2 - 2021-11-11
+
+Added:
+ - Include a Windows CLI verion of the binary for people who don't have OpenGL
+    compatible hardware.
+ - Update Fyne to 2.1.1
+
 ## v2.2.1 - 2021-10-03
 
 Changed:

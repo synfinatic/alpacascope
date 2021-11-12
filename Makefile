@@ -53,14 +53,14 @@ release: clean .build-release ## Build CLI release files
 	@echo "You still need to build 'make windows-release' and 'make sign-relase'"
 
 .PHONY: sign-release
-sign-release: $(DIST_DIR)/release.sig ## Sign release
+sign-release: $(DIST_DIR)/release.sig.asc ## Sign release
 
 .PHONY:
 .verify_windows:
 	@if test ! -f $(WINDOWS_RELEASE); then echo "Missing Windows release binary"; exit 1; fi
 
-$(DIST_DIR)/release.sig: .build-release $(DARWIN_RELEASE_ZIP) .verify_windows
-	cd dist && shasum -a 256 * | gpg --clear-sign >release.sig
+$(DIST_DIR)/release.sig.asc: .build-release $(DARWIN_RELEASE_ZIP) .verify_windows
+	cd dist && shasum -a 256 * | gpg --clear-sign >release.sig.asc
 
 # This target builds anywhere
 .build-release: $(LINUX_BIN) $(LINUXARM64_BIN) $(LINUXARM32_BIN) $(DARWIN_BIN) $(DARWIN_GUI) $(DARWIN_RELEASE_GUI) $(WINDOWS_CLI)

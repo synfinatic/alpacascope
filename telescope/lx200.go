@@ -29,7 +29,7 @@ type LX200 struct {
 	year           int
 }
 
-func NewLX200(autoTrack bool, highPrecision, twentyfourhr bool, rates map[string]float64, utcoffset float64) *LX200 {
+func NewLX200(autoTrack, highPrecision, twentyfourhr bool, rates map[string]float64, utcoffset float64) *LX200 {
 	state := LX200{
 		AutoTrack:      autoTrack,
 		HighPrecision:  highPrecision,

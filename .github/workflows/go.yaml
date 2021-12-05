@@ -7,8 +7,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-    - name: Install X11
-      run: sudo apt-get install -y xorg-dev
+    - name: Install X11/OpenGL
+      run: sudo apt-get update && sudo apt-get install -y xorg-dev
 
     - name: Set up Go 1.15
       uses: actions/setup-go@v1

@@ -1,5 +1,14 @@
 # AlpacaScope Changelog
 
+## v2.2.3 - 2021-12-05
+
+Changed:
+
+ - LX200 mode now defaults to disabling "high precision" mode #51
+ - Both GUI and CLI now support toggling high precision mode to be on or 
+    off by default on startup so that you can enable high precision 
+    by default to replicate the old behavior.
+
 ## v2.2.2 - 2021-11-11
 
 Added:

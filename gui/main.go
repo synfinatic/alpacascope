@@ -46,18 +46,19 @@ const (
 var sbox *StatusBox
 
 type Widgets struct {
-	TelescopeProtocol *widget.Select
-	TelescopeMount    *widget.Select
-	AutoTracking      *widget.Check
-	ListenIp          *widget.Select
-	ListenPort        *widget.Entry
-	AscomAuto         *widget.Check
-	AscomIp           *widget.Entry
-	AscomPort         *widget.Entry
-	AscomTelescope    *widget.Select
-	Status            *widget.TextGrid
-	Save              *widget.Button
-	Delete            *widget.Button
+	TelescopeProtocol  *widget.Select
+	TelescopeMount     *widget.Select
+	AutoTracking       *widget.Check
+	HighPrecisionLX200 *widget.Check
+	ListenIp           *widget.Select
+	ListenPort         *widget.Entry
+	AscomAuto          *widget.Check
+	AscomIp            *widget.Entry
+	AscomPort          *widget.Entry
+	AscomTelescope     *widget.Select
+	Status             *widget.TextGrid
+	Save               *widget.Button
+	Delete             *widget.Button
 }
 
 func main() {
@@ -80,6 +81,7 @@ func main() {
 	top := widget.NewForm(
 		widget.NewFormItem("Telescope Protocol", ourWidgets.TelescopeProtocol),
 		widget.NewFormItem("Mount Type", ourWidgets.TelescopeMount),
+		widget.NewFormItem("", ourWidgets.HighPrecisionLX200),
 		widget.NewFormItem("Auto Tracking", ourWidgets.AutoTracking),
 		widget.NewFormItem("Listen IP", ourWidgets.ListenIp),
 		widget.NewFormItem("Listen Port", ourWidgets.ListenPort),
@@ -393,9 +395,12 @@ func NewWidgets(config *AlpacaScopeConfig) *Widgets {
 			config.TelescopeProtocol = proto
 			if proto == "NexStar" {
 				w.TelescopeMount.Enable()
+				w.HighPrecisionLX200.Disable()
 			} else {
 				// only NexStar supports the mountType
 				w.TelescopeMount.Disable()
+				// only LX200 supports high precision
+				w.HighPrecisionLX200.Enable()
 			}
 		},
 	)
@@ -406,15 +411,20 @@ func NewWidgets(config *AlpacaScopeConfig) *Widgets {
 
 	// AutoTracking
 	w.AutoTracking = widget.NewCheck("", func(enabled bool) {
-		switch enabled {
-		case true:
-			config.AutoTracking = true
-		case false:
-			config.AutoTracking = false
-		}
-
+		config.AutoTracking = enabled
 	})
 	w.AutoTracking.Checked = config.AutoTracking
+
+	// HighPrecisionLX200
+	w.HighPrecisionLX200 = widget.NewCheck("Default to using High Precision", func(enabled bool) {
+		config.HighPrecisionLX200 = enabled
+	})
+	w.HighPrecisionLX200.Checked = config.HighPrecisionLX200
+	if config.TelescopeProtocol == "LX200" {
+		w.HighPrecisionLX200.Enable()
+	} else {
+		w.HighPrecisionLX200.Disable()
+	}
 
 	// ListenIp
 	ips, err := utils.GetLocalIPs()
@@ -491,6 +501,7 @@ func NewWidgets(config *AlpacaScopeConfig) *Widgets {
 
 func (w *Widgets) Set(config *AlpacaScopeConfig) {
 	w.TelescopeProtocol.SetSelected(config.TelescopeProtocol)
+	w.HighPrecisionLX200.SetChecked(config.HighPrecisionLX200)
 	w.TelescopeMount.SetSelected(config.TelescopeMount)
 	w.AutoTracking.SetChecked(config.AutoTracking)
 	w.ListenIp.SetSelected(config.ListenIp)

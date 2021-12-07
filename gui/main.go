@@ -46,6 +46,7 @@ const (
 var sbox *StatusBox
 
 type Widgets struct {
+	form               *widget.Form
 	TelescopeProtocol  *widget.Select
 	TelescopeMount     *widget.Select
 	AutoTracking       *widget.Check
@@ -80,8 +81,8 @@ func main() {
 
 	top := widget.NewForm(
 		widget.NewFormItem("Telescope Protocol", ourWidgets.TelescopeProtocol),
-		widget.NewFormItem("Mount Type", ourWidgets.TelescopeMount),
-		widget.NewFormItem("", ourWidgets.HighPrecisionLX200),
+		widget.NewFormItem("NexStar Mount Type", ourWidgets.TelescopeMount),
+		widget.NewFormItem("LX200 default to High Precision", ourWidgets.HighPrecisionLX200),
 		widget.NewFormItem("Auto Tracking", ourWidgets.AutoTracking),
 		widget.NewFormItem("Listen IP", ourWidgets.ListenIp),
 		widget.NewFormItem("Listen Port", ourWidgets.ListenPort),
@@ -90,6 +91,7 @@ func main() {
 		widget.NewFormItem("ASCOM Remote Port", ourWidgets.AscomPort),
 		widget.NewFormItem("ASCOM Telescope ID", ourWidgets.AscomTelescope),
 	)
+	ourWidgets.form = top
 
 	ourWidgets.Save = widget.NewButton("Save Settings", func() {
 		err := config.Save()
@@ -402,6 +404,7 @@ func NewWidgets(config *AlpacaScopeConfig) *Widgets {
 				// only LX200 supports high precision
 				w.HighPrecisionLX200.Enable()
 			}
+			w.form.Refresh()
 		},
 	)
 	w.TelescopeProtocol.Selected = config.TelescopeProtocol
@@ -412,12 +415,14 @@ func NewWidgets(config *AlpacaScopeConfig) *Widgets {
 	// AutoTracking
 	w.AutoTracking = widget.NewCheck("", func(enabled bool) {
 		config.AutoTracking = enabled
+		w.form.Refresh()
 	})
 	w.AutoTracking.Checked = config.AutoTracking
 
 	// HighPrecisionLX200
-	w.HighPrecisionLX200 = widget.NewCheck("Default to using High Precision", func(enabled bool) {
+	w.HighPrecisionLX200 = widget.NewCheck("", func(enabled bool) {
 		config.HighPrecisionLX200 = enabled
+		w.form.Refresh()
 	})
 	w.HighPrecisionLX200.Checked = config.HighPrecisionLX200
 	if config.TelescopeProtocol == "LX200" {
@@ -476,7 +481,7 @@ func NewWidgets(config *AlpacaScopeConfig) *Widgets {
 			w.AscomIp.Enable()
 			w.AscomPort.Enable()
 		}
-
+		w.form.Refresh()
 	})
 	w.AscomAuto.Checked = config.AscomAuto
 	if config.AscomAuto {

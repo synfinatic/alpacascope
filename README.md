@@ -112,9 +112,31 @@ Alpaca standards.
 
 No!  AlpacaScope works with any telescope / mount supported by Alpaca or
 ASCOM.  The LX200 and NexStar protocols are only for communicating with software
-like SkySafari.  You can even use the LX200 protocol with your Celestron scope
-if you want because AlpacaScope does all the translating between the different
-protocols.
+like SkySafari or StarryNight.  You can even use the LX200 protocol with your 
+Celestron scope if you want because AlpacaScope does all the translating between
+the different protocols.
+
+#### Should I use NexStar or LX200 protocol?
+
+Short version: 
+
+No matter what kind of telescope you have, you probably want 
+to pick `NexStar` in AlpacaScope.  In SkySafari and StarryNight, you should choose 
+`Celestron NexStar/Advanced GT`.
+
+Longer story:
+
+The protocol spec for Celestron NexStar is more consistently implimented
+in my experience and users report a lot more issues with LX200.  So I would
+definitely recommend people try `NexStar` before `LX200`.  Yes, this even
+means people with a Meade LX200 series telescope should probably choose 
+`NexStar`!  Yes, that is _very confusing_ but trust me. :)
+
+That said, I understand there are cases where you might need to use LX200
+and I do my very best to support it.  If you experience any compatibility
+issues, please let me know so I can try to either fix the bug in my code
+or develop a work-around for poorly behaved clients.
+
 
 #### What do I need at minimum?
 

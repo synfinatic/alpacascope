@@ -1,5 +1,22 @@
 # AlpacaScope Changelog
 
+## v2.2.3 - 2021-12-06
+
+Fixed:
+
+ - LX200 mode now defaults to disabling "high precision" mode #51
+ - GUI now consistently (un)shades text labels associated with disabled widgets
+
+Changed:
+
+ - Both GUI and CLI now support toggling high precision mode to be on or
+    off by default on startup so that you can enable high precision
+    by default to replicate the old behavior.
+ - Clients providing goto coordinates in LX200 mode can now specify
+    high or low precision values and we will parse it appropriately
+    regardless of the specified mode.
+
+
 ## v2.2.2 - 2021-11-11
 
 Added:
@@ -22,8 +39,8 @@ Changed:
 Added:
 
  - SkySafari's "Stop" action will disable tracking which for some mounts
-    will prevent future goto's until tracking is re-enabled.  AlpacaScope 
-    will now optionally check for this situation and re-enable tracking 
+    will prevent future goto's until tracking is re-enabled.  AlpacaScope
+    will now optionally check for this situation and re-enable tracking
     for goto's to be successful. #41
 
 Changed:
@@ -43,7 +60,7 @@ Added:
 
 Changed:
 
- - Selecting mount type is only supported with NexStar protocol 
+ - Selecting mount type is only supported with NexStar protocol
  - Updated makefile targets
  - Updated readme
  - Add improved docs for configuration
@@ -98,7 +115,7 @@ Fixed:
 
 Added:
 
- - Info about viruses and how to build on Windows 
+ - Info about viruses and how to build on Windows
  - Git workflow for building & testing
  - Add Linux-ARM binary for RasPi
  - Add support for Alpaca discovery via: --alpaca-host auto
@@ -129,7 +146,7 @@ Fixed:
 
 ## v0.0.2 - 2020-12-23
 
-Fixed: 
+Fixed:
 
  - Properly close Nexstar client TCP sockets that are no longer in use.
 

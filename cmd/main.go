@@ -49,14 +49,15 @@ const (
 )
 
 func main() {
-	var lport int32     // listen port
-	var lip string      // listen IP
-	var clientid uint32 // alpaca client id
-	var debug bool      // enable debugging
-	var sport int32     // Alpaca server port
-	var shost string    // Alpaca server IP
-	var version bool    //  Version info
-	var _mode string    // Comms mode
+	var lport int32        // listen port
+	var lip string         // listen IP
+	var clientid uint32    // alpaca client id
+	var debug bool         // enable debugging
+	var sport int32        // Alpaca server port
+	var shost string       // Alpaca server IP
+	var version bool       //  Version info
+	var _mode string       // Comms mode
+	var highPrecision bool // used for LX200
 	var noAutoTrack bool
 	var mode TeleComms
 	var telescopeId uint32 // Alpaca telescope id.  Usually 0-10
@@ -74,6 +75,7 @@ func main() {
 	flag.Uint32Var(&telescopeId, "telescope-id", 0, "Alpaca Telescope ID")
 	flag.StringVar(&_mount_type, "mount-type", "altaz", "Mount type: [altaz|eqn|eqs]")
 	flag.BoolVar(&noAutoTrack, "no-auto-track", false, "Do not enable auto-track")
+	flag.BoolVar(&highPrecision, "high-precision", false, "Default to High Precision LX200 mode")
 
 	flag.Parse()
 
@@ -186,7 +188,7 @@ func main() {
 		if err != nil {
 			log.Errorf("Unable to query axis rates: %s", err.Error())
 		}
-		tscope = telescope.NewLX200(!noAutoTrack, true, true, minmax, 100000)
+		tscope = telescope.NewLX200(!noAutoTrack, highPrecision, true, minmax, 100000)
 	case NexStar:
 		tscope = telescope.NewNexStar(!noAutoTrack)
 	default:

@@ -29,7 +29,7 @@ type LX200 struct {
 	year           int
 }
 
-func NewLX200(autoTrack bool, highPrecision, twentyfourhr bool, rates map[string]float64, utcoffset float64) *LX200 {
+func NewLX200(autoTrack, highPrecision, twentyfourhr bool, rates map[string]float64, utcoffset float64) *LX200 {
 	state := LX200{
 		AutoTrack:      autoTrack,
 		HighPrecision:  highPrecision,
@@ -372,7 +372,8 @@ func (state *LX200) lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte) (
 			var degrees, min, sec int
 			var sign byte
 			var dms DMS
-			if state.HighPrecision {
+			switch strings.Count(cmd, ":") {
+			case 2:
 				// sDD:MM:SS
 				_, err = fmt.Sscanf(cmd, ":Sd%c%02d*%02d:%02d#", &sign, &degrees, &min, &sec)
 				if err != nil {
@@ -383,7 +384,7 @@ func (state *LX200) lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte) (
 					degrees *= -1
 				}
 				dms = NewDMS(degrees, min, float64(sec))
-			} else {
+			case 1:
 				// sDD:MM
 				_, err = fmt.Sscanf(cmd, ":Sd%c%02d*%02d#", &sign, &degrees, &min)
 				if err != nil {
@@ -394,6 +395,9 @@ func (state *LX200) lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte) (
 					degrees *= -1
 				}
 				dms = NewDMSShort(degrees, float64(min))
+			default:
+				log.Errorf("Unable to parse %s", cmd)
+				ret = "0"
 			}
 			if ret == "" {
 				err = t.PutTargetDeclination(dms.Float)
@@ -487,7 +491,8 @@ func (state *LX200) lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte) (
 			// Set target RA
 			var hour, min, sec int
 			var hms HMS
-			if state.HighPrecision {
+			switch strings.Count(cmd, ":") {
+			case 3:
 				// HH:MM:SS
 				_, err = fmt.Sscanf(cmd, ":Sr%02d:%02d:%02d#", &hour, &min, &sec)
 				if err != nil {
@@ -495,7 +500,7 @@ func (state *LX200) lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte) (
 					ret = "0"
 				}
 				hms = NewHMS(hour, min, float64(sec))
-			} else {
+			case 2:
 				// HH:MM.T  not sure what T is.  Assuming is tenth of sec?
 				_, err = fmt.Sscanf(cmd, ":Sr%02d:%02d.%d#", &hour, &min, &sec)
 				if err != nil {
@@ -504,6 +509,9 @@ func (state *LX200) lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte) (
 				}
 				min_float := float64(min) + (float64(sec) / 10.0)
 				hms = NewHMSShort(hour, min_float)
+			default:
+				log.Errorf("Unable to parse %s", cmd)
+				ret = "0"
 			}
 
 			if ret == "" {

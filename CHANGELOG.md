@@ -1,5 +1,11 @@
 # AlpacaScope Changelog
 
+## Unreleased
+
+Fixed:
+
+ - GetAxisRates() now returns 0, 0 if the mount is parked
+
 ## v2.2.3 - 2021-12-06
 
 Fixed:

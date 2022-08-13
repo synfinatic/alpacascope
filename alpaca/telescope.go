@@ -170,6 +170,13 @@ func (t *Telescope) GetAxisRates(axis AxisType) (map[string]float64, error) {
 		return map[string]float64{}, err
 	}
 	result := (resp.Result().(*mapAxisRates))
+	if len(result.Value) == 0 {
+		// if axis is parked, then you'll get an empty list
+		return map[string]float64{
+			"Minimum": 0.0,
+			"Maximum": 0.0,
+		}, nil
+	}
 	return result.Value[0], nil
 }
 

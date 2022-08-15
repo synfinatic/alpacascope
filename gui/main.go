@@ -20,46 +20,50 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"net"
 	"os"
 	"strconv"
-	"strings"
+	"time"
 
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/data/validation"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 	"github.com/synfinatic/alpacascope/alpaca"
 	"github.com/synfinatic/alpacascope/skyfi"
 	"github.com/synfinatic/alpacascope/telescope"
-	"github.com/synfinatic/alpacascope/utils"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (
-	RUNNING = "Status: AlpacaScope is running!"
-	STOPPED = "Status: AlpacaScope is stopped."
-	CHECK   = "Check configuration and press 'Start'"
+	RUNNING                = "Status: AlpacaScope is running!"
+	STOPPED                = "Status: AlpacaScope is stopped."
+	CHECK                  = "Check configuration and press 'Start'"
+	DEFAULT_DISCOVER_TRIES = 3
 )
 
 var sbox *StatusBox
 
 type Widgets struct {
-	form               *widget.Form
-	TelescopeProtocol  *widget.Select
-	TelescopeMount     *widget.Select
-	AutoTracking       *widget.Check
-	HighPrecisionLX200 *widget.Check
-	ListenIp           *widget.Select
-	ListenPort         *widget.Entry
-	AscomAuto          *widget.Check
-	AscomIp            *widget.Entry
-	AscomPort          *widget.Entry
-	AscomTelescope     *widget.Select
-	Status             *widget.TextGrid
-	Save               *widget.Button
-	Delete             *widget.Button
+	form                *widget.Form
+	TelescopeProtocol   *widget.Select
+	TelescopeMount      *widget.Select
+	AutoTracking        *widget.Check
+	HighPrecisionLX200  *widget.Check
+	ListenIp            *widget.Select
+	ListenPort          *widget.Entry
+	AscomAuto           *widget.Check
+	AutoConnectAttempts *widget.Select
+	AutoStart           *widget.Check
+	AscomIp             *widget.Entry
+	AscomPort           *widget.Entry
+	AscomTelescope      *widget.Select
+	Status              *widget.TextGrid
+	Save                *widget.Button
+	Delete              *widget.Button
 }
 
 func main() {
@@ -77,7 +81,13 @@ func main() {
 	}
 
 	ourWidgets := NewWidgets(config)
-	sbox.AddLine("Press 'Start' when ready.")
+	if !config.AutoStart {
+		sbox.AddLine("Press 'Start' when ready.")
+	} else {
+		sbox.AddLine("Automatically connecting...")
+		go config.Run()
+		go ourWidgets.Manager(config)
+	}
 
 	top := widget.NewForm(
 		widget.NewFormItem("Telescope Protocol", ourWidgets.TelescopeProtocol),
@@ -90,6 +100,8 @@ func main() {
 		widget.NewFormItem("ASCOM Remote Server IP", ourWidgets.AscomIp),
 		widget.NewFormItem("ASCOM Remote Port", ourWidgets.AscomPort),
 		widget.NewFormItem("ASCOM Telescope ID", ourWidgets.AscomTelescope),
+		widget.NewFormItem("Automatically Connect on Start", ourWidgets.AutoStart),
+		widget.NewFormItem("Connect Attempts", ourWidgets.AutoConnectAttempts),
 	)
 	ourWidgets.form = top
 
@@ -116,6 +128,7 @@ func main() {
 		go config.Run()
 		go ourWidgets.Manager(config)
 	}
+
 	top.OnCancel = func() {
 		if config.IsRunning() {
 			config.Quit <- true
@@ -151,8 +164,7 @@ func main() {
 // Waits until we are no longer running and then re-enables the buttons
 func (w *Widgets) Manager(config *AlpacaScopeConfig) {
 	// disable the buttons
-	w.Save.Disable()
-	w.Delete.Disable()
+	w.Disable()
 	w.Status.SetText(RUNNING)
 
 	// wait until we are Quitting our main Run() loop
@@ -160,9 +172,22 @@ func (w *Widgets) Manager(config *AlpacaScopeConfig) {
 	case <-config.EnableButtons:
 		break
 	}
-	w.Save.Enable()
-	w.Delete.Enable()
+	w.Enable()
 	w.Status.SetText(STOPPED)
+}
+
+// preConnectQuit does a stop before we have connected or started skyfi
+func preConnectQuit(c *AlpacaScopeConfig, stop chan bool) {
+	for {
+		select {
+		case <-stop:
+			return
+
+		case <-c.Quit:
+			c.isRunning = false
+			c.EnableButtons <- true
+		}
+	}
 }
 
 func (c *AlpacaScopeConfig) Run() {
@@ -174,6 +199,8 @@ func (c *AlpacaScopeConfig) Run() {
 
 	sbox.AddLine(fmt.Sprintf("Using Alpaca ClientID: %d", clientid))
 
+	tempQuit := make(chan bool)
+	go preConnectQuit(c, tempQuit)
 	c.isRunning = true
 
 	sbox.Clear()
@@ -183,13 +210,27 @@ func (c *AlpacaScopeConfig) Run() {
 		sport = alpaca.DEFAULT_PORT
 		shost = alpaca.IsRunningLocal(sport)
 		if shost == "" {
-			for i := 0; i < 3; i++ {
+			count := math.MaxUint32
+			if c.AutoConnectAttempts != "Unlimited" {
+				x, err := strconv.ParseInt(c.AutoConnectAttempts, 10, 32)
+				if err != nil {
+					count = 3
+					log.Errorf("Error parsing AutoConnectAttempts '%s', using default %d", c.AutoConnectAttempts,
+						DEFAULT_DISCOVER_TRIES)
+				}
+				count = int(x)
+			}
+			for i := 1; i <= count && c.isRunning; i++ {
 				shost, sport, err = alpaca.DiscoverServer(1)
 				if err == nil {
 					sbox.AddLine(fmt.Sprintf("Found ASCOM Remote: %s:%d", shost, sport))
 					break
 				} else {
-					sbox.AddLine(err.Error())
+					if c.AutoConnectAttempts != "Unlimited" {
+						sbox.AddLine(fmt.Sprintf("%d/%d %s", i, count, err.Error()))
+					} else {
+						sbox.AddLine(fmt.Sprintf("%d/Unlimited %s", i, err.Error()))
+					}
 				}
 			}
 		} else {
@@ -205,8 +246,7 @@ func (c *AlpacaScopeConfig) Run() {
 	if shost == "" {
 		sbox.AddLine("Unable to auto-discover Alpaca/ASCOM Remote Server")
 		sbox.AddLine(CHECK)
-		c.isRunning = false
-		c.EnableButtons <- true
+		tempQuit <- true
 		return
 	}
 
@@ -223,25 +263,30 @@ func (c *AlpacaScopeConfig) Run() {
 	a := alpaca.NewAlpaca(clientid, shost, sport)
 	tid, _ := strconv.ParseUint(c.AscomTelescope, 10, 32)
 	scope := alpaca.NewTelescope(uint32(tid), tracking_mode, a)
+	var connected bool = false
+	var connectAttempts int64 = 1
+	if c.AutoStart {
+		connectAttempts, _ = strconv.ParseInt(c.AutoConnectAttempts, 10, 32)
+		sbox.AddLine(fmt.Sprintf("Attempting connecting to TelescopeID:%s %d times",
+			c.AscomTelescope, connectAttempts))
+	}
 
-	connected, err := scope.GetConnected()
-	if err != nil {
-		sbox.AddLine(fmt.Sprintf("Unable to determine status of telescope ID %s: %s",
-			c.AscomTelescope, err.Error()))
-		sbox.AddLine(CHECK)
-		c.isRunning = false
-		c.EnableButtons <- true
-		return
+	for i := 1; !connected && int64(i) <= connectAttempts && c.isRunning; i++ {
+		connected, err = scope.GetConnected()
+		if err != nil {
+			sbox.AddLine(fmt.Sprintf("%d/%d Unable to connect to TelescopeID:%s",
+				i, connectAttempts, c.AscomTelescope))
+			time.Sleep(time.Second)
+		}
 	}
 
 	if !connected {
 		err = scope.PutConnected(true)
 		if err != nil {
-			sbox.AddLine(fmt.Sprintf("Unable to connect to telescope ID %s: %s",
-				c.AscomTelescope, err.Error()))
+			sbox.AddLine(fmt.Sprintf("Unable to connect to telescope ID %s", c.AscomTelescope))
+			sbox.AddLine(err.Error())
 			sbox.AddLine(CHECK)
-			c.isRunning = false
-			c.EnableButtons <- true
+			tempQuit <- true
 			return
 		}
 	}
@@ -269,7 +314,6 @@ func (c *AlpacaScopeConfig) Run() {
 	// Act like SkyFi
 	shutdownSkyFi := make(chan bool)
 	go skyfi.ReplyDiscoverWithShutdown(shutdownSkyFi)
-	// go skyfi.ReplyDiscover()
 
 	newConns := make(chan net.Conn)
 
@@ -278,8 +322,7 @@ func (c *AlpacaScopeConfig) Run() {
 	if err != nil {
 		sbox.AddLine(fmt.Sprintf("Error listening on %s: %s", listen, err.Error()))
 		sbox.AddLine(CHECK)
-		c.isRunning = false
-		c.EnableButtons <- true
+		tempQuit <- true
 		return
 	}
 	defer ln.Close()
@@ -302,13 +345,17 @@ func (c *AlpacaScopeConfig) Run() {
 		}
 	}(ln)
 
+	// stop our temp quit handler
+	tempQuit <- true
+
+	// main loop
 	for {
 		select {
 		case <-c.Quit:
 			sbox.AddLine("Shutting down...")
-			shutdownSkyFi <- true
-			c.EnableButtons <- true
 			c.isRunning = false
+			c.EnableButtons <- true
+			shutdownSkyFi <- true
 			return
 
 		case conn := <-newConns:
@@ -322,197 +369,4 @@ func (c *AlpacaScopeConfig) Run() {
 			clientid += 1
 		}
 	}
-}
-
-type StatusBox struct {
-	TextGrid *widget.TextGrid
-	Lines    int
-	numLines int
-	lines    []string
-}
-
-func NewStatusBox(lineCount int) *StatusBox {
-	status := widget.NewTextGrid()
-	var zeroValue []string
-
-	for i := 0; i < lineCount; i++ {
-		zeroValue = append(zeroValue, "")
-	}
-	status.SetText(strings.Join(zeroValue, "\n"))
-
-	sbox := StatusBox{
-		TextGrid: status,
-		Lines:    lineCount,
-		numLines: 0,
-		lines:    []string{},
-	}
-	return &sbox
-}
-
-func (sb *StatusBox) AddLine(line string) {
-	sb.lines = append(sb.lines, line)
-	for len(sb.lines) > sb.Lines {
-		sb.lines = sb.lines[1:]
-	}
-	displayLines := sb.lines
-	for len(displayLines) < sb.Lines {
-		displayLines = append(displayLines, "")
-	}
-
-	lines := strings.Join(displayLines, "\n")
-	sb.TextGrid.SetText(lines)
-}
-
-func (sb *StatusBox) Widget() *widget.TextGrid {
-	return sb.TextGrid
-}
-
-func (sb *StatusBox) Clear() {
-	var zeroValue []string
-	sb.lines = []string{}
-	sb.numLines = 0
-	for i := 0; i < sb.Lines; i++ {
-		zeroValue = append(zeroValue, "")
-	}
-
-	lines := strings.Join(zeroValue, "\n")
-	sb.TextGrid.SetText(lines)
-}
-
-func NewWidgets(config *AlpacaScopeConfig) *Widgets {
-	w := Widgets{}
-
-	// TelescopeMount
-	w.TelescopeMount = widget.NewSelect(
-		[]string{"Alt-Az", "EQ North", "EQ South"},
-		func(val string) {
-			config.TelescopeMount = val
-		},
-	)
-	w.TelescopeMount.Selected = config.TelescopeMount
-
-	// Telescope Protocol
-	w.TelescopeProtocol = widget.NewSelect([]string{"NexStar", "LX200"},
-		func(proto string) {
-			config.TelescopeProtocol = proto
-			if proto == "NexStar" {
-				w.TelescopeMount.Enable()
-				w.HighPrecisionLX200.Disable()
-			} else {
-				// only NexStar supports the mountType
-				w.TelescopeMount.Disable()
-				// only LX200 supports high precision
-				w.HighPrecisionLX200.Enable()
-			}
-			w.form.Refresh()
-		},
-	)
-	w.TelescopeProtocol.Selected = config.TelescopeProtocol
-	if config.TelescopeProtocol == "LX200" {
-		w.TelescopeMount.Disable()
-	}
-
-	// AutoTracking
-	w.AutoTracking = widget.NewCheck("", func(enabled bool) {
-		config.AutoTracking = enabled
-		w.form.Refresh()
-	})
-	w.AutoTracking.Checked = config.AutoTracking
-
-	// HighPrecisionLX200
-	w.HighPrecisionLX200 = widget.NewCheck("", func(enabled bool) {
-		config.HighPrecisionLX200 = enabled
-		w.form.Refresh()
-	})
-	w.HighPrecisionLX200.Checked = config.HighPrecisionLX200
-	if config.TelescopeProtocol == "LX200" {
-		w.HighPrecisionLX200.Enable()
-	} else {
-		w.HighPrecisionLX200.Disable()
-	}
-
-	// ListenIp
-	ips, err := utils.GetLocalIPs()
-	if err != nil {
-		ips = []string{config.ListenIp}
-		sbox.AddLine(fmt.Sprintf("Unable to detect interfaces: %s", err.Error()))
-	}
-	w.ListenIp = widget.NewSelect(ips, func(ip string) {
-		config.ListenIp = ip
-	})
-	w.ListenIp.Selected = config.ListenIp
-
-	// ListenPort
-	w.ListenPort = widget.NewEntry()
-	w.ListenPort.SetText(config.ListenPort)
-	w.ListenPort.Validator = validation.NewRegexp("^[1-9][0-9]+$",
-		"Invalid TCP Port number")
-	w.ListenPort.OnChanged = func(val string) {
-		config.ListenPort = val
-	}
-
-	// AscomIp
-	w.AscomIp = widget.NewEntry()
-	w.AscomIp.SetText(config.AscomIp)
-	w.AscomIp.Validator = validation.NewRegexp("^([0-9]+\\.){3}[0-9]+$",
-		"Must be a valid IPv4 address")
-	w.AscomIp.OnChanged = func(val string) {
-		config.AscomIp = val
-	}
-
-	// AscomPort
-	w.AscomPort = widget.NewEntry()
-	w.AscomPort.SetText(config.AscomPort)
-	w.AscomPort.Validator = validation.NewRegexp("^[1-9][0-9]+$",
-		"Must be a valid integer > 1")
-	w.AscomPort.OnChanged = func(val string) {
-		config.AscomPort = val
-	}
-
-	// AscomAuto
-	w.AscomAuto = widget.NewCheck("", func(enabled bool) {
-		switch enabled {
-		case true:
-			config.AscomAuto = true
-			w.AscomIp.Disable()
-			w.AscomPort.Disable()
-		case false:
-			config.AscomAuto = false
-			w.AscomIp.Enable()
-			w.AscomPort.Enable()
-		}
-		w.form.Refresh()
-	})
-	w.AscomAuto.Checked = config.AscomAuto
-	if config.AscomAuto {
-		w.AscomIp.Disable()
-		w.AscomPort.Disable()
-	}
-
-	// AscomTelescope
-	w.AscomTelescope = widget.NewSelect(
-		[]string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"},
-		func(val string) {
-			config.AscomTelescope = val
-		},
-	)
-	w.AscomTelescope.Selected = config.AscomTelescope
-
-	// status field
-	w.Status = widget.NewTextGrid()
-	w.Status.SetText(STOPPED)
-	return &w
-}
-
-func (w *Widgets) Set(config *AlpacaScopeConfig) {
-	w.TelescopeProtocol.SetSelected(config.TelescopeProtocol)
-	w.HighPrecisionLX200.SetChecked(config.HighPrecisionLX200)
-	w.TelescopeMount.SetSelected(config.TelescopeMount)
-	w.AutoTracking.SetChecked(config.AutoTracking)
-	w.ListenIp.SetSelected(config.ListenIp)
-	w.ListenPort.SetText(config.ListenPort)
-	w.AscomAuto.SetChecked(config.AscomAuto)
-	w.AscomIp.SetText(config.AscomIp)
-	w.AscomPort.SetText(config.AscomPort)
-	w.AscomTelescope.SetSelected(config.AscomTelescope)
 }

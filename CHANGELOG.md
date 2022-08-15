@@ -1,5 +1,15 @@
 # AlpacaScope Changelog
 
+## v2.3.0 - 2022-07-21
+
+Added:
+
+ - GUI now supports auto-connect on startup #55
+
+Changed:
+
+ - Options are now disabled while running
+
 ## v2.2.3 - 2021-12-06
 
 Fixed:

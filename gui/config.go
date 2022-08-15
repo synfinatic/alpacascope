@@ -27,20 +27,22 @@ import (
 
 // Our actual application config
 type AlpacaScopeConfig struct {
-	TelescopeProtocol  string `json:"TelescopeProtocol"`
-	TelescopeMount     string `json:"TelescopeMount"`
-	AutoTracking       bool   `json:"AutoTracking"`
-	ListenIp           string `json:"ListenIp"`
-	ListenPort         string `json:"ListenPort"`
-	AscomAuto          bool   `json:"AscomAuto"`
-	AscomIp            string `json:"AscomIp"`
-	AscomPort          string `json:"AscomPort"`
-	AscomTelescope     string `json:"AscomTelescope"`
-	HighPrecisionLX200 bool   `json:"HighPrecisionLX200"`
-	isRunning          bool
-	Quit               chan bool      `json:"-"` // have to hide since public
-	EnableButtons      chan bool      `json:"-"`
-	store              *SettingsStore // platform specific
+	TelescopeProtocol   string `json:"TelescopeProtocol"`
+	TelescopeMount      string `json:"TelescopeMount"`
+	AutoTracking        bool   `json:"AutoTracking"`
+	ListenIp            string `json:"ListenIp"`
+	ListenPort          string `json:"ListenPort"`
+	AscomAuto           bool   `json:"AscomAuto"`
+	AutoConnectAttempts string `json:"AutoConnectAttempts"`
+	AutoStart           bool   `json:"AutoStart"`
+	AscomIp             string `json:"AscomIp"`
+	AscomPort           string `json:"AscomPort"`
+	AscomTelescope      string `json:"AscomTelescope"`
+	HighPrecisionLX200  bool   `json:"HighPrecisionLX200"`
+	isRunning           bool
+	Quit                chan bool      `json:"-"` // have to hide since public
+	EnableButtons       chan bool      `json:"-"`
+	store               *SettingsStore // platform specific
 }
 
 // Loads the config from our SettingsStore (if it exists),
@@ -48,19 +50,21 @@ type AlpacaScopeConfig struct {
 // so you know why loading settings failed.
 func NewAlpacaScopeConfig() *AlpacaScopeConfig {
 	config := &AlpacaScopeConfig{
-		TelescopeProtocol:  "NexStar",
-		TelescopeMount:     "Alt-Az",
-		HighPrecisionLX200: false,
-		AutoTracking:       true,
-		AscomAuto:          true,
-		ListenIp:           "All-Interfaces/0.0.0.0",
-		ListenPort:         "4030",
-		AscomIp:            "127.0.0.1",
-		AscomPort:          alpaca.DEFAULT_PORT_STR,
-		AscomTelescope:     "0",
-		Quit:               make(chan bool),
-		EnableButtons:      make(chan bool),
-		store:              NewSettingsStore(),
+		TelescopeProtocol:   "NexStar",
+		TelescopeMount:      "Alt-Az",
+		HighPrecisionLX200:  false,
+		AutoTracking:        true,
+		AscomAuto:           true,
+		AutoConnectAttempts: "3",
+		AutoStart:           false,
+		ListenIp:            "All-Interfaces/0.0.0.0",
+		ListenPort:          "4030",
+		AscomIp:             "127.0.0.1",
+		AscomPort:           alpaca.DEFAULT_PORT_STR,
+		AscomTelescope:      "0",
+		Quit:                make(chan bool),
+		EnableButtons:       make(chan bool),
+		store:               NewSettingsStore(),
 	}
 
 	return config

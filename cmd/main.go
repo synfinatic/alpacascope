@@ -72,7 +72,7 @@ func main() {
 	flag.BoolVar(&debug, "debug", false, "Enable debug logging")
 	flag.BoolVar(&version, "version", false, "Print version and exit")
 	flag.StringVar(&_mode, "mode", "nexstar", "Comms mode: [nexstar|lx200]")
-	flag.Uint32Var(&telescopeId, "telescope-id", 0, "Alpaca Telescope ID")
+	flag.Uint32Var(&telescopeId, "telescope-id", 0, "Alpaca Telescope ID (default 0)")
 	flag.StringVar(&_mount_type, "mount-type", "altaz", "Mount type: [altaz|eqn|eqs]")
 	flag.BoolVar(&noAutoTrack, "no-auto-track", false, "Do not enable auto-track")
 	flag.BoolVar(&highPrecision, "high-precision", false, "Default to High Precision LX200 mode")

@@ -216,6 +216,27 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 		// logged at the end
 		ret = "#"
 
+	case 'h':
+		// get date/time
+		utcDate, err := t.GetUTCDate()
+		if err != nil {
+			log.Errorf("Unable to get date from scope: %s", err.Error())
+		} else {
+			h, m, s := utcDate.Date()
+			isDST := '0'
+			if utcDate.IsDST() {
+				isDST = '1'
+			}
+
+			y, M, d := utcDate.Clock()
+			y = -2000 // need to output a single byte for the year
+			ret = fmt.Sprintf("%c%c%c%c%c%c%c%c#",
+				h, m, s, // H:M:S
+				M, d, y, // M:D:Y
+				0, // always UTC
+				isDST)
+		}
+
 	case 'H':
 		// set date/time
 		tz_val := int(buf[7])
@@ -235,6 +256,11 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 			tz)
 		err = t.PutUTCDate(date)
 		ret = "#"
+
+	case 'J':
+		// is alignment complete?
+		// since Alpaca has no similar command, aways return true
+		ret = "1#"
 
 	case 'L':
 		// Goto in progress??

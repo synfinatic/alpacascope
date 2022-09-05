@@ -9,7 +9,7 @@ endif
 BUILDINFOSDET ?=
 PROGRAM_ARGS ?=
 
-PROJECT_VERSION           := 2.3.0
+PROJECT_VERSION           := 2.4.0
 BUILD_ID                  := 1
 DOCKER_REPO               := synfinatic
 PROJECT_NAME              := alpacascope
@@ -75,13 +75,19 @@ build-gui: darwin-gui darwin-release-gui windows linux-gui ## Build GUI binaries
 	@if test -z "`echo $(GOOS) | grep 'mingw64'`" ; then echo "$(MAKECMDGOALS) requires building on Windows/MINGW64" ; exit 1 ; fi
 
 
+install-fyne:  ## Download and install Fyne
+	go install fyne.io/fyne/v2/cmd/fyne@v2.2.2
+
+install-fyne-cross:  ## Download and install Fyne-Cross
+	go install github.com/fyne-io/fyne-cross@v1.3.0
+
 # Install fyne binary in $GOPATh/bin
 .PHONY: .fyne .fyne-cross
 .fyne:
-	@if test -z "`which fyne`"; then echo "Please install fyne: go get fyne.io/fyne/v2/cmd/fyne" ; exit 1 ; fi
+	@if test -z "`which fyne`"; then echo "Please install fyne: make install-fyne" ; exit 1 ; fi
 
 .fyne-cross:
-	@if test -z "`which fyne-cross`"; then echo "Please install fyne-cross: go get github.com/fyne-io/fyne-cross" ; exit 1 ; fi
+	@if test -z "`which fyne-cross`"; then echo "Please install fyne-cross: make install-fyne-cross" ; exit 1 ; fi
 
 # used by our github action to test building the release binaries + GUI on Linux
 .build-test-binaries: $(LINUX_BIN) $(DARWIN_BIN) $(WINDOWS)
@@ -99,7 +105,7 @@ clean-go: ## Clean Go cache
 	go clean -i -r -cache -modcache
 
 go-get:  ## Get our go modules
-	go get -v all
+	go install -v all
 
 .PHONY: build-race
 build-race: .prepare ## Build race detection binary

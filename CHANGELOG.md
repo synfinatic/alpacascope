@@ -1,5 +1,15 @@
 # AlpacaScope Changelog
 
+## v2.4.0 - 2022-09-06
+
+Added:
+
+ - Support for NexStar 'h' and 'J' commands
+
+Changed:
+
+ - Require Go v1.18+
+
 ## v2.3.0 - 2022-07-21
 
 Added:

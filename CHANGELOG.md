@@ -10,6 +10,11 @@ Changed:
 
  - Require Go v1.18+
 
+Fixed:
+
+ - Fix decoding of ISO8601 timestamps which include fractional seconds
+    for GetUTCDate
+
 ## v2.3.0 - 2022-07-21
 
 Added:

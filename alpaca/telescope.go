@@ -7,6 +7,8 @@ package alpaca
 import (
 	"fmt"
 	"time"
+
+	"github.com/relvacode/iso8601"
 )
 
 type TrackingMode int
@@ -142,12 +144,16 @@ func (t *Telescope) GetTracking() (TrackingMode, error) {
 	return t.Tracking, nil
 }
 
+// Parse ISO8601 w/ fractional seconds
 func (t *Telescope) GetUTCDate() (time.Time, error) {
-	iso8601, err := t.alpaca.GetString("telescope", t.Id, "utcdate")
+	isoTime, err := t.alpaca.GetString("telescope", t.Id, "utcdate")
 	if err != nil {
 		return time.Unix(0, 0), err
+	} else if isoTime == "" {
+		// sometimes we get no error, but we get an empty string?
+		return time.Unix(0, 0), fmt.Errorf("got an empty UTCDate string")
 	}
-	return time.Parse("2006-01-02T15:04:05Z0700", iso8601)
+	return iso8601.ParseString(isoTime)
 }
 
 type mapAxisRates struct {

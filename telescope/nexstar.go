@@ -220,22 +220,22 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 		// get date/time
 		utcDate, err := t.GetUTCDate()
 		if err != nil {
-			log.Errorf("Unable to get date from scope: %s", err.Error())
-		} else {
-			h, m, s := utcDate.Date()
-			isDST := '0'
-			if utcDate.IsDST() {
-				isDST = '1'
-			}
-
-			y, M, d := utcDate.Clock()
-			y = -2000 // need to output a single byte for the year
-			ret = fmt.Sprintf("%c%c%c%c%c%c%c%c#",
-				h, m, s, // H:M:S
-				M, d, y, // M:D:Y
-				0, // always UTC
-				isDST)
+			// not all mounts support this, so use our computer time I guess?
+			utcDate = time.Now()
 		}
+		h, m, s := utcDate.Date()
+		isDST := '0'
+		if utcDate.IsDST() {
+			isDST = '1'
+		}
+
+		y, M, d := utcDate.Clock()
+		y = -2000 // need to output a single byte for the year
+		ret = fmt.Sprintf("%c%c%c%c%c%c%c%c#",
+			h, m, s, // H:M:S
+			M, d, y, // M:D:Y
+			0, // always UTC
+			isDST)
 
 	case 'H':
 		// set date/time

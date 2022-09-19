@@ -194,7 +194,7 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 			failed = true
 		}
 
-		long, err := t.GetSiteLatitude()
+		long, err := t.GetSiteLongitude()
 		if err != nil {
 			// logged at the end
 			failed = true
@@ -220,8 +220,8 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 		// get date/time
 		utcDate, err := t.GetUTCDate()
 		if err != nil {
-			// not all mounts support this, so use our computer time I guess?
-			utcDate = time.Now()
+			log.Errorf("computer returned no UTC date: %s", err.Error())
+			return ""
 		}
 		h, m, s := utcDate.Date()
 		isDST := '0'

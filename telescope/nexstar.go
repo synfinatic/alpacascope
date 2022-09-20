@@ -65,12 +65,12 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 	switch buf[0] {
 	case 'K':
 		// echo next byte
-		ret = fmt.Sprintf("%c#", buf[1])
+		ret_val = []byte{buf[1], '#'}
 
 	case 'e', 'E':
 		ra, dec, err := t.GetRaDec()
 		if err != nil {
-			log.Errorf("Unable to get RA/DEC: %s", err.Error())
+			log.Errorf("unable to get RA/DEC: %s", err.Error())
 		} else {
 			radec := Coordinates{
 				RA:  ra,
@@ -88,7 +88,7 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 		// Get AZM/ALT.  Note that AZM is 0->360, while Alt is -90->90
 		azm, alt, err := t.GetAzmAlt()
 		if err != nil {
-			log.Errorf("Unable to get AZM/ALT: %s", err.Error())
+			log.Errorf("unable to get AZM/ALT: %s", err.Error())
 		} else {
 			azm_int := uint32(azm / 360.0 * math.Pow(2, 16))
 			alt_int := uint32(alt / 360.0 * math.Pow(2, 16))
@@ -99,7 +99,7 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 		// Get Precise AZM/ALT
 		azm, alt, err := t.GetAzmAlt()
 		if err != nil {
-			log.Errorf("Unable to get AZM/ALT: %s", err.Error())
+			log.Errorf("unable to get AZM/ALT: %s", err.Error())
 		} else {
 			azm_int := uint32(azm / 360.0 * 4294967296.0)
 			alt_int := uint32(alt / 360.0 * 4294967296.0)
@@ -110,9 +110,9 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 		// get tracking mode
 		mode, err := t.GetTracking()
 		if err != nil {
-			log.Errorf("Unable to get tracking mode: %s", err.Error())
+			log.Errorf("unable to get tracking mode: %s", err.Error())
 		} else {
-			ret = fmt.Sprintf("%d#", mode)
+			ret = fmt.Sprintf("%c#", mode)
 		}
 
 	case 'T':
@@ -127,9 +127,36 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 		ret = "50#"
 
 	case 'P':
-		// Slew
-		err = executeSlew(t, buf)
-		ret = "#"
+		// Pass through commands for Slew, GPS, RTC, etc
+		if int(buf[3]) == 254 {
+			// Get passthrough device version
+			switch int(buf[2]) {
+			case 16, 17:
+				// mounts
+				ret_val = []byte{5, 0, '#'}
+			case 176, 178:
+				// GPS & RTC
+				ret_val = []byte{1, 6, '#'}
+			default:
+				log.Errorf("invalid device version device type: %d", int(buf[3]))
+			}
+		} else {
+			switch int(buf[2]) {
+			case 176:
+				// GPS
+				ret_val, err = getGPS(t, buf)
+			case 178:
+				// RTC
+				ret_val, err = getRTC(t, buf)
+			case 16, 17:
+				err = executeSlew(t, buf)
+				ret = "#"
+			default:
+				log.Errorf("unsupported P command: %c%c%c%c%c%c%c",
+					buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6])
+				ret = "#"
+			}
+		}
 
 	case 's':
 		// Precise sync aka: Align on object.  Uses the same math as 'e'
@@ -149,12 +176,12 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 			// auto-enable tracking?
 			mode, err := t.GetTracking()
 			if err != nil {
-				log.Errorf("Unable to get tracking mode: %s", err.Error())
+				log.Errorf("unable to get tracking mode: %s", err.Error())
 			} else {
 				if mode == alpaca.NotTracking {
 					err = t.PutTracking(alpaca.Alt_Az) // need any non-NotTracking value for true
 					if err != nil {
-						log.Errorf("Unable to auto-enable tracking: %s", err.Error())
+						log.Errorf("unable to auto-enable tracking: %s", err.Error())
 					}
 				}
 
@@ -170,12 +197,12 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 			// auto-enable tracking?
 			mode, err := t.GetTracking()
 			if err != nil {
-				log.Errorf("Unable to get tracking mode: %s", err.Error())
+				log.Errorf("unable to get tracking mode: %s", err.Error())
 			} else {
 				if mode == alpaca.NotTracking {
 					err = t.PutTracking(alpaca.Alt_Az) // need any non-NotTracking value for true
 					if err != nil {
-						log.Errorf("Unable to auto-enable tracking: %s", err.Error())
+						log.Errorf("unable to auto-enable tracking: %s", err.Error())
 					}
 				}
 
@@ -190,7 +217,7 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 		failed := false
 		lat, err := t.GetSiteLatitude()
 		if err != nil {
-			log.Errorf("Error talking to scope: %s", err.Error())
+			log.Errorf("error talking to scope: %s", err.Error())
 			failed = true
 		}
 
@@ -210,7 +237,7 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 		lat, long := NexstarToLatLong(buf[1:9])
 		err = t.PutSiteLatitude(lat)
 		if err != nil {
-			log.Errorf("Error talking to scope: %s", err.Error())
+			log.Errorf("talking to scope: %s", err.Error())
 		}
 		err = t.PutSiteLongitude(long)
 		// logged at the end
@@ -221,21 +248,21 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 		utcDate, err := t.GetUTCDate()
 		if err != nil {
 			log.Errorf("computer returned no UTC date: %s", err.Error())
-			return ""
+			break
 		}
-		h, m, s := utcDate.Date()
-		isDST := '0'
+		h, m, s := utcDate.Clock()
+		var isDST byte = 0
 		if utcDate.IsDST() {
-			isDST = '1'
+			isDST = 1
 		}
 
-		y, M, d := utcDate.Clock()
-		y = -2000 // need to output a single byte for the year
-		ret = fmt.Sprintf("%c%c%c%c%c%c%c%c#",
-			h, m, s, // H:M:S
-			M, d, y, // M:D:Y
+		y, M, d := utcDate.Date()
+		y -= 2000 // need to output a single byte for the year
+		ret_val = []byte{
+			byte(h), byte(m), byte(s), // H:M:S
+			byte(M), byte(d), byte(y), // M:D:Y
 			0, // always UTC
-			isDST)
+			isDST, '#'}
 
 	case 'H':
 		// set date/time
@@ -254,13 +281,14 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 			int(buf[3]),        // sec S
 			0,                  // nanosec
 			tz)
+		log.Errorf("client set date to: %s", date.String())
 		err = t.PutUTCDate(date)
 		ret = "#"
 
 	case 'J':
 		// is alignment complete?
 		// since Alpaca has no similar command, aways return true
-		ret = "1#"
+		ret_val = []byte{1, '#'}
 
 	case 'L':
 		// Goto in progress??
@@ -272,18 +300,22 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 			ret = "0#"
 		}
 
+	case 'm':
+		// Model- hard code to 6/8 SE
+		ret_val = []byte{12, '#'}
+
 	case 'M':
 		// cancel GOTO
 		err = t.PutAbortSlew()
 		ret = "#"
 
 	default:
-		log.Errorf("Unsupported command: %c", buf[0])
+		log.Errorf("unsupported command: %c", buf[0])
 		ret = "#"
 	}
 
 	if err != nil {
-		log.Errorf("Error talking to scope: %s", err.Error())
+		log.Errorf("error talking to scope: %s", err.Error())
 	}
 
 	// convert our return string to the ret_val
@@ -319,7 +351,7 @@ func executeSlew(t *alpaca.Telescope, buf []byte) error {
 		// Alt/Dec
 		axis = alpaca.AxisAltDec
 	default:
-		log.Errorf("Unknown axis: %d", int(buf[2]))
+		log.Errorf("unknown axis: %d", int(buf[2]))
 	}
 
 	switch int(buf[3]) {
@@ -328,7 +360,7 @@ func executeSlew(t *alpaca.Telescope, buf []byte) error {
 	case 7, 37:
 		positive_direction = false
 	default:
-		log.Errorf("Unknown direction: %d", int(buf[3]))
+		log.Errorf("unknown direction: %d", int(buf[3]))
 	}
 
 	rate = nexstar_rate_to_ascom(positive_direction, int(buf[4]))
@@ -339,6 +371,97 @@ func executeSlew(t *alpaca.Telescope, buf []byte) error {
 
 	err := t.PutMoveAxis(axis, rate)
 	return err
+}
+
+/*
+ * getGPS is another 'P' command which returns date, location, etc from the GPS
+ * unit.  Note that the time & location values from these commands are supposed
+ * to come from the GPS and not RTC or hand controller, but ASCOM doesn't treat
+ * them differently since it is up to the driver.
+ *
+ * However, GPS was v1.6+ while hand controller was v2.3+ so we can expect
+ * some software to prefer/only support the GPS and not hand controller
+ * (Stellarium?)
+ */
+func getGPS(t *alpaca.Telescope, buf []byte) ([]byte, error) {
+	ret_val := []byte{}
+	switch int(buf[2]) {
+	case 55:
+		_, err := t.GetSiteLatitude()
+		if err != nil {
+			// GPS is not linked
+			return []byte{0, '#'}, nil
+		}
+		// GPS is linked
+		return []byte{1, '#'}, nil
+	case 1:
+		// Latitude
+		lat, err := t.GetSiteLatitude()
+		if err != nil {
+			log.Errorf("unable to GetSiteLatitude(): %s", err.Error())
+			return ret_val, err
+		}
+		ret_val = LatLongToGPS(lat)
+	case 2:
+		// Longitude
+		long, err := t.GetSiteLongitude()
+		if err != nil {
+			log.Errorf("unable to GetSiteLongitude(): %s", err.Error())
+			return ret_val, err
+		}
+		ret_val = LatLongToGPS(long)
+	case 3:
+		// Date: m, d
+		utcDate, err := t.GetUTCDate()
+		if err != nil {
+			log.Errorf("GPS returned no UTC date: %s", err.Error())
+			return ret_val, err
+		}
+		_, m, d := utcDate.Date()
+		ret_val = []byte{byte(m), byte(d), '#'}
+	case 4:
+		// Year: (x * 256) + y = year
+		utcDate, err := t.GetUTCDate()
+		if err != nil {
+			log.Errorf("GPS returned no UTC date: %s", err.Error())
+			return ret_val, err
+		}
+		year, _, _ := utcDate.Date()
+		var x int = year / 256
+		var y int = year % 256
+		ret_val = []byte{byte(x), byte(y), '#'}
+	case 51:
+		// Time: h, m, s
+		utcDate, err := t.GetUTCDate()
+		if err != nil {
+			log.Errorf("GPS returned no UTC date: %s", err.Error())
+			return ret_val, err
+		}
+		h, m, s := utcDate.Date()
+		ret_val = []byte{byte(h), byte(m), byte(s), '#'}
+	}
+	return ret_val, nil
+}
+
+/*
+ * getRTC is another 'P' command which returns date from the real time clock
+ * in the mount.  Note that the time values from these commands are supposed
+ * to come from the RTC and not GPS or hand controller, but ASCOM doesn't treat
+ * them differently since it is up to the driver.
+ *
+ * RTC is v1.6+ for get and v3.01+ for set.
+ */
+func getRTC(t *alpaca.Telescope, buf []byte) ([]byte, error) {
+	switch int(buf[2]) {
+	case 3, 4, 51:
+		// These commands to get date, time and year are the same
+		// as the GPS commands, so reuse that code
+		return getGPS(t, buf)
+	default:
+		log.Errorf("unsupported RTC P command: %c%c%c%c%c%c%c",
+			buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6])
+	}
+	return []byte{}, nil
 }
 
 // Converts the direction & rate to an ASCOM rate
@@ -373,7 +496,7 @@ func NexstarToLatLong(b []byte) (float64, float64) {
 	return lat, long
 }
 
-// Convert Lat/Long to ABCDEFGH bytes
+// Convert Lat/Long to ABCDEFGH bytes for hand controller
 func LatLongToNexstar(lat float64, long float64) []byte {
 	var a, b, c, d, e, f, g, h byte
 	// West & South are negative
@@ -401,6 +524,28 @@ func LatLongToNexstar(lat float64, long float64) []byte {
 	g = byte(int(frac_minute * 60.0 * 60.0))
 
 	return []byte{a, b, c, d, e, f, g, h}
+}
+
+/*
+ * Convert a Lat OR Long to GPS fraction of a rotation "XYZ#"
+ *
+ * This is really a 24bit integer representing degrees as:
+ * (x*65536)+(y*256)+z / 2^24 * 360
+ */
+func LatLongToGPS(latlong float64) []byte {
+	var pos = make([]byte, 4)
+
+	// West & South are negative, so need to convert to positive degrees
+	if latlong < 0 {
+		latlong += 360.0
+	}
+
+	position := uint32(latlong * float64(2^24) / 360.0)
+	pos[0] = byte(position & 0x00ff0000 >> 16)
+	pos[1] = byte(position & 0x0000ff00 >> 8)
+	pos[2] = byte(position & 0x000000ff)
+	pos[3] = '#'
+	return pos
 }
 
 /*

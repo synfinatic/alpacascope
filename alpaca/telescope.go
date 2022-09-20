@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/relvacode/iso8601"
+	log "github.com/sirupsen/logrus"
 )
 
 type TrackingMode int
@@ -118,7 +119,6 @@ func (t *Telescope) GetSlewing() (bool, error) {
 
 func (t *Telescope) GetSiteLatitude() (float64, error) {
 	return t.alpaca.GetFloat64("telescope", t.Id, "sitelatitude")
-
 }
 
 func (t *Telescope) GetSiteLongitude() (float64, error) {
@@ -176,6 +176,14 @@ func (t *Telescope) GetAxisRates(axis AxisType) (map[string]float64, error) {
 		return map[string]float64{}, err
 	}
 	result := (resp.Result().(*mapAxisRates))
+	if len(result.Value) == 0 {
+		log.Errorf("telescope driver returned an empty list for axisrates")
+		// sometime it's an empty list?
+		return map[string]float64{
+			"Minimum": 0.0,
+			"Maximum": 0.0,
+		}, nil
+	}
 	return result.Value[0], nil
 }
 

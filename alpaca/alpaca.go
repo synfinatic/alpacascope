@@ -9,9 +9,8 @@ package alpaca
 import (
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
-
 	"github.com/go-resty/resty/v2"
+	log "github.com/sirupsen/logrus"
 )
 
 type Alpaca struct {

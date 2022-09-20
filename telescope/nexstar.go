@@ -31,16 +31,22 @@ func (n *NexStar) HandleConnection(conn net.Conn, t *alpaca.Telescope) {
 			break
 		}
 		reply := n.nexstar_command(t, rlen, buf)
-		if len(reply) > 0 {
-			_, err = conn.Write(reply)
+		wlen := len(reply)
+		log.Debugf("our reply %d bytes: %v", wlen, reply)
+
+		if wlen > 0 {
+			x, err := conn.Write(reply)
 			if err != nil {
 				log.Errorf("writing reply to NexStar client: %s", err.Error())
+			} else if x != wlen {
+				log.Errorf("only wrote %d of %d bytes", x, wlen)
 			}
 		} else {
 			log.Errorf("command '%s' returned a zero length reply", string(buf))
 		}
-		rlen, err = conn.Read(buf)
+		rlen, err = conn.Read(buf) // blocks for next command
 	}
+
 	// Will get this any time the client sends a Fin, so don't log that
 	if err.Error() != "EOF" {
 		log.Errorf("conn.Read() returned error: %s", err.Error())
@@ -56,9 +62,7 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 		for i := 1; i < len; i++ {
 			strbuf = fmt.Sprintf("%s %d", strbuf, buf[i])
 		}
-		if buf[0] != 'e' {
-			log.Debugf("Received %d bytes [%s]: %c %s", len, string(buf[:len]), buf[0], strbuf)
-		}
+		log.Debugf("Received %d bytes [%s]: %c %s", len, string(buf[:len]), buf[0], strbuf)
 	}
 
 	// single byte commands
@@ -217,7 +221,7 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 		failed := false
 		lat, err := t.GetSiteLatitude()
 		if err != nil {
-			log.Errorf("error talking to scope: %s", err.Error())
+			log.Errorf("talking to scope: %s", err.Error())
 			failed = true
 		}
 
@@ -248,21 +252,29 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 		utcDate, err := t.GetUTCDate()
 		if err != nil {
 			log.Errorf("computer returned no UTC date: %s", err.Error())
-			break
-		}
-		h, m, s := utcDate.Clock()
-		var isDST byte = 0
-		if utcDate.IsDST() {
-			isDST = 1
-		}
+			/*
+				ret_val = []byte{
+					0, 0, 0,
+					0, 0, 0,
+					0, 0, '#',
+				}
+			*/
+		} else {
+			h, m, s := utcDate.Clock()
+			var isDST byte = 0
+			if utcDate.IsDST() {
+				isDST = 1
+			}
 
-		y, M, d := utcDate.Date()
-		y -= 2000 // need to output a single byte for the year
-		ret_val = []byte{
-			byte(h), byte(m), byte(s), // H:M:S
-			byte(M), byte(d), byte(y), // M:D:Y
-			0, // always UTC
-			isDST, '#'}
+			y, M, d := utcDate.Date()
+			y -= 2000 // need to output a single byte for the year
+			ret_val = []byte{
+				byte(h), byte(m), byte(s), // H:M:S
+				byte(M), byte(d), byte(y), // M:D:Y
+				0, // always UTC
+				isDST, '#',
+			}
+		}
 
 	case 'H':
 		// set date/time

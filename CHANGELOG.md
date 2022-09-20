@@ -6,6 +6,7 @@ Added:
 
  - Added missing support for NexStar 'h', 'J' and 'm' commands
  - Added NexStar 'P' command support for GPS, RTC and get device version (1.6)
+ - Improved `--debug` output
 
 Changed:
 

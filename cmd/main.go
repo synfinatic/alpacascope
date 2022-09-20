@@ -86,8 +86,12 @@ func main() {
 
 	// turn on debugging?
 	if debug == true {
-		log.SetReportCaller(true)
+		log.SetFormatter(&log.TextFormatter{
+			// DisableColors: true,
+			FullTimestamp: true,
+		})
 		log.SetLevel(log.DebugLevel)
+		// log.SetReportCaller(true)
 	} else {
 		// pretty console output
 		log.SetLevel(log.InfoLevel)

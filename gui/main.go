@@ -281,8 +281,17 @@ func (c *AlpacaScopeConfig) Run() {
 	}
 
 	if !connected {
+		// Manually connect
 		err = scope.PutConnected(true)
 		if err != nil {
+			sbox.AddLine(fmt.Sprintf("Unable to connect to telescope ID %s", c.AscomTelescope))
+			sbox.AddLine(err.Error())
+			sbox.AddLine(CHECK)
+			tempQuit <- true
+			return
+		}
+		connected, err = scope.GetConnected()
+		if err != nil || !connected {
 			sbox.AddLine(fmt.Sprintf("Unable to connect to telescope ID %s", c.AscomTelescope))
 			sbox.AddLine(err.Error())
 			sbox.AddLine(CHECK)

@@ -18,7 +18,8 @@ Fixed:
 
  - Fix decoding of ISO8601 timestamps which include fractional seconds
     for GetUTCDate
- - Incorrectly returned Lat twice instead of lat/long
+ - Incorrectly returned Lat twice instead of lat/long 
+ - Error out if unable to connect to telescope
 
 ## v2.3.0 - 2022-07-21
 

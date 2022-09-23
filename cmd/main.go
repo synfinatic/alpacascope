@@ -86,8 +86,12 @@ func main() {
 
 	// turn on debugging?
 	if debug == true {
-		log.SetReportCaller(true)
+		log.SetFormatter(&log.TextFormatter{
+			// DisableColors: true,
+			FullTimestamp: true,
+		})
 		log.SetLevel(log.DebugLevel)
+		// log.SetReportCaller(true)
 	} else {
 		// pretty console output
 		log.SetLevel(log.InfoLevel)
@@ -165,6 +169,13 @@ func main() {
 		err = scope.PutConnected(true)
 		if err != nil {
 			log.Fatalf("Unable to connect to telescope ID %d: %s", telescopeId, err.Error())
+		}
+		connected, err = scope.GetConnected()
+		if err != nil {
+			log.Fatalf("Unable to determine status of telescope: %s", err.Error())
+		}
+		if !connected {
+			log.Fatalf("Telescope is not connected to ASCOM Remote")
 		}
 	}
 

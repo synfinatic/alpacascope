@@ -7,6 +7,9 @@ package alpaca
 import (
 	"fmt"
 	"time"
+
+	"github.com/relvacode/iso8601"
+	log "github.com/sirupsen/logrus"
 )
 
 type TrackingMode int
@@ -116,7 +119,6 @@ func (t *Telescope) GetSlewing() (bool, error) {
 
 func (t *Telescope) GetSiteLatitude() (float64, error) {
 	return t.alpaca.GetFloat64("telescope", t.Id, "sitelatitude")
-
 }
 
 func (t *Telescope) GetSiteLongitude() (float64, error) {
@@ -142,12 +144,16 @@ func (t *Telescope) GetTracking() (TrackingMode, error) {
 	return t.Tracking, nil
 }
 
+// Parse ISO8601 w/ fractional seconds
 func (t *Telescope) GetUTCDate() (time.Time, error) {
-	iso8601, err := t.alpaca.GetString("telescope", t.Id, "utcdate")
+	isoTime, err := t.alpaca.GetString("telescope", t.Id, "utcdate")
 	if err != nil {
 		return time.Unix(0, 0), err
+	} else if isoTime == "" {
+		// sometimes we get no error, but we get an empty string?
+		return time.Unix(0, 0), fmt.Errorf("got an empty UTCDate string")
 	}
-	return time.Parse("2006-01-02T15:04:05Z0700", iso8601)
+	return iso8601.ParseString(isoTime)
 }
 
 type mapAxisRates struct {
@@ -170,6 +176,14 @@ func (t *Telescope) GetAxisRates(axis AxisType) (map[string]float64, error) {
 		return map[string]float64{}, err
 	}
 	result := (resp.Result().(*mapAxisRates))
+	if len(result.Value) == 0 {
+		log.Errorf("telescope driver returned an empty list for axisrates")
+		// sometime it's an empty list?
+		return map[string]float64{
+			"Minimum": 0.0,
+			"Maximum": 0.0,
+		}, nil
+	}
 	return result.Value[0], nil
 }
 

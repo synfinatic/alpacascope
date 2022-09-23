@@ -9,9 +9,9 @@ package alpaca
 import (
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
-
+	"github.com/davecgh/go-spew/spew"
 	"github.com/go-resty/resty/v2"
+	log "github.com/sirupsen/logrus"
 )
 
 type Alpaca struct {
@@ -70,6 +70,7 @@ func (a *Alpaca) GetString(device string, id uint32, api string) (string, error)
 		a.ErrorMessage = resp.String()
 	}
 	result := (resp.Result().(*stringResponse))
+	log.Debugf("Alpaca response: %s", spew.Sdump(result))
 	return result.Value, nil
 }
 
@@ -95,6 +96,7 @@ func (a *Alpaca) GetStringList(device string, id uint32, api string) ([]string, 
 		a.ErrorMessage = resp.String()
 	}
 	result := (resp.Result().(*stringlistResponse))
+	log.Debugf("Alpaca response: %s", spew.Sdump(result))
 	return result.Value, nil
 }
 
@@ -120,6 +122,7 @@ func (a *Alpaca) GetBool(device string, id uint32, api string) (bool, error) {
 		a.ErrorMessage = resp.String()
 	}
 	result := (resp.Result().(*boolResponse))
+	log.Debugf("Alpaca response: %s", spew.Sdump(result))
 	return result.Value, nil
 }
 
@@ -145,6 +148,7 @@ func (a *Alpaca) GetInt32(device string, id uint32, api string) (int32, error) {
 		a.ErrorMessage = resp.String()
 	}
 	result := (resp.Result().(*int32Response))
+	log.Debugf("Alpaca response: %s", spew.Sdump(result))
 	return result.Value, nil
 }
 
@@ -170,6 +174,7 @@ func (a *Alpaca) GetFloat64(device string, id uint32, api string) (float64, erro
 		a.ErrorMessage = resp.String()
 	}
 	result := (resp.Result().(*float64Response))
+	log.Debugf("Alpaca response: %s", spew.Sdump(result))
 	return result.Value, nil
 }
 
@@ -195,6 +200,7 @@ func (a *Alpaca) GetListUint32(device string, id uint32, api string) ([]uint32, 
 		a.ErrorMessage = resp.String()
 	}
 	result := (resp.Result().(*listUint32Response))
+	log.Debugf("Alpaca response: %s", spew.Sdump(result))
 	return result.Value, nil
 
 }
@@ -236,6 +242,7 @@ type putResponse struct {
 
 func (a *Alpaca) Put(device string, id uint32, api string, form map[string]string) error {
 	url := a.url(device, id, api)
+	log.Debugf("Alpaca PUT: %v", spew.Sdump(form))
 	resp, err := a.client.R().
 		SetHeader("Content-Type", "application/x-www-form-urlencoded").
 		SetResult(&putResponse{}).
@@ -253,6 +260,6 @@ func (a *Alpaca) Put(device string, id uint32, api string, form map[string]strin
 	if result.ErrorNumber != 0 {
 		return fmt.Errorf("%d: %s", result.ErrorNumber, result.ErrorMessage)
 	}
-	log.Debugf("%v", result)
+	log.Debugf("Alpaca PUT response: %s", spew.Sdump(result))
 	return nil
 }

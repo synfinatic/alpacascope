@@ -43,7 +43,8 @@ WINDOWS_RELEASE           := $(DIST_DIR)/AlpacaScope.exe
 WINDOWS_CLI               := $(DIST_DIR)/AlpacaScope-CLI-$(PROJECT_VERSION).exe
 WINDOWS                   := $(DIST_DIR)/AlpacaScope-Debug-$(PROJECT_VERSION).exe
 
-GO_FILES = $(shell find . -type f -name '*.go' | grep -v _test.go) Makefile
+GUI_FILES = $(shell find . -type f -name '*.go' | grep -v _test.go | grep -v ./cmd/alpacascope/ ) Makefile
+CLI_FILES = $(shell find . -type f -name '*.go' | grep -v _test.go | grep -v ./cmd/alpacascope-gui/) Makefile
 
 ALL: $(OUTPUT_NAME) ## Build binary.  Needs to be a supported plaform as defined above
 
@@ -93,8 +94,8 @@ install-fyne-cross:  ## Download and install Fyne-Cross
 .build-test-binaries: $(LINUX_BIN) $(DARWIN_BIN) $(WINDOWS)
 
 .PHONY: run
-run: cmd/*.go  ## build and run cria using $PROGRAM_ARGS
-	go run ./cmd/... $(PROGRAM_ARGS)
+run: $(CLI_FILES)  ## build and run cria using $PROGRAM_ARGS
+	go run ./cmd/alpacascope/... $(PROGRAM_ARGS)
 
 clean-all: clean ## clean _everything_
 
@@ -109,11 +110,11 @@ go-get:  ## Get our go modules
 
 .PHONY: build-race
 build-race: .prepare ## Build race detection binary
-	go build -race -ldflags='$(LDFLAGS)' -o $(OUTPUT_NAME) ./cmd/...
-	go build -race -ldflags='$(LDFLAGS)' -o $(OUTPUT_NAME) ./gui/...
+	go build -race -ldflags='$(LDFLAGS)' -o $(OUTPUT_NAME) ./cmd/alpacascope/...
+	go build -race -ldflags='$(LDFLAGS)' -o $(OUTPUT_NAME) ./cmd/alpacascope-gui/...
 
 debug: .prepare ## Run debug in dlv
-	dlv debug ./cmd/...
+	dlv debug ./cmd/alpacascope/...
 
 .PHONY: unittest
 unittest: ## Run go unit tests
@@ -138,7 +139,7 @@ $(DIST_DIR):
 
 .PHONY: fmt
 fmt: ## Format Go code
-	@go fmt cmd
+	@go fmt cmd/...
 
 .PHONY: test-fmt
 test-fmt: fmt ## Test to make sure code if formatted correctly
@@ -162,73 +163,73 @@ precheck: test test-fmt test-tidy  ## Run all tests that happen in a PR
 # Build targets for our supported plaforms
 linux: $(LINUX_BIN)  ## Build Linux/x86_64 CLI
 
-$(LINUX_BIN): $(GO_FILES) | .prepare
-	GOARCH=amd64 GOOS=linux go build -ldflags='$(LDFLAGS)' -o $(LINUX_BIN) ./cmd/...
+$(LINUX_BIN): $(CLI_FILES) | .prepare
+	GOARCH=amd64 GOOS=linux go build -ldflags='$(LDFLAGS)' -o $(LINUX_BIN) ./cmd/alpacascope/...
 	@echo "Created: $(LINUX_BIN)"
 
 linux-arm64: $(LINUXARM64_BIN)  ## Build Linux/arm64 CLI
 
-$(LINUXARM64_BIN): $(GO_FILES) | .prepare
-	GOARCH=arm64 GOOS=linux go build -ldflags='$(LDFLAGS)' -o $(LINUXARM64_BIN) ./cmd/...
+$(LINUXARM64_BIN): $(CLI_FILES) | .prepare
+	GOARCH=arm64 GOOS=linux go build -ldflags='$(LDFLAGS)' -o $(LINUXARM64_BIN) ./cmd/alpacascope/...
 	@echo "Created: $(LINUXARM64_BIN)"
 
 linux-arm32: $(LINUXARM32_BIN)  ## Build Linux/arm64 CLI
 
-$(LINUXARM32_BIN): $(GO_FILES) | .prepare
-	GOARCH=arm GOOS=linux go build -ldflags='$(LDFLAGS)' -o $(LINUXARM32_BIN) ./cmd/...
+$(LINUXARM32_BIN): $(CLI_FILES) | .prepare
+	GOARCH=arm GOOS=linux go build -ldflags='$(LDFLAGS)' -o $(LINUXARM32_BIN) ./cmd/alpacascope/...
 	@echo "Created: $(LINUXARM32_BIN)"
 
 darwin: $(DARWIN_BIN)  ## Build MacOS/x86_64 CLI
 
-$(DARWIN_BIN): $(GO_FILES) | .prepare
-	GOARCH=amd64 GOOS=darwin go build -ldflags='$(LDFLAGS)' -o $(DARWIN_BIN) ./cmd/...
+$(DARWIN_BIN): $(CLI_FILES) | .prepare
+	GOARCH=amd64 GOOS=darwin go build -ldflags='$(LDFLAGS)' -o $(DARWIN_BIN) ./cmd/alpacascope/...
 	@echo "Created: $(DARWIN_BIN)"
 
 darwin-gui: $(DARWIN_GUI)  ## Build MacOS/x86_64 GUI
 darwin-release-gui: $(DARWIN_RELEASE_GUI)  ## Build MacOS/x86_64 Release GUI
 
-$(DARWIN_RELEASE_GUI): $(GO_FILES) | .build-gui-check .prepare .fyne
+$(DARWIN_RELEASE_GUI): $(GUI_FILES) | .build-gui-check .prepare .fyne
 	@fyne package -appID net.synfin.alpacascope -name AlpacaScope \
 		-appVersion $(PROJECT_VERSION) -appBuild $(BUILD_ID) \
-		-os darwin -sourceDir gui && \
+		-os darwin -sourceDir cmd/alpacascope-gui && \
 		rm -rf $(DARWIN_RELEASE_GUI) && mv AlpacaScope.app $(DARWIN_RELEASE_GUI)
 
 $(DARWIN_RELEASE_ZIP): $(DARWIN_RELEASE_GUI)
 	@zip -mr $(DARWIN_RELEASE_ZIP) $(DARWIN_RELEASE_GUI)
 
 
-$(DARWIN_GUI): $(GO_FILES) | .build-gui-check .prepare
-	go build -ldflags='$(LDFLAGS)' -o $(DARWIN_GUI) ./gui/...
+$(DARWIN_GUI): $(GUI_FILES) | .build-gui-check .prepare
+	go build -ldflags='$(LDFLAGS)' -o $(DARWIN_GUI) ./cmd/alpacascope-gui/...
 
 windows: $(WINDOWS)  ## Build Windows/x86_64 GUI
 
-$(WINDOWS): $(GO_FILES) | .fyne-cross .prepare
+$(WINDOWS): $(GUI_FILES) | .fyne-cross .prepare
 	@fyne-cross windows -app-id net.synfin.alpacascope -developer "Aaron Turner" \
 		-app-version $(PROJECT_VERSION) -ldflags '$(LDFLAGS)' \
-		-icon $(shell pwd)/gui/Icon.png \
-		-name AlpacaScope.exe $(shell pwd)/gui && \
+		-icon $(shell pwd)/cmd/alpacascope-gui/Icon.png \
+		-name AlpacaScope.exe $(shell pwd)/cmd/alpacascope-gui && \
 		mv fyne-cross/bin/windows-amd64/AlpacaScope.exe $(WINDOWS)
 
 windows-release: $(WINDOWS_RELEASE)  ## Build Windows/x86_64 release GUI
 
-$(WINDOWS_RELEASE): $(GO_FILES) | .build-windows-check .prepare .fyne
+$(WINDOWS_RELEASE): $(GUI_FILES) | .build-windows-check .prepare .fyne
 	@rm -f dist/AlpacaScope-$(PROJECT_VERSION).exe && \
 	fyne package -appID net.synfin.AlpacaScope -name net.synfin.AlpacaScope \
 		-appVersion $(PROJECT_VERSION) -appBuild $(BUILD_ID) -os windows -release \
-		-sourceDir gui && \
+		-sourceDir cmd/alpacascope-gui && \
 		mv gui/gui.exe $(WINDOWS_RELEASE)
 
 windows-cli: $(WINDOWS_CLI)  ## Build Windows/amd64 CLI
 
-$(WINDOWS_CLI): $(GO_FILES) | .prepare
-	GOARCH=amd64 GOOS=windows go build -ldflags='$(LDFLAGS)' -o $(WINDOWS_CLI) ./cmd/...
+$(WINDOWS_CLI): $(GUI_FILES) | .prepare
+	GOARCH=amd64 GOOS=windows go build -ldflags='$(LDFLAGS)' -o $(WINDOWS_CLI) ./cmd/alpacascope/...
 	@echo "Created: $(WINDOWS_CLI)"
 
 linux-gui: $(LINUX_GUI)  ## Build Linux/x86_64 GUI
 
-$(LINUX_GUI): $(GO_FILES) | .prepare .fyne-cross
+$(LINUX_GUI): $(GUI_FILES) | .prepare .fyne-cross
 	@fyne-cross linux -app-id net.synfin.alpacascope \
 		-app-version $(PROJECT_VERSION) -ldflags '$(LDFLAGS)' \
-		-icon $(shell pwd)/gui/Icon.png \
-		-name alpacascope $(shell pwd)/gui && \
+		-icon $(shell pwd)/cmd/alpacascope-gui/Icon.png \
+		-name alpacascope $(shell pwd)/cmd/alpacascope-gui && \
 		mv fyne-cross/bin/linux-amd64/alpacascope $(LINUX_GUI)

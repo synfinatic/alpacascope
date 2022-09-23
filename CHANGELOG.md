@@ -1,9 +1,10 @@
 # AlpacaScope Changelog
 
-## v2.4.0 - 2022-09-20
+## v2.4.0 - 2022-09-23
 
 Added:
 
+ - Many enhancments to enable NexStar support for Stellarium Mobile
  - Added missing support for NexStar 'h', 'J' and 'm' commands
  - Added NexStar 'P' command support for GPS, RTC and get device version (1.6)
  - Improved `--debug` output
@@ -11,11 +12,10 @@ Added:
 Changed:
 
  - Require Go v1.18+
- - Many bug fixes in NexStar code for Stellarium Mobile support
- - NexStar tracking mode now reports correctly
 
 Fixed:
 
+ - NexStar tracking mode now reports correctly
  - Fix decoding of ISO8601 timestamps which include fractional seconds
     for GetUTCDate
  - Incorrectly returned Lat twice instead of lat/long 

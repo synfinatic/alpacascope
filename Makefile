@@ -217,7 +217,7 @@ $(WINDOWS_RELEASE): $(GUI_FILES) | .build-windows-check .prepare .fyne
 	fyne package -appID net.synfin.AlpacaScope -name net.synfin.AlpacaScope \
 		-appVersion $(PROJECT_VERSION) -appBuild $(BUILD_ID) -os windows -release \
 		-sourceDir cmd/alpacascope-gui && \
-		mv gui/gui.exe $(WINDOWS_RELEASE)
+		mv cmd/alpacascope-gui/alpacascope-gui.exe $(WINDOWS_RELEASE)
 
 windows-cli: $(WINDOWS_CLI)  ## Build Windows/amd64 CLI
 

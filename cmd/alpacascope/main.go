@@ -25,6 +25,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/alecthomas/kong"
 	"github.com/mattn/go-colorable"
 	"github.com/synfinatic/alpacascope/alpaca"
 	"github.com/synfinatic/alpacascope/skyfi"
@@ -32,10 +33,10 @@ import (
 	"github.com/synfinatic/alpacascope/utils"
 
 	log "github.com/sirupsen/logrus"
-	flag "github.com/spf13/pflag"
 )
 
 var Version = "unknown"
+var CopyrightYears = "2021-2022"
 var Buildinfos = "unknown"
 var Tag = "NO-TAG"
 var CommitID = "unknown"
@@ -48,44 +49,50 @@ const (
 	LX200
 )
 
+type CLI struct {
+	AlpacaHost    string `default:"auto" short:"H" help:"FQDN or IP address of Alpaca server"`
+	AlpacaPort    int32  `default:"11111" short:"P" help:"TCP port of the Alpaca server"`
+	ClientID      uint32 `default:"0" short:"c" help:"Override Alpaca ClientID used for debugging"`
+	TelescopeID   uint32 `default:"0" short:"t" help:"Alpaca TelescopeID"`
+	ListenIP      string `default:"0.0.0.0" help:"IP to listen on for clients"`
+	ListenPort    int32  `default:"4030" help:"TCP port to listen on for clients (default: 4030)"`
+	SerialPort    string `default:"/dev/alpacascope" short:"p" help:"Specify serial port to listen for connections"`
+	Serial        bool   `short:"s" help:"Listen on serial port instead of network"`
+	Mode          string `short:"m" default:"nexstar" enum:"nexstar,lx200" help:"Comms mode: [nexstar|lx200]"`
+	MountType     string `default:"altaz" enum:"altaz,eqn,eqs" help:"Mount type: [altaz|eqn|eqs]"`
+	HighPrecision bool   `help:"Default to High Precision in LX200 mode"`
+	NoAutoTrack   bool   `help:"Do not enable auto-track"`
+	Debug         bool   `help:"Enable debug logging"`
+	Version       bool   `help:"Print version and exit"`
+}
+
+type RunContext struct {
+	Kctx *kong.Context
+	Cli  *CLI
+}
+
 func main() {
-	var lport int32        // listen port
-	var lip string         // listen IP
-	var clientid uint32    // alpaca client id
-	var debug bool         // enable debugging
-	var sport int32        // Alpaca server port
-	var shost string       // Alpaca server IP
-	var version bool       //  Version info
-	var _mode string       // Comms mode
-	var highPrecision bool // used for LX200
-	var noAutoTrack bool
+	cli := CLI{}
+	parser := kong.Must(
+		&cli,
+		kong.Name("alpacascope"),
+		kong.Description("Alpaca to Telescope Gateway"),
+		kong.UsageOnError(),
+		kong.Vars{},
+	)
+	_, err := parser.Parse(os.Args[1:])
+	parser.FatalIfErrorf(err)
+
 	var mode TeleComms
-	var telescopeId uint32 // Alpaca telescope id.  Usually 0-10
-	var _mount_type string // mount type
 	var tracking_mode alpaca.TrackingMode
 
-	flag.StringVar(&shost, "alpaca-host", "auto", "FQDN or IP address of Alpaca server")
-	flag.Int32Var(&sport, "alpaca-port", 11111, "TCP port of the Alpaca server")
-	flag.Uint32Var(&clientid, "clientid", 0, "Override Alpaca ClientID used for debugging")
-	flag.Int32Var(&lport, "listen-port", 4030, "TCP port to listen on for clients")
-	flag.StringVar(&lip, "listen-ip", "0.0.0.0", "IP to listen on for clients")
-	flag.BoolVar(&debug, "debug", false, "Enable debug logging")
-	flag.BoolVar(&version, "version", false, "Print version and exit")
-	flag.StringVar(&_mode, "mode", "nexstar", "Comms mode: [nexstar|lx200]")
-	flag.Uint32Var(&telescopeId, "telescope-id", 0, "Alpaca Telescope ID (default 0)")
-	flag.StringVar(&_mount_type, "mount-type", "altaz", "Mount type: [altaz|eqn|eqs]")
-	flag.BoolVar(&noAutoTrack, "no-auto-track", false, "Do not enable auto-track")
-	flag.BoolVar(&highPrecision, "high-precision", false, "Default to High Precision LX200 mode")
-
-	flag.Parse()
-
-	if clientid == 0 {
-		clientid = rand.Uint32()
-		log.Debugf("Selecting random ClientID: %d", clientid)
+	if cli.ClientID == 0 {
+		cli.ClientID = rand.Uint32()
+		log.Debugf("Selecting random ClientID: %d", cli.ClientID)
 	}
 
 	// turn on debugging?
-	if debug == true {
+	if cli.Debug == true {
 		log.SetFormatter(&log.TextFormatter{
 			// DisableColors: true,
 			FullTimestamp: true,
@@ -106,48 +113,49 @@ func main() {
 		log.Errorf("found ips: %s", strings.Join(ips, ", "))
 	}
 
-	if version == true {
+	if cli.Version {
 		delta := ""
 		if len(Delta) > 0 {
 			delta = fmt.Sprintf(" [%s delta]", Delta)
 			Tag = "Unknown"
 		}
-		fmt.Printf("AlpacaScope Version %s -- Copyright 2021 Aaron Turner\n", Version)
+		fmt.Printf("AlpacaScope Version %s -- Copyright %s Aaron Turner\n", Version, CopyrightYears)
 		fmt.Printf("%s (%s)%s built at %s\n", CommitID, Tag, delta, Buildinfos)
 		os.Exit(0)
 	}
 
-	switch _mode {
+	switch cli.Mode {
 	case "nexstar":
 		mode = NexStar
 	case "lx200":
 		mode = LX200
-	default:
-		log.Fatalf("Invalid mode: %s", _mode)
 	}
-	switch _mount_type {
+	switch cli.MountType {
 	case "altaz":
 		tracking_mode = alpaca.Alt_Az
 	case "eqn":
 		tracking_mode = alpaca.EQ_North
 	case "eqs":
 		tracking_mode = alpaca.EQ_South
-	default:
-		log.Fatalf("Invalid mount type: %s", _mount_type)
 	}
 
-	listen := fmt.Sprintf("%s:%d", lip, lport)
-	ln, err := net.Listen("tcp", listen)
-	if err != nil {
-		log.Fatalf("Error listening on %s: %s", listen, err.Error())
+	var ln net.Listener
+	if !cli.Serial {
+		listen := fmt.Sprintf("%s:%d", cli.ListenIP, cli.ListenPort)
+		ln, err = net.Listen("tcp", listen)
+		if err != nil {
+			log.Fatalf("Error listening on %s: %s", listen, err.Error())
+		}
+	} else {
+		// do the serial port needful
 	}
 	defer ln.Close()
 
-	if shost == "auto" {
+	if cli.AlpacaHost == "auto" {
 		// first look locally since we can't rely on UDP broadcast to work locally on windows
-		shost = alpaca.IsRunningLocal(sport)
-		if shost == "" {
-			shost, sport, err = alpaca.DiscoverServer(3)
+		cli.AlpacaHost = alpaca.IsRunningLocal(cli.AlpacaPort)
+		if cli.AlpacaHost == "" {
+			cli.AlpacaHost, cli.AlpacaPort, err = alpaca.DiscoverServer(3)
 			if err != nil {
 				log.Fatalf("Unable to auto discover Alpaca Remote Server.  Please specify --alpaca-host and --alpaca-port")
 			}
@@ -157,8 +165,8 @@ func main() {
 	// Act like a SkyFi for discovery
 	go skyfi.ReplyDiscover()
 
-	a := alpaca.NewAlpaca(clientid, shost, sport)
-	scope := alpaca.NewTelescope(telescopeId, tracking_mode, a)
+	a := alpaca.NewAlpaca(cli.ClientID, cli.AlpacaHost, cli.AlpacaPort)
+	scope := alpaca.NewTelescope(cli.TelescopeID, tracking_mode, a)
 
 	connected, err := scope.GetConnected()
 	if err != nil {
@@ -168,7 +176,7 @@ func main() {
 	if !connected {
 		err = scope.PutConnected(true)
 		if err != nil {
-			log.Fatalf("Unable to connect to telescope ID %d: %s", telescopeId, err.Error())
+			log.Fatalf("Unable to connect to telescope ID %d: %s", cli.TelescopeID, err.Error())
 		}
 		connected, err = scope.GetConnected()
 		if err != nil {
@@ -183,7 +191,7 @@ func main() {
 	if err != nil {
 		log.Warnf("Unable to determine name of telescope: %s", err.Error())
 	} else {
-		log.Infof("Connected to telescope %d: %s", telescopeId, name)
+		log.Infof("Connected to telescope %d: %s", cli.TelescopeID, name)
 	}
 
 	actions, err := scope.GetSupportedActions()
@@ -199,14 +207,14 @@ func main() {
 		if err != nil {
 			log.Errorf("Unable to query axis rates: %s", err.Error())
 		}
-		tscope = telescope.NewLX200(!noAutoTrack, highPrecision, true, minmax, 100000)
+		tscope = telescope.NewLX200(!cli.NoAutoTrack, cli.HighPrecision, true, minmax, 100000)
 	case NexStar:
-		tscope = telescope.NewNexStar(!noAutoTrack)
+		tscope = telescope.NewNexStar(!cli.NoAutoTrack)
 	default:
 		log.Fatalf("Unsupported mode value: %d", mode)
 	}
 
-	log.Infof("Waiting for %s clients on %s:%d\n", _mode, lip, lport)
+	log.Infof("Waiting for %s clients on %s:%d\n", cli.Mode, cli.ListenIP, cli.ListenPort)
 
 	for {
 		conn, err := ln.Accept()
@@ -216,7 +224,5 @@ func main() {
 		}
 
 		tscope.HandleConnection(conn, scope)
-
-		clientid += 1
 	}
 }

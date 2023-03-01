@@ -77,7 +77,7 @@ build-gui: darwin-gui darwin-release-gui windows linux-gui ## Build GUI binaries
 
 
 install-fyne:  ## Download and install Fyne
-	go install fyne.io/fyne/v2/cmd/fyne@v2.2.2
+	go install fyne.io/fyne/v2/cmd/fyne@v2.3.1
 
 install-fyne-cross:  ## Download and install Fyne-Cross
 	go install github.com/fyne-io/fyne-cross@v1.3.0

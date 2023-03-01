@@ -1,5 +1,11 @@
 # AlpacaScope Changelog
 
+## Unreleased
+
+Changed:
+
+ - Update dependencies
+
 ## v2.4.0 - 2022-09-23
 
 Added:

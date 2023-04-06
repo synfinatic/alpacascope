@@ -10,7 +10,7 @@ and Sequence Generator Pro's [WiFi Scope](https://www.sequencegeneratorpro.com/d
 Unlike the SkyFi, there is no special device you have to buy to control
 your telescope; you can just use your Windows, Mac or Linux computer.
 AlpacaScope controls your telescope via [ASCOM Alpaca](
-https://ascom-standards.org/Developer/Alpaca.htm)
+https://ascom-standards.org/AlpacaDeveloper/Index.htm)
 which is an open source and open standard for astronomy software.
 
 If your telescope does not yet support Alpaca, there is good news: you can use
@@ -98,7 +98,7 @@ https://ascom-standards.org) but that only allows IPC via Windows COM
 which doesn't even support talking to programs on other computers (or my iPad).
 
 But then in 2019, ASCOM introduced [Alpaca](
-https://ascom-standards.org/Developer/Alpaca.htm) which via
+https://ascom-standards.org/AlpacaDeveloper/Index.htm) which via
 [ASCOM Remote Server](https://github.com/ASCOMInitiative/ASCOMRemote/releases)
 exposes the ASCOM API via REST.  Of course, SkySafari doesn't support this (yet)
 so I decided to write a service which emulates a telescope SkySafari supports

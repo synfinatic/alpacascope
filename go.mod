@@ -9,7 +9,7 @@ require (
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/libp2p/go-reuseport v0.2.0
 	github.com/mattn/go-colorable v0.1.8
-	github.com/relvacode/iso8601 v1.1.0
+	github.com/relvacode/iso8601 v1.3.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.0
 	golang.org/x/image v0.6.0 // indirect; security

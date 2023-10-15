@@ -1,11 +1,11 @@
 module github.com/synfinatic/alpacascope
 
-go 1.18
+go 1.21
 
 // when you update the Fyne version, also update the Makefile target
 require (
 	fyne.io/fyne/v2 v2.3.1
-	github.com/alecthomas/kong v0.7.1
+	github.com/alecthomas/kong v0.8.1
 	github.com/go-resty/resty/v2 v2.10.0
 	github.com/libp2p/go-reuseport v0.2.0
 	github.com/mattn/go-colorable v0.1.8

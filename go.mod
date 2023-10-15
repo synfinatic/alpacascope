@@ -6,16 +6,16 @@ go 1.18
 require (
 	fyne.io/fyne/v2 v2.3.1
 	github.com/alecthomas/kong v0.7.1
-	github.com/go-resty/resty/v2 v2.7.0
+	github.com/go-resty/resty/v2 v2.10.0
 	github.com/libp2p/go-reuseport v0.2.0
 	github.com/mattn/go-colorable v0.1.8
 	github.com/relvacode/iso8601 v1.1.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.0
 	golang.org/x/image v0.6.0 // indirect; security
-	golang.org/x/net v0.7.0 // indirect; security
-	golang.org/x/sys v0.5.0
-	golang.org/x/text v0.8.0 // indirect; security
+	golang.org/x/net v0.17.0 // indirect; security
+	golang.org/x/sys v0.13.0
+	golang.org/x/text v0.13.0 // indirect; security
 )
 
 require github.com/davecgh/go-spew v1.1.1

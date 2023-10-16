@@ -7,7 +7,7 @@ require (
 	fyne.io/fyne/v2 v2.3.1
 	github.com/alecthomas/kong v0.8.1
 	github.com/go-resty/resty/v2 v2.10.0
-	github.com/libp2p/go-reuseport v0.2.0
+	github.com/libp2p/go-reuseport v0.4.0
 	github.com/mattn/go-colorable v0.1.13
 	github.com/relvacode/iso8601 v1.3.0
 	github.com/sirupsen/logrus v1.9.0

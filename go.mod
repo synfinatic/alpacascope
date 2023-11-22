@@ -4,7 +4,7 @@ go 1.21
 
 // when you update the Fyne version, also update the Makefile target
 require (
-	fyne.io/fyne/v2 v2.4.1
+	fyne.io/fyne/v2 v2.4.2
 	github.com/alecthomas/kong v0.8.1
 	github.com/go-resty/resty/v2 v2.10.0
 	github.com/libp2p/go-reuseport v0.4.0
@@ -21,7 +21,7 @@ require (
 require github.com/davecgh/go-spew v1.1.1
 
 require (
-	fyne.io/systray v1.10.1-0.20230722100817-88df1e0ffa9a // indirect
+	fyne.io/systray v1.10.1-0.20231115130155-104f5ef7839e // indirect
 	github.com/fredbi/uri v1.0.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/fyne-io/gl-js v0.0.0-20220119005834-d2da28d9ccfe // indirect

@@ -1,11 +1,8 @@
 # AlpacaScope
 
 ## What?
-
-Basically AlpacaScope is a lot like the [SCC SkyFi](
-https://www.skysafariastronomy.com/skyfi-3-professional-astronomy-telescope-control.html)
 <!-- markdown-link-check-disable-next-line -->
-and Sequence Generator Pro's [WiFi Scope](https://www.sequencegeneratorpro.com/download/wifi-scope/).
+Basically AlpacaScope is a lot like the [SCC SkyFi](https://www.skysafariastronomy.com/skyfi-3-professional-astronomy-telescope-control.html) and Sequence Generator Pro's [WiFi Scope](https://www.sequencegeneratorpro.com/download/wifi-scope/).
 
 Unlike the SkyFi, there is no special device you have to buy to control
 your telescope; you can just use your Windows, Mac or Linux computer.

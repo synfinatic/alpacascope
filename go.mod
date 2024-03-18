@@ -6,16 +6,16 @@ go 1.21
 require (
 	fyne.io/fyne/v2 v2.4.4
 	github.com/alecthomas/kong v0.9.0
-	github.com/go-resty/resty/v2 v2.11.0
+	github.com/go-resty/resty/v2 v2.12.0
 	github.com/libp2p/go-reuseport v0.4.0
 	github.com/mattn/go-colorable v0.1.13
 	github.com/relvacode/iso8601 v1.4.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/image v0.11.0 // indirect; security
-	golang.org/x/net v0.17.0 // indirect; security
+	golang.org/x/net v0.22.0 // indirect; security
 	golang.org/x/sys v0.18.0
-	golang.org/x/text v0.13.0 // indirect; security
+	golang.org/x/text v0.14.0 // indirect; security
 )
 
 require github.com/davecgh/go-spew v1.1.1

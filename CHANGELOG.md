@@ -2,9 +2,11 @@
 
 ## Unreleased
 
+## v2.4.1 - 2024-07-09
+
 Changed:
 
- - Update dependencies
+ - Update dependencies.  Fix security bugs in dependencies.
 
 ## v2.4.0 - 2022-09-23
 

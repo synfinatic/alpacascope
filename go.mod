@@ -12,10 +12,10 @@ require (
 	github.com/relvacode/iso8601 v1.4.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.9.0
-	golang.org/x/image v0.11.0 // indirect; security
+	golang.org/x/image v0.18.0 // indirect; security
 	golang.org/x/net v0.23.0 // indirect; security
 	golang.org/x/sys v0.20.0
-	golang.org/x/text v0.14.0 // indirect; security
+	golang.org/x/text v0.16.0 // indirect; security
 )
 
 require github.com/davecgh/go-spew v1.1.1

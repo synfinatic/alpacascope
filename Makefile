@@ -4,12 +4,13 @@ ARCH ?= $(shell uname -m)
 ifeq ($(ARCH),x86_64)
 GOARCH             := amd64
 else
-GOARCH             := $(ARCH)  # no idea if this works for other platforms....
+# no idea if this works for other platforms....
+GOARCH             := $(ARCH)
 endif
 BUILDINFOSDET ?=
 PROGRAM_ARGS ?=
 
-PROJECT_VERSION           := 2.4.1
+PROJECT_VERSION           := 2.4.2
 BUILD_ID                  := 1
 DOCKER_REPO               := synfinatic
 PROJECT_NAME              := alpacascope
@@ -42,11 +43,13 @@ DARWIN_GUI                := $(DIST_DIR)/$(PROJECT_NAME)-gui-$(PROJECT_VERSION)-
 WINDOWS_RELEASE           := $(DIST_DIR)/AlpacaScope.exe
 WINDOWS_CLI               := $(DIST_DIR)/AlpacaScope-CLI-$(PROJECT_VERSION).exe
 WINDOWS                   := $(DIST_DIR)/AlpacaScope-Debug-$(PROJECT_VERSION).exe
+FYNE_VERSION 			  := v2.5.0
+FYNE_CROSS_VERSION 	      := v1.5.0
 
 GUI_FILES = $(shell find . -type f -name '*.go' | grep -v _test.go | grep -v ./cmd/alpacascope/ ) Makefile
 CLI_FILES = $(shell find . -type f -name '*.go' | grep -v _test.go | grep -v ./cmd/alpacascope-gui/) Makefile
 
-ALL: $(OUTPUT_NAME) ## Build binary.  Needs to be a supported plaform as defined above
+ALL: $(GOOS) ## Build binary.  Needs to be a supported plaform as defined above
 
 include help.mk  # place after ALL target and before all other targets
 
@@ -77,10 +80,10 @@ build-gui: darwin-gui darwin-release-gui windows linux-gui ## Build GUI binaries
 
 
 install-fyne:  ## Download and install Fyne
-	go install fyne.io/fyne/v2/cmd/fyne@v2.3.1
+	go install fyne.io/fyne/v2/cmd/fyne@$(FYNE_VERSION)
 
 install-fyne-cross:  ## Download and install Fyne-Cross
-	go install github.com/fyne-io/fyne-cross@v1.3.0
+	go install github.com/fyne-io/fyne-cross@$(FYNE_CROSS_VERSION)
 
 # Install fyne binary in $GOPATh/bin
 .PHONY: .fyne .fyne-cross
@@ -118,7 +121,7 @@ debug: .prepare ## Run debug in dlv
 
 .PHONY: unittest
 unittest: ## Run go unit tests
-	go test ./...
+	go test -ldflags='$(LDFLAGS)' -covermode=atomic -coverprofile=coverage.out  ./...
 
 .PHONY: test-race
 test-race: ## Run `go test -race` on the code
@@ -189,9 +192,9 @@ darwin-gui: $(DARWIN_GUI)  ## Build MacOS/x86_64 GUI
 darwin-release-gui: $(DARWIN_RELEASE_GUI)  ## Build MacOS/x86_64 Release GUI
 
 $(DARWIN_RELEASE_GUI): $(GUI_FILES) | .build-gui-check .prepare .fyne
-	@fyne package -appID net.synfin.alpacascope -name AlpacaScope \
-		-appVersion $(PROJECT_VERSION) -appBuild $(BUILD_ID) \
-		-os darwin -sourceDir cmd/alpacascope-gui && \
+	@fyne package --appID net.synfin.alpacascope --name AlpacaScope \
+		--appVersion $(PROJECT_VERSION) --appBuild $(BUILD_ID) \
+		--target darwin -sourceDir cmd/alpacascope-gui && \
 		rm -rf $(DARWIN_RELEASE_GUI) && mv AlpacaScope.app $(DARWIN_RELEASE_GUI)
 
 $(DARWIN_RELEASE_ZIP): $(DARWIN_RELEASE_GUI)
@@ -204,19 +207,20 @@ $(DARWIN_GUI): $(GUI_FILES) | .build-gui-check .prepare
 windows: $(WINDOWS)  ## Build Windows/x86_64 GUI
 
 $(WINDOWS): $(GUI_FILES) | .fyne-cross .prepare
-	@fyne-cross windows -app-id net.synfin.alpacascope -developer "Aaron Turner" \
-		-app-version $(PROJECT_VERSION) -ldflags '$(LDFLAGS)' \
-		-icon $(shell pwd)/cmd/alpacascope-gui/Icon.png \
-		-name AlpacaScope.exe $(shell pwd)/cmd/alpacascope-gui && \
-		mv fyne-cross/bin/windows-amd64/AlpacaScope.exe $(WINDOWS)
+	fyne-cross windows -app-id net.synfin.alpacascope -developer "Aaron Turner" \
+		-app-version $(PROJECT_VERSION) \
+		-env FYNE_VERSION=$(FYNE_VERSION) \
+		-icon ./cmd/alpacascope-gui/Icon.png \
+		-name AlpacaScope-Debug-$(PROJECT_VERSION) ./cmd/alpacascope-gui && \
+		mv ./fyne-cross/bin/windows-$(GOARCH)/AlpacaScope-Debug-$(PROJECT_VERSION).exe $(DIST_DIR)
 
 windows-release: $(WINDOWS_RELEASE)  ## Build Windows/x86_64 release GUI
 
 $(WINDOWS_RELEASE): $(GUI_FILES) | .build-windows-check .prepare .fyne
 	@rm -f dist/AlpacaScope-$(PROJECT_VERSION).exe && \
-	fyne package -appID net.synfin.AlpacaScope -name net.synfin.AlpacaScope \
-		-appVersion $(PROJECT_VERSION) -appBuild $(BUILD_ID) -os windows -release \
-		-sourceDir cmd/alpacascope-gui && \
+	fyne package --appID net.synfin.AlpacaScope --name net.synfin.AlpacaScope \
+		--appVersion $(PROJECT_VERSION) --appBuild $(BUILD_ID) --target windows --release \
+		--sourceDir cmd/alpacascope-gui && \
 		mv cmd/alpacascope-gui/alpacascope-gui.exe $(WINDOWS_RELEASE)
 
 windows-cli: $(WINDOWS_CLI)  ## Build Windows/amd64 CLI

@@ -1,18 +1,28 @@
 package telescope
 
 import (
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestRAToHourAngle(t *testing.T) {
-	tests := map[float64]map[string]float64{
-		54.382619999999974: map[string]float64{
+	tests := map[float64]map[string]float64{}
+	switch runtime.GOARCH {
+	case "arm64":
+		tests[54.38261999999998] = map[string]float64{
 			"ra":  250.425,
 			"lst": 304.80762,
-		},
+		}
+
+	default:
+		tests[54.382619999999974] = map[string]float64{
+			"ra":  250.425,
+			"lst": 304.80762,
+		}
 	}
+
 	for check, test := range tests {
 		ra := NewDMSDegrees(test["ra"])
 		assert.Equal(t, check, RAToHourAngle(ra.HMS(), test["lst"]))

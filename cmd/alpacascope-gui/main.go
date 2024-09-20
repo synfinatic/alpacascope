@@ -267,15 +267,15 @@ func (c *AlpacaScopeConfig) Run() {
 	var connectAttempts int64 = 1
 	if c.AutoStart {
 		connectAttempts, _ = strconv.ParseInt(c.AutoConnectAttempts, 10, 32)
-		sbox.AddLine(fmt.Sprintf("Attempting connecting to TelescopeID:%s %d times",
+		sbox.AddLine(fmt.Sprintf("Attempting connecting to TelescopeID=%s %d times",
 			c.AscomTelescope, connectAttempts))
 	}
 
 	for i := 1; !connected && int64(i) <= connectAttempts && c.isRunning; i++ {
 		connected, err = scope.GetConnected()
 		if err != nil {
-			sbox.AddLine(fmt.Sprintf("%d/%d Unable to connect to TelescopeID:%s",
-				i, connectAttempts, c.AscomTelescope))
+			line := fmt.Sprintf("%d/%d Unable to connect to TelescopeID=%s: %s", i, connectAttempts, c.AscomTelescope, err.Error())
+			sbox.AddLine(line)
 			time.Sleep(time.Second)
 		}
 	}
@@ -284,7 +284,7 @@ func (c *AlpacaScopeConfig) Run() {
 		// Manually connect
 		err = scope.PutConnected(true)
 		if err != nil {
-			sbox.AddLine(fmt.Sprintf("Unable to connect to telescope ID %s", c.AscomTelescope))
+			sbox.AddLine(fmt.Sprintf("Unable to connect to TelescopeID=%s: %s", c.AscomTelescope, err.Error()))
 			sbox.AddLine(err.Error())
 			sbox.AddLine(CHECK)
 			tempQuit <- true
@@ -292,7 +292,7 @@ func (c *AlpacaScopeConfig) Run() {
 		}
 		connected, err = scope.GetConnected()
 		if err != nil || !connected {
-			sbox.AddLine(fmt.Sprintf("Unable to connect to telescope ID %s", c.AscomTelescope))
+			sbox.AddLine(fmt.Sprintf("Unable to connect to TelescopeID=%s: %s", c.AscomTelescope, err.Error()))
 			sbox.AddLine(err.Error())
 			sbox.AddLine(CHECK)
 			tempQuit <- true

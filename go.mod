@@ -1,6 +1,6 @@
 module github.com/synfinatic/alpacascope
 
-go 1.21
+go 1.22.5
 
 // when you update the Fyne version, also update the Makefile target
 require (

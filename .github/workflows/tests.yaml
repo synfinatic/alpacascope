@@ -156,9 +156,13 @@ jobs:
 
     - name: Generate Coverage Report
       run: |
-        make unittest
-    #     echo "Run, Build Application using script"
-    #     ./location_of_script_within_repo/buildscript.sh
+        make unittest 
+        if [ -f ./coverage.out ]; then
+          echo "Coverage file exists."
+        else
+          echo "Coverage file does not exist."
+          exit 1
+        fi
 
     - name: Perform CodeQL Analysis
       uses: codecov/codecov-action@v5
@@ -167,5 +171,5 @@ jobs:
         files: ./coverage.out
         fail_ci_if_error: true
         flags: unittests
-        token: '${{ secrets.CODECOV_TOKEN }}'
+        token: ${{ secrets.CODECOV_TOKEN }}
         verbose: true

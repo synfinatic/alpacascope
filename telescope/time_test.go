@@ -43,8 +43,8 @@ func TestSideralTimeCalcs(t *testing.T) {
 	mm := time.Date(1969, 1, 5, 20, 5, 0, 0, tz)
 	hours := TimeToUTCHours(mm)
 	assert.Equal(t, 2440227.54513888889, CalcJulianDate(mm, hours))
-	tt_hours := hours + (LeapSeconds(mm)+32.184)/3600.0
-	assert.Equal(t, 2.440227545511389e+06, CalcJulianDate(mm, tt_hours))
+	ttHours := hours + (LeapSeconds(mm)+32.184)/3600.0
+	assert.Equal(t, 2.440227545511389e+06, CalcJulianDate(mm, ttHours))
 	gmst := GreenwichMeanSiderealTime(mm)
 	assert.Equal(t, 8.112740425894629, gmst)
 	dms := NewDMS(-81, 23, 0)
@@ -72,12 +72,12 @@ func TestSideralTimeCalcs(t *testing.T) {
 	 * Third test using old values from http://www.stargazing.net/kepler/altaz.html
 	 */
 	utctz, _ := time.LoadLocation("UTC")
-	m13_time := time.Date(1998, 8, 10, 22, 10, 0, 0, utctz)
+	m13time := time.Date(1998, 8, 10, 22, 10, 0, 0, utctz)
 
 	// Julian date per SkySafari
-	assert.Equal(t, 2.451036423611111e+06, CalcJulianDate(m13_time, TimeToUTCHours(m13_time)))
+	assert.Equal(t, 2.451036423611111e+06, CalcJulianDate(m13time, TimeToUTCHours(m13time)))
 
-	gmst = GreenwichMeanSiderealTime(m13_time)
+	gmst = GreenwichMeanSiderealTime(m13time)
 	dms = NewDMS(-1, 53, 59.4)
 
 	// LST per SkySafari is 19h 19m 9s but doesn't have enough resolution

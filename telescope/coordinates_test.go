@@ -31,7 +31,7 @@ func TestRAToHourAngle(t *testing.T) {
 
 func TestGetAlt(t *testing.T) {
 	tests := map[float64]map[string]float64{
-		49.169127488469556: map[string]float64{
+		49.169127488469556: {
 			"ha":  54.382617,
 			"dec": 36.466667,
 			"lat": 52.5,
@@ -44,7 +44,7 @@ func TestGetAlt(t *testing.T) {
 
 func TestGetAz(t *testing.T) {
 	tests := map[float64]map[string]float64{
-		269.1463277297406: map[string]float64{
+		269.1463277297406: {
 			"ha":  54.382617,
 			"dec": 36.466667,
 			"lat": 52.5,

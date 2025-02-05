@@ -28,4 +28,4 @@ issues:
         - revive
       text: ALL_CAPS
   exclude-files:
-    - ".*_test\\.go"
+#    - ".*_test\\.go"

@@ -18,6 +18,16 @@ func TestNewDMS(t *testing.T) {
 		assert.Equal(t, check, test.Float)
 		assert.Equal(t, check/15.0, test.Hours())
 	}
+	positiveTests := map[float64]DMS{
+		0.0:                NewDMS(0, 0, 0.0),
+		8.2525:             NewDMS(8, 15, 8.99999999999821),    // float error
+		12.505:             NewDMS(12, 30, 18.000000000002814), // float error
+		358.0833333333333:  NewDMS(-1, 55, 0),
+		22.841666666666665: NewDMS(22, 50, 30),
+	}
+	for check, test := range positiveTests {
+		assert.Equal(t, check, test.FloatPositive)
+	}
 }
 
 func TestNewDMSShort(t *testing.T) {
@@ -29,6 +39,15 @@ func TestNewDMSShort(t *testing.T) {
 	}
 	for check, test := range tests {
 		assert.Equal(t, check, test.Float)
+	}
+	positiveTests := map[float64]DMS{
+		0.0:                NewDMSShort(0, 0.0),
+		8.508333333333333:  NewDMSShort(8, 30.5),   // 8:30:30
+		12.254166666666666: NewDMSShort(12, 15.25), // 12:15:15
+		358.0833333333333:  NewDMSShort(-1, 55),
+	}
+	for check, test := range positiveTests {
+		assert.Equal(t, check, test.FloatPositive)
 	}
 }
 

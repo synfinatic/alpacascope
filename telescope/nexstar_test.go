@@ -15,12 +15,12 @@ type LatLong struct {
 
 func TestLatLong(t *testing.T) {
 	tests := []LatLong{
-		LatLong{
+		{
 			Bytes: []byte{118, 20, 17, 0, 33, 50, 41, 1},
 			Lat:   118.33805555555556,
 			Long:  -33.844722222222224,
 		},
-		LatLong{
+		{
 			Bytes: []byte{118, 20, 17, 1, 33, 50, 41, 0},
 			Lat:   -118.33805555555556,
 			Long:  33.844722222222224,
@@ -37,27 +37,27 @@ func TestLatLong(t *testing.T) {
 }
 
 func TestNexstarRA32(t *testing.T) {
-	one_step := 5.587935447692871e-09
-	one_hour := 0.9999999962747097    // rounding error
-	two_hours := 1.9999999981373549   // rouding error
-	eight_hours := 7.999999998137355  // rounding error
-	thirty_min := 0.49999999813735485 // rounding error
-	thirty_min_steps := uint32(math.Pow(2, 32) / 24.0 / 2.0)
-	tests := map[uint32]float64{
+	oneStep := 5.587935447692871e-09
+	oneHour := 0.9999999962747097    // rounding error
+	twoHours := 1.9999999981373549   // rouding error
+	eightHours := 7.999999998137355  // rounding error
+	thirtyMin := 0.49999999813735485 // rounding error
+	thirtyMinSteps := uint32(math.Pow(2, 32) / 24.0 / 2.0)
+	tests := map[uint32]float64{ // nolint:dupl
 		0:                                0.0,
-		1:                                one_step,
-		thirty_min_steps:                 thirty_min,
+		1:                                oneStep,
+		thirtyMinSteps:                   thirtyMin,
 		uint32(math.Pow(2, 32)):          0.0,
 		uint32(math.Pow(2, 32) / 2.0):    12.0,
-		uint32(math.Pow(2, 32) / 3.0):    eight_hours,
-		uint32(math.Pow(2, 32)/2.0) + 1:  12.0 + one_step,
-		uint32(math.Pow(2, 32)/2.0) - 1:  12.0 - one_step,
-		uint32(math.Pow(2, 32) / 12.0):   two_hours,
-		uint32(math.Pow(2, 32) / 24.0):   one_hour,
-		uint32(math.Pow(2, 32)/24.0) + 1: one_hour + one_step,
-		uint32(math.Pow(2, 32)/24.0) - 1: one_hour - one_step,
-		uint32(math.Pow(2, 32)/24.0) + thirty_min_steps: one_hour + thirty_min,
-		uint32(math.Pow(2, 32)/24.0) - thirty_min_steps: one_hour - thirty_min,
+		uint32(math.Pow(2, 32) / 3.0):    eightHours,
+		uint32(math.Pow(2, 32)/2.0) + 1:  12.0 + oneStep,
+		uint32(math.Pow(2, 32)/2.0) - 1:  12.0 - oneStep,
+		uint32(math.Pow(2, 32) / 12.0):   twoHours,
+		uint32(math.Pow(2, 32) / 24.0):   oneHour,
+		uint32(math.Pow(2, 32)/24.0) + 1: oneHour + oneStep,
+		uint32(math.Pow(2, 32)/24.0) - 1: oneHour - oneStep,
+		uint32(math.Pow(2, 32)/24.0) + thirtyMinSteps: oneHour + thirtyMin,
+		uint32(math.Pow(2, 32)/24.0) - thirtyMinSteps: oneHour - thirtyMin,
 	}
 
 	for k, v := range tests {
@@ -69,34 +69,33 @@ func TestNexstarRA32(t *testing.T) {
 }
 
 func TestNexstarRA16(t *testing.T) {
-	one_step := 0.0003662109375
-	one_hour := 0.999755859375     // rounding error
-	two_hours := 1.9998779296875   // rouding error
-	eight_hours := 7.9998779296875 // rounding error
-	thirty_min := 0.4998779296875  // rounding error
-	thirty_min_steps := uint16(math.Pow(2, 16) / 24.0 / 2.0)
-	tests := map[uint16]float64{
+	oneStep := 0.0003662109375
+	oneHour := 0.999755859375     // rounding error
+	twoHours := 1.9998779296875   // rouding error
+	eightHours := 7.9998779296875 // rounding error
+	thirtyMin := 0.4998779296875  // rounding error
+	thirtyMinSteps := uint16(math.Pow(2, 16) / 24.0 / 2.0)
+	tests := map[uint16]float64{ // nolint:dupl
 		0:                                0.0,
-		1:                                one_step,
-		thirty_min_steps:                 thirty_min,
+		1:                                oneStep,
+		thirtyMinSteps:                   thirtyMin,
 		uint16(math.Pow(2, 16)):          0.0,
 		uint16(math.Pow(2, 16) / 2.0):    12.0,
-		uint16(math.Pow(2, 16) / 3.0):    eight_hours,
-		uint16(math.Pow(2, 16)/2.0) + 1:  12.0 + one_step,
-		uint16(math.Pow(2, 16)/2.0) - 1:  12.0 - one_step,
-		uint16(math.Pow(2, 16) / 12.0):   two_hours,
-		uint16(math.Pow(2, 16) / 24.0):   one_hour,
-		uint16(math.Pow(2, 16)/24.0) + 1: one_hour + one_step,
-		uint16(math.Pow(2, 16)/24.0) - 1: one_hour - one_step,
-		uint16(math.Pow(2, 16)/24.0) + thirty_min_steps: one_hour + thirty_min,
-		uint16(math.Pow(2, 16)/24.0) - thirty_min_steps: one_hour - thirty_min,
+		uint16(math.Pow(2, 16) / 3.0):    eightHours,
+		uint16(math.Pow(2, 16)/2.0) + 1:  12.0 + oneStep,
+		uint16(math.Pow(2, 16)/2.0) - 1:  12.0 - oneStep,
+		uint16(math.Pow(2, 16) / 12.0):   twoHours,
+		uint16(math.Pow(2, 16) / 24.0):   oneHour,
+		uint16(math.Pow(2, 16)/24.0) + 1: oneHour + oneStep,
+		uint16(math.Pow(2, 16)/24.0) - 1: oneHour - oneStep,
+		uint16(math.Pow(2, 16)/24.0) + thirtyMinSteps: oneHour + thirtyMin,
+		uint16(math.Pow(2, 16)/24.0) - thirtyMinSteps: oneHour - thirtyMin,
 	}
-	for k, _ := range tests {
+	for k := range tests {
 		ra := uint16StepsToRA(k)
 		steps := raTo16bitSteps(ra)
 		assert.Equal(t, k, steps)
 	}
-
 }
 
 func TestNexstarDec32(t *testing.T) {
@@ -152,9 +151,9 @@ func TestNestarToHMS(t *testing.T) {
 		uint32(math.Pow(2, 32)/24.0 + 1): NewHMS(1.0, 0, 1.1175870895385742e-07),
 	}
 	for input, check := range tests {
-		ra_value := uint32StepsToRA(input)
+		raValue := uint32StepsToRA(input)
 		c := Coordinates{
-			RA:  ra_value,
+			RA:  raValue,
 			Dec: 0.0,
 		}
 		hms := c.RAToHMS()
@@ -166,11 +165,11 @@ func TestNestarToHMS(t *testing.T) {
 
 func TestNexstarRABytes(t *testing.T) {
 	tests := map[float64][]byte{
-		0.0:                []byte{'0', '0', '0', '0', '0', '0', '0', '0'},
-		6.0:                []byte{'4', '0', '0', '0', '0', '0', '0', '0'},
-		6.24999999627471:   []byte{'4', '2', 'A', 'A', 'A', 'A', 'A', 'A'}, // rounding error
-		11.999999994412065: []byte{'7', 'F', 'F', 'F', 'F', 'F', 'F', 'F'}, // rounding error
-		23.999999994412065: []byte{'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F'}, // rounding error
+		0.0:                {'0', '0', '0', '0', '0', '0', '0', '0'},
+		6.0:                {'4', '0', '0', '0', '0', '0', '0', '0'},
+		6.24999999627471:   {'4', '2', 'A', 'A', 'A', 'A', 'A', 'A'}, // rounding error
+		11.999999994412065: {'7', 'F', 'F', 'F', 'F', 'F', 'F', 'F'}, // rounding error
+		23.999999994412065: {'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F'}, // rounding error
 	}
 	for ra, bytes := range tests {
 		c := NewCoordinateNexstar(bytes, tests[0.0], true)
@@ -180,16 +179,16 @@ func TestNexstarRABytes(t *testing.T) {
 
 func TestNexstarDecBytes(t *testing.T) {
 	tests := map[float64][]byte{
-		0.0:                     []byte{'0', '0', '0', '0', '0', '0', '0', '0'},
-		45.0:                    []byte{'2', '0', '0', '0', '0', '0', '0', '0'},
-		90.0:                    []byte{'4', '0', '0', '0', '0', '0', '0', '0'},
-		93.74999994412065:       []byte{'4', '2', 'A', 'A', 'A', 'A', 'A', 'A'}, // rounding error
-		179.99999991618097:      []byte{'7', 'F', 'F', 'F', 'F', 'F', 'F', 'F'}, // rounding error
-		180.0:                   []byte{'8', '0', '0', '0', '0', '0', '0', '0'},
-		-8.381903171539307e-08:  []byte{'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F'}, // rounding error
-		-1.6763806343078613e-07: []byte{'F', 'F', 'F', 'F', 'F', 'F', 'F', 'E'}, // rounding error
-		-45.0:                   []byte{'E', '0', '0', '0', '0', '0', '0', '0'},
-		-179.99999991618097:     []byte{'8', '0', '0', '0', '0', '0', '0', '1'}, // rounding error
+		0.0:                     {'0', '0', '0', '0', '0', '0', '0', '0'},
+		45.0:                    {'2', '0', '0', '0', '0', '0', '0', '0'},
+		90.0:                    {'4', '0', '0', '0', '0', '0', '0', '0'},
+		93.74999994412065:       {'4', '2', 'A', 'A', 'A', 'A', 'A', 'A'}, // rounding error
+		179.99999991618097:      {'7', 'F', 'F', 'F', 'F', 'F', 'F', 'F'}, // rounding error
+		180.0:                   {'8', '0', '0', '0', '0', '0', '0', '0'},
+		-8.381903171539307e-08:  {'F', 'F', 'F', 'F', 'F', 'F', 'F', 'F'}, // rounding error
+		-1.6763806343078613e-07: {'F', 'F', 'F', 'F', 'F', 'F', 'F', 'E'}, // rounding error
+		-45.0:                   {'E', '0', '0', '0', '0', '0', '0', '0'},
+		-179.99999991618097:     {'8', '0', '0', '0', '0', '0', '0', '1'}, // rounding error
 	}
 	for dec, bytes := range tests {
 		c := NewCoordinateNexstar(tests[0.0], bytes, true)

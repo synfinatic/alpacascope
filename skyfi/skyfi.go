@@ -18,7 +18,7 @@ const (
  * Based on the client IP, we need to figure out what local IP to respond with.
  */
 func findIPinCIDR(ip string) (string, error) {
-	ip_check := net.ParseIP(ip)
+	ipCheck := net.ParseIP(ip)
 
 	ifaces, err := net.Interfaces()
 	if err != nil {
@@ -41,7 +41,7 @@ func findIPinCIDR(ip string) (string, error) {
 				continue // skip non-IPv4 addresses
 			}
 
-			if network.Contains(ip_check) {
+			if network.Contains(ipCheck) {
 				return ip.String(), nil
 			}
 		}
@@ -62,7 +62,7 @@ func ReplyDiscover() {
 	log.Infof("Starting SkyFi Discovery service on UDP/%d", SKYFI_PORT)
 
 	buf := make([]byte, 1024)
-	for true {
+	for {
 		n, addr, err := pc.ReadFrom(buf)
 		if err != nil {
 			log.Warnf("Unable to read from SkyFi discovery listen socket: %s", err.Error())
@@ -79,8 +79,8 @@ func ReplyDiscover() {
 		if buf[n-1] == 0x3f {
 			buf[n-1] = 0x40
 		}
-		send_buf := []byte{}
-		send_buf = append(send_buf, buf[:n]...)
+		sendBuf := []byte{}
+		sendBuf = append(sendBuf, buf[:n]...)
 
 		// figure out our local IP to thie client and append to end of reply
 		client := strings.Split(addr.String(), ":")
@@ -89,9 +89,9 @@ func ReplyDiscover() {
 			log.Errorf("%s", err.Error())
 			continue
 		}
-		send_buf = append(send_buf, []byte(ip)...)
+		sendBuf = append(sendBuf, []byte(ip)...)
 
-		_, err = pc.WriteTo(send_buf, addr)
+		_, err = pc.WriteTo(sendBuf, addr)
 		if err != nil {
 			log.Errorf("Unable to send SkyFi discovery reply: %s", err.Error())
 		}
@@ -159,8 +159,8 @@ func ReplyDiscoverWithShutdown(shutdown chan bool) error {
 			if disco.Buff[n-1] == 0x3f {
 				disco.Buff[n-1] = 0x40
 			}
-			send_buf := []byte{}
-			send_buf = append(send_buf, disco.Buff[:n]...)
+			sendBuf := []byte{}
+			sendBuf = append(sendBuf, disco.Buff[:n]...)
 
 			// figure out our local IP to thie client and append to end of reply
 			client := strings.Split(disco.Addr.String(), ":")
@@ -169,9 +169,9 @@ func ReplyDiscoverWithShutdown(shutdown chan bool) error {
 				log.Errorf("%s", err.Error())
 				continue
 			}
-			send_buf = append(send_buf, []byte(ip)...)
+			sendBuf = append(sendBuf, []byte(ip)...)
 
-			_, err = pc.WriteTo(send_buf, disco.Addr)
+			_, err = pc.WriteTo(sendBuf, disco.Addr)
 			if err != nil {
 				log.Errorf("Unable to send SkyFi discovery reply: %s", err.Error())
 			}
@@ -180,7 +180,7 @@ func ReplyDiscoverWithShutdown(shutdown chan bool) error {
 }
 
 /*
- * This function is really for informative purposes only.  It impliments
+ * This function is really for informative purposes only.  It implements
  * enough of the client side SkyFi protocol to get a SkyFi device to respond
  */
 func GetDiscover(name string, tries int) ([]byte, error) {
@@ -190,7 +190,7 @@ func GetDiscover(name string, tries int) ([]byte, error) {
 	}
 	defer pc.Close()
 
-	send_addr, err := net.ResolveUDPAddr("udp4", fmt.Sprintf("255.255.255.255:%d", SKYFI_PORT))
+	sendAddr, err := net.ResolveUDPAddr("udp4", fmt.Sprintf("255.255.255.255:%d", SKYFI_PORT))
 	if err != nil {
 		return []byte{}, fmt.Errorf("Unable to resolve SkyFi broadcast address: %s", err.Error())
 	}
@@ -202,19 +202,22 @@ func GetDiscover(name string, tries int) ([]byte, error) {
 	} else {
 		msg = "skyfi?"
 	}
-	msg_bytes := []byte(msg)
+	msgBytes := []byte(msg)
 	buf := make([]byte, 1024)
 
 	for i := 0; i < tries; i++ {
-		_, err = pc.WriteTo(msg_bytes, send_addr)
+		_, err = pc.WriteTo(msgBytes, sendAddr)
 		if err != nil {
 			return []byte{}, fmt.Errorf("Unable to send SkyFi discovery message: %s", err.Error())
 		}
 
 		deadline := time.Now().Add(time.Second * 1)
-		for true {
-			pc.SetReadDeadline(deadline)
-			err = nil
+		for {
+			err = pc.SetReadDeadline(deadline)
+			if err != nil {
+				log.Warnf("Unable to set read deadline: %s", err.Error())
+				break
+			}
 			n, addr, err := pc.ReadFrom(buf)
 			if err != nil {
 				log.Warnf("Failed to discover SkyFi server: %s", err.Error())

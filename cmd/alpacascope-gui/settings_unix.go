@@ -1,3 +1,4 @@
+//go:build !windows
 // +build !windows
 
 package main
@@ -22,7 +23,6 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"path"
 	"strings"
@@ -42,7 +42,9 @@ type SettingsStore struct {
 }
 
 func NewSettingsStore() *SettingsStore {
-	os.MkdirAll(getPath(STORE_DIR), 0755)
+	if err := os.MkdirAll(getPath(STORE_DIR), 0755); err != nil {
+		panic(err)
+	}
 	path := getPath(path.Join(STORE_DIR, STORE_FILE))
 
 	return &SettingsStore{
@@ -51,7 +53,7 @@ func NewSettingsStore() *SettingsStore {
 }
 
 func (ss *SettingsStore) GetSettings(config *AlpacaScopeConfig) error {
-	settingBytes, err := ioutil.ReadFile(ss.path)
+	settingBytes, err := os.ReadFile(ss.path)
 	if err != nil {
 		// missing file
 		settingBytes = []byte("")
@@ -65,7 +67,7 @@ func (ss *SettingsStore) SaveSettings(config *AlpacaScopeConfig) error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(ss.path, jdata, 0600)
+	return os.WriteFile(ss.path, jdata, 0600)
 }
 
 func (ss *SettingsStore) Delete() error {

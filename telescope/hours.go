@@ -9,7 +9,7 @@ import (
  *
  * We store both H:M:S and floating point in our struct so that
  * no matter how we create the struct, the original source is never
- * modified so retrival doesn't cause a convertion and introduce any error
+ * modified so retrival doesn't cause a conversion and introduce any error
  */
 
 type HMS struct {
@@ -19,7 +19,7 @@ type HMS struct {
 	Float   float64 // alternate representation
 }
 
-//New HMS via hours, minutes & seconds
+// New HMS via hours, minutes & seconds
 func NewHMS(hours int, minutes int, seconds float64) HMS {
 	ret := HMS{
 		Hours:   hours,
@@ -36,16 +36,16 @@ func NewHMSHours(hours float64) HMS {
 	var hrs, min, sec float64
 	if hours > 0 {
 		hrs = math.Floor(hours)
-		frac_hours := hours - hrs
-		min = math.Floor(frac_hours * 60.0)
+		fracHours := hours - hrs
+		min = math.Floor(fracHours * 60.0)
 
-		sec = frac_hours - (float64(min) / 60.0)
+		sec = fracHours - (float64(min) / 60.0)
 		sec *= 3600.0
 	} else {
 		hrs = math.Ceil(hours)
-		frac_hours := hours - hrs
-		min = math.Abs(math.Ceil(frac_hours * 60.0))
-		sec = frac_hours + (float64(min) / 60.0)
+		fracHours := hours - hrs
+		min = math.Abs(math.Ceil(fracHours * 60.0))
+		sec = fracHours + (float64(min) / 60.0)
 		sec *= -3600.0
 	}
 

@@ -23,8 +23,8 @@ func (c *Coordinates) RAToHMS() HMS {
 	remainder := c.RA - float64(h)
 	m := int(remainder * 60.0)
 	// remove the minutes from the hours and leave fractions of minute
-	frac_minute := c.RA - float64(h) - float64(m)/60.0
-	s := 60.0 * frac_minute
+	fracMinute := c.RA - float64(h) - float64(m)/60.0
+	s := 60.0 * fracMinute
 	return HMS{
 		Hours:   h,
 		Minutes: m,
@@ -37,14 +37,13 @@ func (c *Coordinates) DecToDegrees() DMS {
 	remainder := c.Dec - float64(degrees)
 	minutes := int(remainder * 60.0)
 	// remove the minutes from the degrees and leave fractions of minute
-	frac_minute := c.Dec - float64(degrees) - float64(minutes)/60.0
-	seconds := 60.0 * frac_minute
+	fracMinute := c.Dec - float64(degrees) - float64(minutes)/60.0
+	seconds := 60.0 * fracMinute
 	return DMS{
 		Degrees: degrees,
 		Minutes: minutes,
 		Seconds: seconds,
 	}
-
 }
 
 /*

@@ -93,25 +93,27 @@ func DiscoverServer(tries int) (string, int32, error) {
 	}
 	defer pc.Close()
 
-	send_addr, err := net.ResolveUDPAddr("udp4", "255.255.255.255:32227")
+	sendAddr, err := net.ResolveUDPAddr("udp4", "255.255.255.255:32227")
 	if err != nil {
 		return "", 0, fmt.Errorf("Unable to resolve Alpaca broadcast address: %s", err.Error())
 	}
 
 	adm := NewAlpacaDiscoveryMessage(ALPACA_DISCOVERY_VERSION)
-	msg_bytes := adm.Bytes()
+	msgBytes := adm.Bytes()
 	buf := make([]byte, 1024)
 
 	for i := 0; i < tries; i++ {
-		_, err = pc.WriteTo(msg_bytes, send_addr)
+		_, err = pc.WriteTo(msgBytes, sendAddr)
 		if err != nil {
 			return "", 0, fmt.Errorf("Unable to send Alpaca discovery message: %s", err.Error())
 		}
 
 		deadline := time.Now().Add(time.Second * 1)
-		for true {
-			pc.SetReadDeadline(deadline)
-			err = nil
+		for {
+			if err = pc.SetReadDeadline(deadline); err != nil {
+				log.Warnf("Unable to set read deadline: %s", err.Error())
+				break
+			}
 			n, addr, err := pc.ReadFrom(buf)
 			log.Debugf("receved %d bytes", n)
 			if err != nil {

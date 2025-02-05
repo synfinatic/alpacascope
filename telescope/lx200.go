@@ -19,8 +19,8 @@ type LX200 struct {
 	MinSlew        float64
 	SlewRate       int
 	UTCOffset      float64
-	have_time      bool
-	have_date      bool
+	haveTime       bool
+	haveDate       bool
 	hour           int
 	minute         int
 	second         int
@@ -57,7 +57,7 @@ func (state *LX200) HandleConnection(conn net.Conn, t *alpaca.Telescope) {
 		 * multiple commands at once :-/
 		 */
 		for rlen > 0 {
-			reply, consumed := state.lx200_command(t, rlen, buf)
+			reply, consumed := state.lx200Command(t, rlen, buf)
 			if len(reply) > 0 {
 				_, err = conn.Write(reply)
 				if err != nil {
@@ -81,9 +81,9 @@ func (state *LX200) HandleConnection(conn net.Conn, t *alpaca.Telescope) {
 	}
 }
 
-func (state *LX200) lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte) ([]byte, int) {
-	var consumed int = 0
-	var ret_val []byte
+func (state *LX200) lx200Command(t *alpaca.Telescope, cmdlen int, buf []byte) ([]byte, int) {
+	var consumed int
+	var retVal []byte
 	ret := ""
 	var err error
 
@@ -124,8 +124,8 @@ func (state *LX200) lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte) (
 		 */
 
 		commands := string(buf)
-		end_of_command := strings.Index(commands, "#")
-		consumed = end_of_command + 1
+		endOfCommand := strings.Index(commands, "#")
+		consumed = endOfCommand + 1
 		cmd := commands[0:consumed]
 		log.Debugf("Consumed %d of %d bytes in buffer", consumed, cmdlen)
 
@@ -142,9 +142,9 @@ func (state *LX200) lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte) (
 		 * :F - Focuser control works very differently... unclear how to support
 		 * :g - GPS
 		 * :G0, :G1, :G2 - no idea what this is :(
-		 * :Gb - Browse brigher magintude limit
+		 * :Gb - Browse brigher magnitude limit
 		 * :GF - field diameter
-		 * :GF - faint magintude limit
+		 * :GF - faint magnitude limit
 		 * :Gh - get high limit
 		 * :Gl - Larger size limit
 		 * :GM, :GN, :GO, :GP - get site (1, 2, 3, 4) name
@@ -284,28 +284,28 @@ func (state *LX200) lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte) (
 		case ":Me":
 			// slew east (+ long)
 			axis := alpaca.AxisAzmRa
-			rate := state.rateToAscom(false)
+			rate := state.rateToASCOM(false)
 			err = t.PutMoveAxis(axis, rate)
 			// returns nothing
 
 		case ":Mw":
 			// slew west (- long)
 			axis := alpaca.AxisAzmRa
-			rate := state.rateToAscom(true)
+			rate := state.rateToASCOM(true)
 			err = t.PutMoveAxis(axis, rate)
 			// returns nothing
 			//
 		case ":Mn":
 			// slew north (+ long)
 			axis := alpaca.AxisAltDec
-			rate := state.rateToAscom(true)
+			rate := state.rateToASCOM(true)
 			err = t.PutMoveAxis(axis, rate)
 			// returns nothing
 
 		case ":Ms":
 			// slew south (-lat)
 			axis := alpaca.AxisAltDec
-			rate := state.rateToAscom(false)
+			rate := state.rateToASCOM(false)
 			err = t.PutMoveAxis(axis, rate)
 			// returns nothing
 
@@ -318,12 +318,11 @@ func (state *LX200) lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte) (
 					log.Errorf("Unable to get tracking mode: %s", err.Error())
 				} else {
 					if mode == alpaca.NotTracking {
-						err = t.PutTracking(alpaca.Alt_Az) // need any non-NotTracking value for true
+						err = t.PutTracking(alpaca.AltAz) // need any non-NotTracking value for true
 						if err != nil {
 							log.Errorf("Unable to auto-enable tracking: %s", err.Error())
 						}
 					}
-
 				}
 			}
 			err = t.PutSlewToTargetAsync()
@@ -332,7 +331,7 @@ func (state *LX200) lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte) (
 
 		case ":Q#":
 			// halt slewing
-			t.PutAbortSlew()
+			_ = t.PutAbortSlew()
 			// returns nothing
 
 		case ":Qe", ":Qw":
@@ -437,28 +436,28 @@ func (state *LX200) lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte) (
 		case ":SG":
 			// set TZ offset hours: :SGsHH.H
 			var sign byte
-			var hrs_float float64
-			var hrs_int int
+			var hrsFloat float64
+			var hrsInt int
 
 			ret = "1"
 
 			// this is what the docs say
-			_, err = fmt.Sscanf(cmd, ":SG%c%2.1f#", &sign, &hrs_float)
+			_, err = fmt.Sscanf(cmd, ":SG%c%2.1f#", &sign, &hrsFloat)
 			if err != nil {
 				// and this is what SkySafari actually sends :(
-				_, err = fmt.Sscanf(cmd, ":SG%c%02d#", &sign, &hrs_int)
+				_, err = fmt.Sscanf(cmd, ":SG%c%02d#", &sign, &hrsInt)
 				if err != nil {
 					log.Errorf("Error parsing '%s': %s", cmd, err.Error())
 					ret = "0"
 				} else {
-					hrs_float = float64(hrs_int)
+					hrsFloat = float64(hrsInt)
 				}
 			}
 			if err == nil {
 				if sign == '-' {
-					hrs_float *= -1
+					hrsFloat *= -1
 				}
-				state.UTCOffset = hrs_float
+				state.UTCOffset = hrsFloat
 				err = state.SendDateTime(t)
 			}
 
@@ -470,7 +469,7 @@ func (state *LX200) lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte) (
 				err = fmt.Errorf("Unable to parse time '%s': %s", cmd, err.Error())
 				ret = "0"
 			} else {
-				state.have_date = true
+				state.haveDate = true
 				state.year += 2000
 				err = state.SendDateTime(t)
 			}
@@ -483,7 +482,7 @@ func (state *LX200) lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte) (
 				err = fmt.Errorf("Unable to parse time '%s': %s", cmd, err.Error())
 				ret = "0"
 			} else {
-				state.have_time = true
+				state.haveTime = true
 				err = state.SendDateTime(t)
 			}
 
@@ -507,8 +506,8 @@ func (state *LX200) lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte) (
 					log.Errorf("Error parsing '%s': %s", cmd, err.Error())
 					ret = "0"
 				}
-				min_float := float64(min) + (float64(sec) / 10.0)
-				hms = NewHMSShort(hour, min_float)
+				minFloat := float64(min) + (float64(sec) / 10.0)
+				hms = NewHMSShort(hour, minFloat)
 			default:
 				log.Errorf("Unable to parse %s", cmd)
 				ret = "0"
@@ -555,15 +554,15 @@ func (state *LX200) lx200_command(t *alpaca.Telescope, cmdlen int, buf []byte) (
 
 	// convert our return string to the ret_val
 	if ret != "" {
-		ret_val = []byte(ret)
+		retVal = []byte(ret)
 	}
-	log.Debugf("sending ret_val = %v, %d bytes consumed", ret_val, consumed)
-	return ret_val, consumed
+	log.Debugf("sending ret_val = %v, %d bytes consumed", retVal, consumed)
+	return retVal, consumed
 }
 
-func (state *LX200) rateToAscom(move_positive bool) int {
+func (state *LX200) rateToASCOM(movePostion bool) int {
 	ret := state.SlewRate
-	if !move_positive {
+	if !movePostion {
 		ret *= -1
 	}
 	return ret
@@ -578,8 +577,8 @@ func DegreesToStr(deg float64, highp bool) string {
 	dd := int(deg)
 	remain := deg - math.Floor(deg)
 	mm := int(remain * 60.0)
-	frac_minute := remain - float64(mm)/60.0
-	ss := int(frac_minute * 60.0 * 60.0)
+	fracMinute := remain - float64(mm)/60.0
+	ss := int(fracMinute * 60.0 * 60.0)
 	if highp {
 		return fmt.Sprintf("%c%02d*%02d'%02d", sign, dd, mm, ss)
 	} else {
@@ -616,7 +615,7 @@ func DegreesToLat(deg float64) string {
  * send the current time to Alpaca
  */
 func (state *LX200) SendDateTime(t *alpaca.Telescope) error {
-	if state.UTCOffset > 24.0 || state.have_time == false || state.have_date == false {
+	if state.UTCOffset > 24.0 || !state.haveTime || !state.haveDate {
 		log.Debugf("Skipping SendDateTime()")
 		return nil // nothing to do
 	}

@@ -84,15 +84,15 @@ func main() {
 	parser.FatalIfErrorf(err)
 
 	var mode TeleComms
-	var tracking_mode alpaca.TrackingMode
+	var trackingMode alpaca.TrackingMode
 
 	if cli.ClientID == 0 {
-		cli.ClientID = rand.Uint32()
+		cli.ClientID = rand.Uint32() // nolint:gosec
 		log.Debugf("Selecting random ClientID: %d", cli.ClientID)
 	}
 
 	// turn on debugging?
-	if cli.Debug == true {
+	if cli.Debug {
 		log.SetFormatter(&log.TextFormatter{
 			// DisableColors: true,
 			FullTimestamp: true,
@@ -132,11 +132,11 @@ func main() {
 	}
 	switch cli.MountType {
 	case "altaz":
-		tracking_mode = alpaca.Alt_Az
+		trackingMode = alpaca.AltAz
 	case "eqn":
-		tracking_mode = alpaca.EQ_North
+		trackingMode = alpaca.EQNorth
 	case "eqs":
-		tracking_mode = alpaca.EQ_South
+		trackingMode = alpaca.EQSouth
 	}
 
 	var ln net.Listener
@@ -146,8 +146,8 @@ func main() {
 		if err != nil {
 			log.Fatalf("Error listening on %s: %s", listen, err.Error())
 		}
-	} else {
-		// do the serial port needful
+	} else { // nolint:staticcheck
+		// do the serial port needful.
 	}
 	defer ln.Close()
 
@@ -166,7 +166,7 @@ func main() {
 	go skyfi.ReplyDiscover()
 
 	a := alpaca.NewAlpaca(cli.ClientID, cli.AlpacaHost, cli.AlpacaPort)
-	scope := alpaca.NewTelescope(cli.TelescopeID, tracking_mode, a)
+	scope := alpaca.NewTelescope(cli.TelescopeID, trackingMode, a)
 
 	connected, err := scope.GetConnected()
 	if err != nil {

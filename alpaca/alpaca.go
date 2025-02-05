@@ -1,7 +1,7 @@
 package alpaca
 
 /*
- * Main functions implimenting an Alpaca REST client.
+ * Main functions implementing an Alpaca REST client.
  * Covers the generic API calls that all ASCOM devices should support
  * as well as the fundamental API call types
  */
@@ -16,7 +16,7 @@ import (
 
 type Alpaca struct {
 	client        *resty.Client
-	url_base      string
+	urlBase       string
 	ClientId      uint32
 	transactionId uint32
 	ErrorNumber   int    // last error
@@ -26,7 +26,7 @@ type Alpaca struct {
 func NewAlpaca(clientid uint32, ip string, port int32) *Alpaca {
 	a := Alpaca{
 		client:        resty.New(),
-		url_base:      fmt.Sprintf("http://%s:%d", ip, port),
+		urlBase:       fmt.Sprintf("http://%s:%d", ip, port),
 		ClientId:      clientid,
 		transactionId: 0,
 	}
@@ -45,7 +45,7 @@ func (a *Alpaca) getQueryString() string {
 }
 
 func (a *Alpaca) url(device string, id uint32, api string) string {
-	return fmt.Sprintf("%s/api/v1/%s/%d/%s", a.url_base, device, id, api)
+	return fmt.Sprintf("%s/api/v1/%s/%d/%s", a.urlBase, device, id, api)
 }
 
 type stringResponse struct {
@@ -202,7 +202,6 @@ func (a *Alpaca) GetListUint32(device string, id uint32, api string) ([]uint32, 
 	result := (resp.Result().(*listUint32Response))
 	log.Debugf("Alpaca response: %s", spew.Sdump(result))
 	return result.Value, nil
-
 }
 
 /*

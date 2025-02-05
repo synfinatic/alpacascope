@@ -30,7 +30,7 @@ func (n *NexStar) HandleConnection(conn net.Conn, t *alpaca.Telescope) {
 		if err != nil {
 			break
 		}
-		reply := n.nexstar_command(t, rlen, buf)
+		reply := n.nexstarCommand(t, rlen, buf)
 		wlen := len(reply)
 		log.Debugf("our reply %d bytes: %v", wlen, reply)
 
@@ -53,8 +53,8 @@ func (n *NexStar) HandleConnection(conn net.Conn, t *alpaca.Telescope) {
 	}
 }
 
-func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []byte {
-	var ret_val []byte
+func (n *NexStar) nexstarCommand(t *alpaca.Telescope, len int, buf []byte) []byte {
+	var retVal []byte
 	ret := ""
 	var err error
 	if log.IsLevelEnabled(log.DebugLevel) {
@@ -69,7 +69,7 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 	switch buf[0] {
 	case 'K':
 		// echo next byte
-		ret_val = []byte{buf[1], '#'}
+		retVal = []byte{buf[1], '#'}
 
 	case 'e', 'E':
 		ra, dec, err := t.GetRaDec()
@@ -81,11 +81,11 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 				Dec: dec,
 			}
 
-			high_precision := true
+			highPrecision := true
 			if buf[0] == 'E' {
-				high_precision = false
+				highPrecision = false
 			}
-			ret = fmt.Sprintf("%s#", radec.Nexstar(high_precision))
+			ret = fmt.Sprintf("%s#", radec.Nexstar(highPrecision))
 		}
 
 	case 'Z':
@@ -94,9 +94,9 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 		if err != nil {
 			log.Errorf("unable to get AZM/ALT: %s", err.Error())
 		} else {
-			azm_int := uint32(azm / 360.0 * math.Pow(2, 16))
-			alt_int := uint32(alt / 360.0 * math.Pow(2, 16))
-			ret = fmt.Sprintf("%04X,%04X#", azm_int, alt_int)
+			asmInt := uint32(azm / 360.0 * math.Pow(2, 16))
+			altInt := uint32(alt / 360.0 * math.Pow(2, 16))
+			ret = fmt.Sprintf("%04X,%04X#", asmInt, altInt)
 		}
 
 	case 'z':
@@ -105,9 +105,9 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 		if err != nil {
 			log.Errorf("unable to get AZM/ALT: %s", err.Error())
 		} else {
-			azm_int := uint32(azm / 360.0 * 4294967296.0)
-			alt_int := uint32(alt / 360.0 * 4294967296.0)
-			ret = fmt.Sprintf("%08X,%08X#", azm_int, alt_int)
+			azmInt := uint32(azm / 360.0 * 4294967296.0)
+			altInt := uint32(alt / 360.0 * 4294967296.0)
+			ret = fmt.Sprintf("%08X,%08X#", azmInt, altInt)
 		}
 
 	case 't':
@@ -121,9 +121,9 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 
 	case 'T':
 		// set tracking mode
-		var tracking_mode alpaca.TrackingMode
-		fmt.Sscanf(string(buf[1]), "%d", &tracking_mode)
-		err = t.PutTracking(tracking_mode)
+		var trackingMode alpaca.TrackingMode
+		_, _ = fmt.Sscanf(string(buf[1]), "%d", &trackingMode)
+		err = t.PutTracking(trackingMode)
 		ret = "#"
 
 	case 'V':
@@ -137,10 +137,10 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 			switch int(buf[2]) {
 			case 16, 17:
 				// mounts
-				ret_val = []byte{5, 0, '#'}
+				retVal = []byte{5, 0, '#'}
 			case 176, 178:
 				// GPS & RTC
-				ret_val = []byte{1, 6, '#'}
+				retVal = []byte{1, 6, '#'}
 			default:
 				log.Errorf("invalid device version device type: %d", int(buf[3]))
 			}
@@ -148,10 +148,10 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 			switch int(buf[2]) {
 			case 176:
 				// GPS
-				ret_val, err = getGPS(t, buf)
+				retVal, err = getGPS(t, buf)
 			case 178:
 				// RTC
-				ret_val, err = getRTC(t, buf)
+				retVal, err = getRTC(t, buf)
 			case 16, 17:
 				err = executeSlew(t, buf)
 				ret = "#"
@@ -183,12 +183,11 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 				log.Errorf("unable to get tracking mode: %s", err.Error())
 			} else {
 				if mode == alpaca.NotTracking {
-					err = t.PutTracking(alpaca.Alt_Az) // need any non-NotTracking value for true
+					err = t.PutTracking(alpaca.AltAz) // need any non-NotTracking value for true
 					if err != nil {
 						log.Errorf("unable to auto-enable tracking: %s", err.Error())
 					}
 				}
-
 			}
 		}
 		radec := NewCoordinateNexstar(buf[1:9], buf[10:18], true)
@@ -204,12 +203,11 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 				log.Errorf("unable to get tracking mode: %s", err.Error())
 			} else {
 				if mode == alpaca.NotTracking {
-					err = t.PutTracking(alpaca.Alt_Az) // need any non-NotTracking value for true
+					err = t.PutTracking(alpaca.AltAz) // need any non-NotTracking value for true
 					if err != nil {
 						log.Errorf("unable to auto-enable tracking: %s", err.Error())
 					}
 				}
-
 			}
 		}
 		radec := NewCoordinateNexstar(buf[1:5], buf[6:10], false)
@@ -232,8 +230,8 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 		}
 
 		if !failed {
-			ret_val = LatLongToNexstar(lat, long)
-			ret_val = append(ret_val, '#')
+			retVal = LatLongToNexstar(lat, long)
+			retVal = append(retVal, '#')
 		}
 
 	case 'W':
@@ -268,7 +266,7 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 
 			y, M, d := utcDate.Date()
 			y -= 2000 // need to output a single byte for the year
-			ret_val = []byte{
+			retVal = []byte{
 				byte(h), byte(m), byte(s), // H:M:S
 				byte(M), byte(d), byte(y), // M:D:Y
 				0, // always UTC
@@ -278,12 +276,12 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 
 	case 'H':
 		// set date/time
-		tz_val := int(buf[7])
+		tzVal := int(buf[7])
 		// UTC-X values are stored as 256-X so need to be converted back to a negative if tz_val > 128 {
-		if tz_val > 128 {
-			tz_val = (256 - tz_val) * -1
+		if tzVal > 128 {
+			tzVal = (256 - tzVal) * -1
 		}
-		tz := time.FixedZone("Telescope Time", tz_val*60*60)
+		tz := time.FixedZone("Telescope Time", tzVal*60*60)
 		date := time.Date(
 			int(buf[6])+2000,   // year V
 			time.Month(buf[4]), // month T
@@ -300,7 +298,7 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 	case 'J':
 		// is alignment complete?
 		// since Alpaca has no similar command, aways return true
-		ret_val = []byte{1, '#'}
+		retVal = []byte{1, '#'}
 
 	case 'L':
 		// Goto in progress??
@@ -314,7 +312,7 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 
 	case 'm':
 		// Model- hard code to 6/8 SE
-		ret_val = []byte{12, '#'}
+		retVal = []byte{12, '#'}
 
 	case 'M':
 		// cancel GOTO
@@ -332,13 +330,13 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
 
 	// convert our return string to the ret_val
 	if ret != "" {
-		ret_val = []byte(ret)
+		retVal = []byte(ret)
 	}
-	return ret_val
+	return retVal
 }
 
 /*
- * So ASCOM and NexStar impliment slewing a little differently.
+ * So ASCOM and NexStar implement slewing a little differently.
  *
  * NexStar uses Azm/Alt, direction, speed (0, 2, 5, 7, 9).
  * ASCOM uses Azm/Alt + direction w/ speed as a function of -3 to +3
@@ -352,8 +350,8 @@ func (n *NexStar) nexstar_command(t *alpaca.Telescope, len int, buf []byte) []by
  */
 func executeSlew(t *alpaca.Telescope, buf []byte) error {
 	var axis alpaca.AxisType = alpaca.AxisAzmRa
-	var positive_direction bool = false
-	var rate int = 0 // SkySafari uses direction with speeds of 0,2,5,7,9 but ASCOM uses axis with speeds -3 to 3
+	var positiveDirection bool = false
+	var rate int // SkySafari uses direction with speeds of 0,2,5,7,9 but ASCOM uses axis with speeds -3 to 3
 
 	switch int(buf[2]) {
 	case 16:
@@ -368,14 +366,14 @@ func executeSlew(t *alpaca.Telescope, buf []byte) error {
 
 	switch int(buf[3]) {
 	case 6, 36:
-		positive_direction = true
+		positiveDirection = true
 	case 7, 37:
-		positive_direction = false
+		positiveDirection = false
 	default:
 		log.Errorf("unknown direction: %d", int(buf[3]))
 	}
 
-	rate = nexstar_rate_to_ascom(positive_direction, int(buf[4]))
+	rate = nextstartRateToASCOM(positiveDirection, int(buf[4]))
 
 	// buf[1] is variable vs. fixed rate, but we always use fixed
 	// buf[5] is the "slow" variable rate which we always ignore
@@ -396,7 +394,7 @@ func executeSlew(t *alpaca.Telescope, buf []byte) error {
  * (Stellarium?)
  */
 func getGPS(t *alpaca.Telescope, buf []byte) ([]byte, error) {
-	ret_val := []byte{}
+	retVal := []byte{}
 	switch int(buf[2]) {
 	case 55:
 		_, err := t.GetSiteLatitude()
@@ -411,48 +409,48 @@ func getGPS(t *alpaca.Telescope, buf []byte) ([]byte, error) {
 		lat, err := t.GetSiteLatitude()
 		if err != nil {
 			log.Errorf("unable to GetSiteLatitude(): %s", err.Error())
-			return ret_val, err
+			return retVal, err
 		}
-		ret_val = LatLongToGPS(lat)
+		retVal = LatLongToGPS(lat)
 	case 2:
 		// Longitude
 		long, err := t.GetSiteLongitude()
 		if err != nil {
 			log.Errorf("unable to GetSiteLongitude(): %s", err.Error())
-			return ret_val, err
+			return retVal, err
 		}
-		ret_val = LatLongToGPS(long)
+		retVal = LatLongToGPS(long)
 	case 3:
 		// Date: m, d
 		utcDate, err := t.GetUTCDate()
 		if err != nil {
 			log.Errorf("GPS returned no UTC date: %s", err.Error())
-			return ret_val, err
+			return retVal, err
 		}
 		_, m, d := utcDate.Date()
-		ret_val = []byte{byte(m), byte(d), '#'}
+		retVal = []byte{byte(m), byte(d), '#'}
 	case 4:
 		// Year: (x * 256) + y = year
 		utcDate, err := t.GetUTCDate()
 		if err != nil {
 			log.Errorf("GPS returned no UTC date: %s", err.Error())
-			return ret_val, err
+			return retVal, err
 		}
 		year, _, _ := utcDate.Date()
 		var x int = year / 256
 		var y int = year % 256
-		ret_val = []byte{byte(x), byte(y), '#'}
+		retVal = []byte{byte(x), byte(y), '#'}
 	case 51:
 		// Time: h, m, s
 		utcDate, err := t.GetUTCDate()
 		if err != nil {
 			log.Errorf("GPS returned no UTC date: %s", err.Error())
-			return ret_val, err
+			return retVal, err
 		}
 		h, m, s := utcDate.Date()
-		ret_val = []byte{byte(h), byte(m), byte(s), '#'}
+		retVal = []byte{byte(h), byte(m), byte(s), '#'}
 	}
-	return ret_val, nil
+	return retVal, nil
 }
 
 /*
@@ -477,7 +475,7 @@ func getRTC(t *alpaca.Telescope, buf []byte) ([]byte, error) {
 }
 
 // Converts the direction & rate to an ASCOM rate
-func nexstar_rate_to_ascom(direction bool, rate int) int {
+func nextstartRateToASCOM(direction bool, rate int) int {
 	switch rate {
 	case 0:
 		rate = 0
@@ -525,15 +523,15 @@ func LatLongToNexstar(lat float64, long float64) []byte {
 	a = byte(int(lat))
 	remain := lat - math.Floor(lat)
 	b = byte(int(remain * 60.0))
-	frac_minute := remain - float64(b)/60.0
-	c = byte(int(frac_minute * 60.0 * 60.0))
+	fracMinute := remain - float64(b)/60.0
+	c = byte(int(fracMinute * 60.0 * 60.0))
 
 	// longitude
 	e = byte(int(long))
 	remain = long - math.Floor(long)
 	f = byte(int(remain * 60.0))
-	frac_minute = remain - float64(f)/60.0
-	g = byte(int(frac_minute * 60.0 * 60.0))
+	fracMinute = remain - float64(f)/60.0
+	g = byte(int(fracMinute * 60.0 * 60.0))
 
 	return []byte{a, b, c, d, e, f, g, h}
 }
@@ -564,16 +562,16 @@ func LatLongToGPS(latlong float64) []byte {
  * Nexstar supports querying in RA/Dec as well as Alt/Azm, but goto only
  * works in RA/Dec mode, so we don't support Alt/Azm
  */
-func NewCoordinateNexstar(ra_bytes []byte, dec_bytes []byte, highp bool) Coordinates {
+func NewCoordinateNexstar(raBytes []byte, decBytes []byte, highp bool) Coordinates {
 	var ra, dec float64
 	if highp {
-		rs := StepsToUint32(ra_bytes)
-		ds := StepsToUint32(dec_bytes)
+		rs := StepsToUint32(raBytes)
+		ds := StepsToUint32(decBytes)
 		ra = uint32StepsToRA(rs)
 		dec = uint32StepsToDec(ds)
 	} else {
-		rs := StepsToUint16(ra_bytes)
-		ds := StepsToUint16(dec_bytes)
+		rs := StepsToUint16(raBytes)
+		ds := StepsToUint16(decBytes)
 		ra = uint16StepsToRA(rs)
 		dec = uint16StepsToDec(ds)
 	}
@@ -605,13 +603,13 @@ func (c *Coordinates) Nexstar(highp bool) string {
  */
 func StepsToUint32(steps []byte) uint32 {
 	var a, b, c, d byte
-	fmt.Sscanf(string(steps), "%02x%02x%02x%02x", &a, &b, &c, &d)
+	_, _ = fmt.Sscanf(string(steps), "%02x%02x%02x%02x", &a, &b, &c, &d)
 	return uint32(a)<<24 + uint32(b)<<16 + uint32(c)<<8 + uint32(d)
 }
 
 func StepsToUint16(steps []byte) uint16 {
 	var a, b byte
-	fmt.Sscanf(string(steps), "%02x%02x", &a, &b)
+	_, _ = fmt.Sscanf(string(steps), "%02x%02x", &a, &b)
 	return uint16(a)<<8 + uint16(b)
 }
 

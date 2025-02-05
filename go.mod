@@ -11,7 +11,7 @@ require (
 	github.com/mattn/go-colorable v0.1.13
 	github.com/relvacode/iso8601 v1.6.0
 	github.com/sirupsen/logrus v1.9.3
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	golang.org/x/image v0.18.0 // indirect; security
 	golang.org/x/sys v0.28.0
 	golang.org/x/text v0.21.0 // indirect; security

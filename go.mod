@@ -4,9 +4,9 @@ go 1.23
 
 // when you update the Fyne version, also update the Makefile target
 require (
-	github.com/alecthomas/kong v1.6.0
 	fyne.io/fyne/v2 v2.5.3
-	github.com/go-resty/resty/v2 v2.15.1
+	github.com/alecthomas/kong v1.6.0
+	github.com/go-resty/resty/v2 v2.16.5
 	github.com/libp2p/go-reuseport v0.4.0
 	github.com/mattn/go-colorable v0.1.13
 	github.com/relvacode/iso8601 v1.6.0

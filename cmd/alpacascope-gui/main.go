@@ -53,12 +53,12 @@ type Widgets struct {
 	TelescopeMount      *widget.Select
 	AutoTracking        *widget.Check
 	HighPrecisionLX200  *widget.Check
-	ListenIp            *widget.Select
+	ListenIP            *widget.Select
 	ListenPort          *widget.Entry
 	AscomAuto           *widget.Check
 	AutoConnectAttempts *widget.Select
 	AutoStart           *widget.Check
-	AscomIp             *widget.Entry
+	AscomIP             *widget.Entry
 	AscomPort           *widget.Entry
 	AscomTelescope      *widget.Select
 	Status              *widget.TextGrid
@@ -94,10 +94,10 @@ func main() {
 		widget.NewFormItem("NexStar Mount Type", ourWidgets.TelescopeMount),
 		widget.NewFormItem("LX200 default to High Precision", ourWidgets.HighPrecisionLX200),
 		widget.NewFormItem("Auto Tracking", ourWidgets.AutoTracking),
-		widget.NewFormItem("Listen IP", ourWidgets.ListenIp),
+		widget.NewFormItem("Listen IP", ourWidgets.ListenIP),
 		widget.NewFormItem("Listen Port", ourWidgets.ListenPort),
 		widget.NewFormItem("Auto Discover Alpaca Mount", ourWidgets.AscomAuto),
-		widget.NewFormItem("ASCOM Remote Server IP", ourWidgets.AscomIp),
+		widget.NewFormItem("ASCOM Remote Server IP", ourWidgets.AscomIP),
 		widget.NewFormItem("ASCOM Remote Port", ourWidgets.AscomPort),
 		widget.NewFormItem("ASCOM Telescope ID", ourWidgets.AscomTelescope),
 		widget.NewFormItem("Automatically Connect on Start", ourWidgets.AutoStart),
@@ -168,10 +168,7 @@ func (w *Widgets) Manager(config *AlpacaScopeConfig) {
 	w.Status.SetText(RUNNING)
 
 	// wait until we are Quitting our main Run() loop
-	select {
-	case <-config.EnableButtons:
-		break
-	}
+	<-config.EnableButtons
 	w.Enable()
 	w.Status.SetText(STOPPED)
 }
@@ -192,7 +189,7 @@ func preConnectQuit(c *AlpacaScopeConfig, stop chan bool) {
 
 func (c *AlpacaScopeConfig) Run() {
 	accptedFirstConnection := false
-	var clientid uint32 = rand.Uint32()
+	var clientid uint32 = rand.Uint32() // nolint:gosec
 	var sport int32
 	var shost string
 	var err error
@@ -217,8 +214,9 @@ func (c *AlpacaScopeConfig) Run() {
 					count = 3
 					log.Errorf("Error parsing AutoConnectAttempts '%s', using default %d", c.AutoConnectAttempts,
 						DEFAULT_DISCOVER_TRIES)
+				} else {
+					count = int(x)
 				}
-				count = int(x)
 			}
 			for i := 1; i <= count && c.isRunning; i++ {
 				shost, sport, err = alpaca.DiscoverServer(1)
@@ -238,7 +236,7 @@ func (c *AlpacaScopeConfig) Run() {
 		}
 	} else {
 		// Use user provided values
-		shost = c.AscomIp
+		shost = c.AscomIP
 		x, _ := strconv.ParseInt(c.AscomPort, 10, 32)
 		sport = int32(x)
 	}
@@ -250,19 +248,19 @@ func (c *AlpacaScopeConfig) Run() {
 		return
 	}
 
-	var tracking_mode alpaca.TrackingMode
+	var trackingMode alpaca.TrackingMode
 	switch c.TelescopeMount {
 	case "Alt-Az":
-		tracking_mode = alpaca.Alt_Az
+		trackingMode = alpaca.AltAz
 	case "EQ North":
-		tracking_mode = alpaca.EQ_North
+		trackingMode = alpaca.EQNorth
 	case "EQ South":
-		tracking_mode = alpaca.EQ_South
+		trackingMode = alpaca.EQSouth
 	}
 
 	a := alpaca.NewAlpaca(clientid, shost, sport)
 	tid, _ := strconv.ParseUint(c.AscomTelescope, 10, 32)
-	scope := alpaca.NewTelescope(uint32(tid), tracking_mode, a)
+	scope := alpaca.NewTelescope(uint32(tid), trackingMode, a)
 	var connected bool = false
 	var connectAttempts int64 = 1
 	if c.AutoStart {
@@ -322,11 +320,11 @@ func (c *AlpacaScopeConfig) Run() {
 
 	// Act like SkyFi
 	shutdownSkyFi := make(chan bool)
-	go skyfi.ReplyDiscoverWithShutdown(shutdownSkyFi)
+	go skyfi.ReplyDiscoverWithShutdown(shutdownSkyFi) // nolint:errcheck
 
 	newConns := make(chan net.Conn)
 
-	listen := fmt.Sprintf("%s:%s", c.ListenIpAddress(), c.ListenPort)
+	listen := fmt.Sprintf("%s:%s", c.ListenIPAddress(), c.ListenPort)
 	ln, err := net.Listen("tcp", listen)
 	if err != nil {
 		sbox.AddLine(fmt.Sprintf("Error listening on %s: %s", listen, err.Error()))
@@ -335,7 +333,7 @@ func (c *AlpacaScopeConfig) Run() {
 		return
 	}
 	defer ln.Close()
-	sbox.AddLine(fmt.Sprintf("Ready to accept connections on %s:%s", c.ListenIp, c.ListenPort))
+	sbox.AddLine(fmt.Sprintf("Ready to accept connections on %s:%s", c.ListenIP, c.ListenPort))
 
 	// goroutine for our listener
 	go func(l net.Listener) {

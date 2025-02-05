@@ -9,7 +9,7 @@ import (
  *
  * We store both D:M:S and floating point in our struct so that
  * no matter how we create the struct, the original source is never
- * modified so retrival doesn't cause a convertion and introduce any error
+ * modified so retrival doesn't cause a conversion and introduce any error
  */
 
 type DMS struct {
@@ -109,8 +109,8 @@ func (dms *DMS) HoursPositive() float64 {
 
 // Sometimes we want degrees & minutes with seconds as frac_min
 func (dms *DMS) DegreeMinute() (int, float64) {
-	frac_min := dms.Seconds / 60.0
-	return dms.Degrees, float64(dms.Minutes) + frac_min
+	fracMin := dms.Seconds / 60.0
+	return dms.Degrees, float64(dms.Minutes) + fracMin
 }
 
 /*

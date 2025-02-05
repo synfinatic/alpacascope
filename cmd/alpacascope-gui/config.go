@@ -30,12 +30,12 @@ type AlpacaScopeConfig struct {
 	TelescopeProtocol   string `json:"TelescopeProtocol"`
 	TelescopeMount      string `json:"TelescopeMount"`
 	AutoTracking        bool   `json:"AutoTracking"`
-	ListenIp            string `json:"ListenIp"`
+	ListenIP            string `json:"ListenIp"`
 	ListenPort          string `json:"ListenPort"`
 	AscomAuto           bool   `json:"AscomAuto"`
 	AutoConnectAttempts string `json:"AutoConnectAttempts"`
 	AutoStart           bool   `json:"AutoStart"`
-	AscomIp             string `json:"AscomIp"`
+	AscomIP             string `json:"AscomIp"`
 	AscomPort           string `json:"AscomPort"`
 	AscomTelescope      string `json:"AscomTelescope"`
 	HighPrecisionLX200  bool   `json:"HighPrecisionLX200"`
@@ -57,9 +57,9 @@ func NewAlpacaScopeConfig() *AlpacaScopeConfig {
 		AscomAuto:           true,
 		AutoConnectAttempts: "3",
 		AutoStart:           false,
-		ListenIp:            "All-Interfaces/0.0.0.0",
+		ListenIP:            "All-Interfaces/0.0.0.0",
 		ListenPort:          "4030",
-		AscomIp:             "127.0.0.1",
+		AscomIP:             "127.0.0.1",
 		AscomPort:           alpaca.DEFAULT_PORT_STR,
 		AscomTelescope:      "0",
 		Quit:                make(chan bool),
@@ -95,8 +95,8 @@ func (a *AlpacaScopeConfig) Delete() error {
 	return fmt.Errorf("No valid SettingsStore")
 }
 
-func (c *AlpacaScopeConfig) ListenIpAddress() string {
-	ips := strings.SplitN(c.ListenIp, "/", 2)
+func (c *AlpacaScopeConfig) ListenIPAddress() string {
+	ips := strings.SplitN(c.ListenIP, "/", 2)
 	if len(ips) == 2 {
 		return ips[1]
 	}

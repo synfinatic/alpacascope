@@ -20,39 +20,39 @@ func TimeToJYear(jyear int, t time.Time) float64 {
 	year, _, _ := utc.Date()
 	hour, minute, second := utc.Clock()
 
-	frac_day := float64(hour)
-	frac_day += float64(minute) / 60.0
-	frac_day += float64(second) / 3600.0
-	frac_day /= 24.0
+	fracDay := float64(hour)
+	fracDay += float64(minute) / 60.0
+	fracDay += float64(second) / 3600.0
+	fracDay /= 24.0
 
-	year_days := -1.5
+	yearDays := -1.5
 
 	utctz, _ := time.LoadLocation("UTC")
 	if year < jyear {
 		for i := jyear - 1; i > year; i-- {
 			y := time.Date(i, 12, 31, 12, 0, 0, 0, utctz)
-			year_days -= float64(y.YearDay())
+			yearDays -= float64(y.YearDay())
 		}
 
 		y := time.Date(year, 12, 31, 12, 0, 0, 0, utctz)
-		year_days -= float64(y.YearDay()) - float64(utc.YearDay())
+		yearDays -= float64(y.YearDay()) - float64(utc.YearDay())
 	} else if year > jyear {
 		for i := jyear; i < year; i++ {
 			y := time.Date(i, 12, 31, 12, 0, 0, 0, utctz)
-			year_days += float64(y.YearDay())
+			yearDays += float64(y.YearDay())
 		}
-		year_days += float64(utc.YearDay()) - 1
+		yearDays += float64(utc.YearDay()) - 1
 	} else {
 		// year is the jyear
-		year_days += float64(utc.YearDay())
+		yearDays += float64(utc.YearDay())
 	}
 
-	return frac_day + year_days
+	return fracDay + yearDays
 }
 
 // Convert Greenwich Mean Siderial Time to Local Siderial Time (hours)
-func GMSTToLST(gmst float64, longitude_hrs float64) float64 {
-	lst := gmst + longitude_hrs // must be in hrs, not degrees!
+func GMSTToLST(gmst float64, longitudeHrs float64) float64 {
+	lst := gmst + longitudeHrs // must be in hrs, not degrees!
 	return math.Mod(lst, 24.0)
 }
 
@@ -95,18 +95,18 @@ func GreenwichMeanSiderealTime(t time.Time) float64 {
 // Convert to time in any TZ to the current hour in UTC
 func TimeToUTCHours(t time.Time) float64 {
 	// can't just t.UTC(), because hours can be > 24.0 if in "next date UTC" (ie USA late at night)
-	_, offset_sec := t.Zone()
+	_, offsetSec := t.Zone()
 
 	hours := float64(t.Hour()) + float64(t.Minute())/60.0 + float64(t.Second())/3600.0
-	hours -= float64(offset_sec) / 3600.0
+	hours -= float64(offsetSec) / 3600.0
 	return hours
 }
 
 // returns number of leap seconds to date UTC per https://en.m.wikipedia.org/wiki/Leap_second
 func LeapSeconds(t time.Time) float64 {
-	leap_seconds := 0.0
+	leapSeconds := 0.0
 	utc := t.UTC()
-	leap_sec_times := [][]int{
+	leapSecTimes := [][]int{
 		// year, month, day.  Only Jun 30 & Dec 31st are valid
 		{1972, 6, 30},
 		{1972, 12, 31},
@@ -138,18 +138,18 @@ func LeapSeconds(t time.Time) float64 {
 		// nothing else as of 2020-12-27.  New leap seconds are announced ~6mo in advance
 	}
 	utctz, _ := time.LoadLocation("UTC")
-	for _, ls := range leap_sec_times {
+	for _, ls := range leapSecTimes {
 		// hours, min, sec are always the end of the day
-		leap_sec := time.Date(ls[0], time.Month(ls[1]), ls[2], 23, 59, 59, 999999999, utctz)
-		if utc.After(leap_sec) {
-			leap_seconds += 1.0
+		leapSec := time.Date(ls[0], time.Month(ls[1]), ls[2], 23, 59, 59, 999999999, utctz)
+		if utc.After(leapSec) {
+			leapSeconds += 1.0
 		}
 	}
-	return leap_seconds
+	return leapSeconds
 }
 
 // Works for UTC and Corrected UTC times
-func CalcJulianDate(t time.Time, utc_hrs float64) float64 {
+func CalcJulianDate(t time.Time, utcHours float64) float64 {
 	year := float64(t.Year())
 	month := float64(t.Month())
 	day := float64(t.Day())
@@ -157,6 +157,6 @@ func CalcJulianDate(t time.Time, utc_hrs float64) float64 {
 	JD := 367.0*year - math.Floor(7.0*(year+math.Floor((month+9.0)/12.0))/4.0)
 	JD -= math.Floor(3.0 * (math.Floor((year+(month-9.0)/7.0)/100.0) + 1.0) / 4.0)
 	JD += math.Floor(275.0 * month / 9.0)
-	JD += day + 1721028.5 + utc_hrs/24.0
+	JD += day + 1721028.5 + utcHours/24.0
 	return JD
 }

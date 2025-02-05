@@ -1,7 +1,7 @@
 package alpaca
 
 /*
- * Impliments the Alpaca Telescope client API
+ * Implements the Alpaca Telescope client API
  */
 
 import (
@@ -16,9 +16,9 @@ type TrackingMode int
 
 const (
 	NotTracking TrackingMode = iota
-	Alt_Az
-	EQ_North
-	EQ_South
+	AltAz
+	EQNorth
+	EQSouth
 )
 
 type AlignmentMode int32
@@ -201,13 +201,6 @@ func (t *Telescope) PutConnected(connected bool) error {
 	return err
 }
 
-type putMoveAxis struct {
-	Axis                AxisType `json:"Axis"`
-	Rate                int      `json:"Rate"`
-	ClientID            uint32   `json:"ClientID"`
-	ClientTransactionID uint32   `json:"ClientTransactionID"`
-}
-
 func (t *Telescope) PutMoveAxis(axis AxisType, rate int) error {
 	var form map[string]string = map[string]string{
 		"Axis":                fmt.Sprintf("%d", axis),
@@ -294,7 +287,7 @@ func (t *Telescope) PutTargetDeclination(long float64) error {
 
 func (t *Telescope) PutUTCDate(date time.Time) error {
 	var form map[string]string = map[string]string{
-		"UTCDate":             fmt.Sprintf("%s", date.Format(time.RFC3339)),
+		"UTCDate":             date.Format(time.RFC3339),
 		"ClientID":            fmt.Sprintf("%d", t.alpaca.ClientId),
 		"ClientTransactionID": fmt.Sprintf("%d", t.alpaca.GetNextTransactionId()),
 	}
@@ -330,12 +323,12 @@ func (t *Telescope) PutSyncToTarget() error {
 }
 
 func (t *Telescope) PutTracking(tracking TrackingMode) error {
-	enable_tracking := false
+	enableTracking := false
 	if tracking != NotTracking {
-		enable_tracking = true
+		enableTracking = true
 	}
 	var form map[string]string = map[string]string{
-		"Tracking":            fmt.Sprintf("%v", enable_tracking),
+		"Tracking":            fmt.Sprintf("%v", enableTracking),
 		"ClientID":            fmt.Sprintf("%d", t.alpaca.ClientId),
 		"ClientTransactionID": fmt.Sprintf("%d", t.alpaca.GetNextTransactionId()),
 	}

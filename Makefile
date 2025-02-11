@@ -43,8 +43,8 @@ DARWIN_GUI                := $(DIST_DIR)/$(PROJECT_NAME)-gui-$(PROJECT_VERSION)-
 WINDOWS_RELEASE           := $(DIST_DIR)/AlpacaScope.exe
 WINDOWS_CLI               := $(DIST_DIR)/AlpacaScope-CLI-$(PROJECT_VERSION).exe
 WINDOWS                   := $(DIST_DIR)/AlpacaScope-Debug-$(PROJECT_VERSION).exe
-FYNE_VERSION 			  := v2.5.1
-FYNE_CROSS_VERSION 	      := v1.5.0
+FYNE_VERSION 		  := v2.5.4
+FYNE_CROSS_VERSION        := v1.6.1
 
 GUI_FILES = $(shell find . -type f -name '*.go' | grep -v _test.go | grep -v ./cmd/alpacascope/ ) Makefile
 CLI_FILES = $(shell find . -type f -name '*.go' | grep -v _test.go | grep -v ./cmd/alpacascope-gui/) Makefile
@@ -207,7 +207,7 @@ $(DARWIN_GUI): $(GUI_FILES) | .build-gui-check .prepare
 windows: $(WINDOWS)  ## Build Windows/x86_64 GUI
 
 $(WINDOWS): $(GUI_FILES) | .fyne-cross .prepare
-	fyne-cross windows -app-id net.synfin.alpacascope -developer "Aaron Turner" \
+	fyne-cross windows -app-id net.synfin.alpacascope -developer "Aaron Turner" -pull \
 		-app-version $(PROJECT_VERSION) \
 		-env FYNE_VERSION=$(FYNE_VERSION) \
 		-icon ./cmd/alpacascope-gui/Icon.png \
@@ -232,7 +232,7 @@ $(WINDOWS_CLI): $(GUI_FILES) | .prepare
 linux-gui: $(LINUX_GUI)  ## Build Linux/x86_64 GUI
 
 $(LINUX_GUI): $(GUI_FILES) | .prepare .fyne-cross
-	@fyne-cross linux -app-id net.synfin.alpacascope \
+	@fyne-cross linux -app-id net.synfin.alpacascope -pull \
 		-app-version $(PROJECT_VERSION) -ldflags '$(LDFLAGS)' \
 		-icon $(shell pwd)/cmd/alpacascope-gui/Icon.png \
 		-name alpacascope $(shell pwd)/cmd/alpacascope-gui && \

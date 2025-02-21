@@ -27,5 +27,5 @@ issues:
     - linters:
         - revive
       text: ALL_CAPS
-  exclude-files:
+#  exclude-files:
 #    - ".*_test\\.go"

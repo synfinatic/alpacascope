@@ -27,7 +27,7 @@ type AlpacaResponseMessage struct {
 }
 
 func (a *AlpacaDiscoveryMessage) Bytes() []byte {
-	var buf []byte = []byte{}
+	buf := []byte{}
 
 	buf = append(buf[:], a.Fixed[:]...)
 	buf = append(buf[:], a.Version)
@@ -89,13 +89,13 @@ func tryAlpaca(ip string, port int32) bool {
 func DiscoverServer(tries int) (string, int32, error) {
 	pc, err := net.ListenPacket("udp4", ":32227")
 	if err != nil {
-		return "", 0, fmt.Errorf("Unable to open Alpaca discovery listen socket: %s", err.Error())
+		return "", 0, fmt.Errorf("unable to open Alpaca discovery listen socket: %s", err.Error())
 	}
 	defer pc.Close()
 
 	sendAddr, err := net.ResolveUDPAddr("udp4", "255.255.255.255:32227")
 	if err != nil {
-		return "", 0, fmt.Errorf("Unable to resolve Alpaca broadcast address: %s", err.Error())
+		return "", 0, fmt.Errorf("unable to resolve Alpaca broadcast address: %s", err.Error())
 	}
 
 	adm := NewAlpacaDiscoveryMessage(ALPACA_DISCOVERY_VERSION)
@@ -105,7 +105,7 @@ func DiscoverServer(tries int) (string, int32, error) {
 	for i := 0; i < tries; i++ {
 		_, err = pc.WriteTo(msgBytes, sendAddr)
 		if err != nil {
-			return "", 0, fmt.Errorf("Unable to send Alpaca discovery message: %s", err.Error())
+			return "", 0, fmt.Errorf("unable to send Alpaca discovery message: %s", err.Error())
 		}
 
 		deadline := time.Now().Add(time.Second * 1)
@@ -136,5 +136,5 @@ func DiscoverServer(tries int) (string, int32, error) {
 			}
 		}
 	}
-	return "", 0, fmt.Errorf("No reply from Alpaca Server")
+	return "", 0, fmt.Errorf("no reply from Alpaca Server")
 }

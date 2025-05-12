@@ -43,7 +43,7 @@ DARWIN_GUI                := $(DIST_DIR)/$(PROJECT_NAME)-gui-$(PROJECT_VERSION)-
 WINDOWS_RELEASE           := $(DIST_DIR)/AlpacaScope.exe
 WINDOWS_CLI               := $(DIST_DIR)/AlpacaScope-CLI-$(PROJECT_VERSION).exe
 WINDOWS                   := $(DIST_DIR)/AlpacaScope-Debug-$(PROJECT_VERSION).exe
-FYNE_VERSION 		  := v2.5.4
+FYNE_VERSION 		  := v2.6.1
 FYNE_CROSS_VERSION        := v1.6.1
 
 GUI_FILES = $(shell find . -type f -name '*.go' | grep -v _test.go | grep -v ./cmd/alpacascope/ ) Makefile

@@ -26,10 +26,7 @@ func (n *NexStar) HandleConnection(conn net.Conn, t *alpaca.Telescope) {
 
 	defer conn.Close() // make sure we close connection before we leave
 	rlen, err := conn.Read(buf)
-	for {
-		if err != nil {
-			break
-		}
+	for err != nil {
 		reply := n.nexstarCommand(t, rlen, buf)
 		wlen := len(reply)
 		log.Debugf("our reply %d bytes: %v", wlen, reply)
@@ -349,8 +346,8 @@ func (n *NexStar) nexstarCommand(t *alpaca.Telescope, len int, buf []byte) []byt
  * treat variable as fixed.
  */
 func executeSlew(t *alpaca.Telescope, buf []byte) error {
-	var axis alpaca.AxisType = alpaca.AxisAzmRa
-	var positiveDirection bool = false
+	axis := alpaca.AxisAzmRa
+	positiveDirection := false
 	var rate int // SkySafari uses direction with speeds of 0,2,5,7,9 but ASCOM uses axis with speeds -3 to 3
 
 	switch int(buf[2]) {
@@ -437,8 +434,8 @@ func getGPS(t *alpaca.Telescope, buf []byte) ([]byte, error) {
 			return retVal, err
 		}
 		year, _, _ := utcDate.Date()
-		var x int = year / 256
-		var y int = year % 256
+		x := year / 256
+		y := year % 256
 		retVal = []byte{byte(x), byte(y), '#'}
 	case 51:
 		// Time: h, m, s
@@ -495,11 +492,11 @@ func nextstartRateToASCOM(direction bool, rate int) int {
 
 // convert ABCDEFGH bytes to lat/long
 func NexstarToLatLong(b []byte) (float64, float64) {
-	var lat float64 = float64(b[0]) + float64(b[1])/60.0 + float64(b[2])/3600.0
+	lat := float64(b[0]) + float64(b[1])/60.0 + float64(b[2])/3600.0
 	if b[3] == 1 {
 		lat *= -1.0
 	}
-	var long float64 = float64(b[4]) + float64(b[5])/60.0 + float64(b[6])/3600.0
+	long := float64(b[4]) + float64(b[5])/60.0 + float64(b[6])/3600.0
 	if b[7] == 1 {
 		long *= -1.0
 	}

@@ -80,7 +80,7 @@ func (dms *HMS) ToDMS() DMS {
 
 // converts H:M:S to a hours.frac_hours
 func (hms *HMS) toFloat() float64 {
-	var ret float64 = math.Abs(float64(hms.Hours))
+	ret := math.Abs(float64(hms.Hours))
 	ret += float64(hms.Minutes) / 60.0
 	ret += hms.Seconds / 3600.0
 	if hms.Hours < 0 {

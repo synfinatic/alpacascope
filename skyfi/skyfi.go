@@ -22,13 +22,13 @@ func findIPinCIDR(ip string) (string, error) {
 
 	ifaces, err := net.Interfaces()
 	if err != nil {
-		return "", fmt.Errorf("Unable to query network interfaces: %s", err.Error())
+		return "", fmt.Errorf("unable to query network interfaces: %s", err.Error())
 	}
 
 	for _, iface := range ifaces {
 		addrs, err := iface.Addrs()
 		if err != nil {
-			log.Errorf("Unable to query addresses for %s: %s", iface.Name, err.Error())
+			log.Errorf("unable to query addresses for %s: %s", iface.Name, err.Error())
 			continue
 		}
 
@@ -46,7 +46,7 @@ func findIPinCIDR(ip string) (string, error) {
 			}
 		}
 	}
-	return "", fmt.Errorf("Unable to find a local IP for %s", ip)
+	return "", fmt.Errorf("unable to find a local IP for %s", ip)
 }
 
 /*
@@ -55,7 +55,7 @@ func findIPinCIDR(ip string) (string, error) {
 func ReplyDiscover() {
 	pc, err := reuse.ListenPacket("udp4", fmt.Sprintf(":%d", SKYFI_PORT))
 	if err != nil {
-		log.Errorf("Unable to open SkyFi discovery listen socket: %s", err.Error())
+		log.Errorf("unable to open SkyFi discovery listen socket: %s", err.Error())
 		return
 	}
 	defer pc.Close()
@@ -93,7 +93,7 @@ func ReplyDiscover() {
 
 		_, err = pc.WriteTo(sendBuf, addr)
 		if err != nil {
-			log.Errorf("Unable to send SkyFi discovery reply: %s", err.Error())
+			log.Errorf("unable to send SkyFi discovery reply: %s", err.Error())
 		}
 	}
 }
@@ -111,7 +111,7 @@ func ReplyDiscoverWithShutdown(shutdown chan bool) error {
 	quit := false
 	pc, err := reuse.ListenPacket("udp4", fmt.Sprintf(":%d", SKYFI_PORT))
 	if err != nil {
-		return fmt.Errorf("Unable to start SkyFi discovery: %s", err.Error())
+		return fmt.Errorf("unable to start SkyFi discovery: %s", err.Error())
 	}
 
 	defer pc.Close()
@@ -131,7 +131,7 @@ func ReplyDiscoverWithShutdown(shutdown chan bool) error {
 				log.Warnf("Unable to read from SkyFi discovery listen socket: %s", err.Error())
 				continue
 			}
-			log.Errorf("Received SkyFi packet")
+			log.Errorf("received SkyFi packet")
 			discoChan <- DiscoveryPacket{
 				Buff: buf,
 				Len:  n,
@@ -143,7 +143,7 @@ func ReplyDiscoverWithShutdown(shutdown chan bool) error {
 	for {
 		select {
 		case <-shutdown:
-			log.Errorf("Shutting down SkyFi")
+			log.Errorf("shutting down SkyFi")
 			quit = true
 			return nil
 
@@ -173,7 +173,7 @@ func ReplyDiscoverWithShutdown(shutdown chan bool) error {
 
 			_, err = pc.WriteTo(sendBuf, disco.Addr)
 			if err != nil {
-				log.Errorf("Unable to send SkyFi discovery reply: %s", err.Error())
+				log.Errorf("unable to send SkyFi discovery reply: %s", err.Error())
 			}
 		}
 	}
@@ -186,13 +186,13 @@ func ReplyDiscoverWithShutdown(shutdown chan bool) error {
 func GetDiscover(name string, tries int) ([]byte, error) {
 	pc, err := reuse.ListenPacket("udp4", fmt.Sprintf(":%d", SKYFI_PORT))
 	if err != nil {
-		return []byte{}, fmt.Errorf("Unable to open SkyFi discovery listen socket: %s", err.Error())
+		return []byte{}, fmt.Errorf("unable to open SkyFi discovery listen socket: %s", err.Error())
 	}
 	defer pc.Close()
 
 	sendAddr, err := net.ResolveUDPAddr("udp4", fmt.Sprintf("255.255.255.255:%d", SKYFI_PORT))
 	if err != nil {
-		return []byte{}, fmt.Errorf("Unable to resolve SkyFi broadcast address: %s", err.Error())
+		return []byte{}, fmt.Errorf("unable to resolve SkyFi broadcast address: %s", err.Error())
 	}
 
 	var msg string
@@ -208,7 +208,7 @@ func GetDiscover(name string, tries int) ([]byte, error) {
 	for i := 0; i < tries; i++ {
 		_, err = pc.WriteTo(msgBytes, sendAddr)
 		if err != nil {
-			return []byte{}, fmt.Errorf("Unable to send SkyFi discovery message: %s", err.Error())
+			return []byte{}, fmt.Errorf("unable to send SkyFi discovery message: %s", err.Error())
 		}
 
 		deadline := time.Now().Add(time.Second * 1)
@@ -230,5 +230,5 @@ func GetDiscover(name string, tries int) ([]byte, error) {
 			return buf[:n], nil
 		}
 	}
-	return []byte{}, fmt.Errorf("No reply from SkyFi")
+	return []byte{}, fmt.Errorf("no reply from SkyFi")
 }

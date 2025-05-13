@@ -2,11 +2,12 @@ module github.com/synfinatic/alpacascope
 
 // go version must be <= https://github.com/fyne-io/fyne-cross-images/blob/main/base/Dockerfile#L3
 go 1.23.5
+toolchain go1.24.1
 
 // when you update the Fyne version, also update the Makefile target
 require (
 	fyne.io/fyne/v2 v2.6.1
-	github.com/alecthomas/kong v1.8.1
+	github.com/alecthomas/kong v1.10.0
 	github.com/go-resty/resty/v2 v2.16.5
 	github.com/libp2p/go-reuseport v0.4.0
 	github.com/mattn/go-colorable v0.1.14

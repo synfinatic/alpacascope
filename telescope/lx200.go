@@ -47,10 +47,7 @@ func (state *LX200) HandleConnection(conn net.Conn, t *alpaca.Telescope) {
 
 	defer conn.Close()
 	rlen, err := conn.Read(buf)
-	for {
-		if err != nil {
-			break
-		}
+	for err != nil {
 		/*
 		 * LX200 has a single byte command <0x06> and variable length commands
 		 * which start with a ':' and end with a '#'.  Also, clients may send
@@ -466,7 +463,7 @@ func (state *LX200) lx200Command(t *alpaca.Telescope, cmdlen int, buf []byte) ([
 			ret = "1Updating Planetary Data#" // LOL, WTF is this???
 			_, err = fmt.Sscanf(cmd, ":SC%02d/%02d/%02d#", &state.month, &state.day, &state.year)
 			if err != nil {
-				err = fmt.Errorf("Unable to parse time '%s': %s", cmd, err.Error())
+				err = fmt.Errorf("unable to parse time '%s': %s", cmd, err.Error())
 				ret = "0"
 			} else {
 				state.haveDate = true
@@ -479,7 +476,7 @@ func (state *LX200) lx200Command(t *alpaca.Telescope, cmdlen int, buf []byte) ([
 			ret = "1"
 			_, err = fmt.Sscanf(cmd, ":SL%02d:%02d:%02d#", &state.hour, &state.minute, &state.second)
 			if err != nil {
-				err = fmt.Errorf("Unable to parse time '%s': %s", cmd, err.Error())
+				err = fmt.Errorf("unable to parse time '%s': %s", cmd, err.Error())
 				ret = "0"
 			} else {
 				state.haveTime = true
@@ -495,7 +492,7 @@ func (state *LX200) lx200Command(t *alpaca.Telescope, cmdlen int, buf []byte) ([
 				// HH:MM:SS
 				_, err = fmt.Sscanf(cmd, ":Sr%02d:%02d:%02d#", &hour, &min, &sec)
 				if err != nil {
-					log.Errorf("Error parsing '%s': %s", cmd, err.Error())
+					log.Errorf("error parsing '%s': %s", cmd, err.Error())
 					ret = "0"
 				}
 				hms = NewHMS(hour, min, float64(sec))
@@ -503,13 +500,13 @@ func (state *LX200) lx200Command(t *alpaca.Telescope, cmdlen int, buf []byte) ([
 				// HH:MM.T  not sure what T is.  Assuming is tenth of sec?
 				_, err = fmt.Sscanf(cmd, ":Sr%02d:%02d.%d#", &hour, &min, &sec)
 				if err != nil {
-					log.Errorf("Error parsing '%s': %s", cmd, err.Error())
+					log.Errorf("error parsing '%s': %s", cmd, err.Error())
 					ret = "0"
 				}
 				minFloat := float64(min) + (float64(sec) / 10.0)
 				hms = NewHMSShort(hour, minFloat)
 			default:
-				log.Errorf("Unable to parse %s", cmd)
+				log.Errorf("unable to parse %s", cmd)
 				ret = "0"
 			}
 
@@ -528,7 +525,7 @@ func (state *LX200) lx200Command(t *alpaca.Telescope, cmdlen int, buf []byte) ([
 			var deg, min int
 			_, err = fmt.Sscanf(cmd, ":St%c%02d*%02d#", &sign, &deg, &min)
 			if err != nil {
-				log.Errorf("Error parsing '%s': %s", cmd, err.Error())
+				log.Errorf("error parsing '%s': %s", cmd, err.Error())
 				ret = "0"
 			} else {
 				if sign == '-' {
@@ -544,12 +541,12 @@ func (state *LX200) lx200Command(t *alpaca.Telescope, cmdlen int, buf []byte) ([
 			}
 
 		default:
-			log.Errorf("Unsupported command: '%s'", cmd)
+			log.Errorf("unsupported command: '%s'", cmd)
 		}
 	}
 
 	if err != nil {
-		log.Errorf("Error talking to scope: %s", err.Error())
+		log.Errorf("error talking to scope: %s", err.Error())
 	}
 
 	// convert our return string to the ret_val

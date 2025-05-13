@@ -85,14 +85,14 @@ func (a *AlpacaScopeConfig) Save() error {
 	if a.store != nil {
 		return a.store.SaveSettings(a)
 	}
-	return fmt.Errorf("No valid SettingsStore")
+	return fmt.Errorf("no valid SettingsStore")
 }
 
 func (a *AlpacaScopeConfig) Delete() error {
 	if a.store != nil {
 		return a.store.Delete()
 	}
-	return fmt.Errorf("No valid SettingsStore")
+	return fmt.Errorf("no valid SettingsStore")
 }
 
 func (c *AlpacaScopeConfig) ListenIPAddress() string {

@@ -1,5 +1,11 @@
 # AlpacaScope
 
+## Status
+
+AlpacaScope is no longer maintained.  My primary use case for it was connecting
+SkySafari to my scope, but now that SkySafari supports ALPACA natively, there
+is no need for me to continue development or support.
+
 ## What?
 <!-- markdown-link-check-disable-next-line -->
 Basically AlpacaScope is a lot like the [SCC SkyFi](https://www.skysafariastronomy.com/skyfi-3-professional-astronomy-telescope-control.html) and Sequence Generator Pro's [WiFi Scope](https://www.sequencegeneratorpro.com/download/wifi-scope/).

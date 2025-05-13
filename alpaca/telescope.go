@@ -192,7 +192,7 @@ func (t *Telescope) PutConnected(connected bool) error {
 	if !connected {
 		c = "false"
 	}
-	var form map[string]string = map[string]string{
+	form := map[string]string{
 		"Connected":           c,
 		"ClientID":            fmt.Sprintf("%d", t.alpaca.ClientId),
 		"ClientTransactionID": fmt.Sprintf("%d", t.alpaca.GetNextTransactionId()),
@@ -202,7 +202,7 @@ func (t *Telescope) PutConnected(connected bool) error {
 }
 
 func (t *Telescope) PutMoveAxis(axis AxisType, rate int) error {
-	var form map[string]string = map[string]string{
+	form := map[string]string{
 		"Axis":                fmt.Sprintf("%d", axis),
 		"Rate":                fmt.Sprintf("%d", rate),
 		"ClientID":            fmt.Sprintf("%d", t.alpaca.ClientId),
@@ -213,7 +213,7 @@ func (t *Telescope) PutMoveAxis(axis AxisType, rate int) error {
 }
 
 func (t *Telescope) PutSyncToCoordinates(ra float64, dec float64) error {
-	var form map[string]string = map[string]string{
+	form := map[string]string{
 		"RightAscension":      fmt.Sprintf("%g", ra),
 		"Declination":         fmt.Sprintf("%g", dec),
 		"ClientID":            fmt.Sprintf("%d", t.alpaca.ClientId),
@@ -224,7 +224,7 @@ func (t *Telescope) PutSyncToCoordinates(ra float64, dec float64) error {
 }
 
 func (t *Telescope) PutSlewToCoordinatestAsync(ra float64, dec float64) error {
-	var form map[string]string = map[string]string{
+	form := map[string]string{
 		"RightAscension":      fmt.Sprintf("%g", ra),
 		"Declination":         fmt.Sprintf("%g", dec),
 		"ClientID":            fmt.Sprintf("%d", t.alpaca.ClientId),
@@ -235,7 +235,7 @@ func (t *Telescope) PutSlewToCoordinatestAsync(ra float64, dec float64) error {
 }
 
 func (t *Telescope) PutSlewToCoordinates(ra float64, dec float64) error {
-	var form map[string]string = map[string]string{
+	form := map[string]string{
 		"RightAscension":      fmt.Sprintf("%g", ra),
 		"Declination":         fmt.Sprintf("%g", dec),
 		"ClientID":            fmt.Sprintf("%d", t.alpaca.ClientId),
@@ -246,7 +246,7 @@ func (t *Telescope) PutSlewToCoordinates(ra float64, dec float64) error {
 }
 
 func (t *Telescope) PutSiteLatitude(lat float64) error {
-	var form map[string]string = map[string]string{
+	form := map[string]string{
 		"SiteLatitude":        fmt.Sprintf("%g", lat),
 		"ClientID":            fmt.Sprintf("%d", t.alpaca.ClientId),
 		"ClientTransactionID": fmt.Sprintf("%d", t.alpaca.GetNextTransactionId()),
@@ -256,7 +256,7 @@ func (t *Telescope) PutSiteLatitude(lat float64) error {
 }
 
 func (t *Telescope) PutSiteLongitude(long float64) error {
-	var form map[string]string = map[string]string{
+	form := map[string]string{
 		"SiteLongitude":       fmt.Sprintf("%g", long),
 		"ClientID":            fmt.Sprintf("%d", t.alpaca.ClientId),
 		"ClientTransactionID": fmt.Sprintf("%d", t.alpaca.GetNextTransactionId()),
@@ -266,7 +266,7 @@ func (t *Telescope) PutSiteLongitude(long float64) error {
 }
 
 func (t *Telescope) PutTargetRightAscension(long float64) error {
-	var form map[string]string = map[string]string{
+	form := map[string]string{
 		"TargetRightAscension": fmt.Sprintf("%g", long),
 		"ClientID":             fmt.Sprintf("%d", t.alpaca.ClientId),
 		"ClientTransactionID":  fmt.Sprintf("%d", t.alpaca.GetNextTransactionId()),
@@ -276,7 +276,7 @@ func (t *Telescope) PutTargetRightAscension(long float64) error {
 }
 
 func (t *Telescope) PutTargetDeclination(long float64) error {
-	var form map[string]string = map[string]string{
+	form := map[string]string{
 		"TargetDeclination":   fmt.Sprintf("%g", long),
 		"ClientID":            fmt.Sprintf("%d", t.alpaca.ClientId),
 		"ClientTransactionID": fmt.Sprintf("%d", t.alpaca.GetNextTransactionId()),
@@ -286,7 +286,7 @@ func (t *Telescope) PutTargetDeclination(long float64) error {
 }
 
 func (t *Telescope) PutUTCDate(date time.Time) error {
-	var form map[string]string = map[string]string{
+	form := map[string]string{
 		"UTCDate":             date.Format(time.RFC3339),
 		"ClientID":            fmt.Sprintf("%d", t.alpaca.ClientId),
 		"ClientTransactionID": fmt.Sprintf("%d", t.alpaca.GetNextTransactionId()),
@@ -296,7 +296,7 @@ func (t *Telescope) PutUTCDate(date time.Time) error {
 }
 
 func (t *Telescope) PutAbortSlew() error {
-	var form map[string]string = map[string]string{
+	form := map[string]string{
 		"ClientID":            fmt.Sprintf("%d", t.alpaca.ClientId),
 		"ClientTransactionID": fmt.Sprintf("%d", t.alpaca.GetNextTransactionId()),
 	}
@@ -305,7 +305,7 @@ func (t *Telescope) PutAbortSlew() error {
 }
 
 func (t *Telescope) PutSlewToTargetAsync() error {
-	var form map[string]string = map[string]string{
+	form := map[string]string{
 		"ClientID":            fmt.Sprintf("%d", t.alpaca.ClientId),
 		"ClientTransactionID": fmt.Sprintf("%d", t.alpaca.GetNextTransactionId()),
 	}
@@ -314,7 +314,7 @@ func (t *Telescope) PutSlewToTargetAsync() error {
 }
 
 func (t *Telescope) PutSyncToTarget() error {
-	var form map[string]string = map[string]string{
+	form := map[string]string{
 		"ClientID":            fmt.Sprintf("%d", t.alpaca.ClientId),
 		"ClientTransactionID": fmt.Sprintf("%d", t.alpaca.GetNextTransactionId()),
 	}
@@ -323,11 +323,8 @@ func (t *Telescope) PutSyncToTarget() error {
 }
 
 func (t *Telescope) PutTracking(tracking TrackingMode) error {
-	enableTracking := false
-	if tracking != NotTracking {
-		enableTracking = true
-	}
-	var form map[string]string = map[string]string{
+	enableTracking := tracking != NotTracking
+	form := map[string]string{
 		"Tracking":            fmt.Sprintf("%v", enableTracking),
 		"ClientID":            fmt.Sprintf("%d", t.alpaca.ClientId),
 		"ClientTransactionID": fmt.Sprintf("%d", t.alpaca.GetNextTransactionId()),

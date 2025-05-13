@@ -26,7 +26,7 @@ import (
 	"strings"
 
 	"github.com/alecthomas/kong"
-	"github.com/mattn/go-colorable"
+	colorable "github.com/mattn/go-colorable"
 	"github.com/synfinatic/alpacascope/alpaca"
 	"github.com/synfinatic/alpacascope/skyfi"
 	"github.com/synfinatic/alpacascope/telescope"

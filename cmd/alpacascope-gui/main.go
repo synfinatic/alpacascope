@@ -189,7 +189,7 @@ func preConnectQuit(c *AlpacaScopeConfig, stop chan bool) {
 
 func (c *AlpacaScopeConfig) Run() {
 	accptedFirstConnection := false
-	var clientid uint32 = rand.Uint32() // nolint:gosec
+	var clientid = rand.Uint32() // nolint:gosec
 	var sport int32
 	var shost string
 	var err error
@@ -261,7 +261,7 @@ func (c *AlpacaScopeConfig) Run() {
 	a := alpaca.NewAlpaca(clientid, shost, sport)
 	tid, _ := strconv.ParseUint(c.AscomTelescope, 10, 32)
 	scope := alpaca.NewTelescope(uint32(tid), trackingMode, a)
-	var connected bool = false
+	var connected = false
 	var connectAttempts int64 = 1
 	if c.AutoStart {
 		connectAttempts, _ = strconv.ParseInt(c.AutoConnectAttempts, 10, 32)

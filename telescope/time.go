@@ -16,7 +16,7 @@ func TimeToJ2000(t time.Time) float64 {
 
 // Returns days.frac_day since given JXXXX day for UTC time
 func TimeToJYear(jyear int, t time.Time) float64 {
-	var utc time.Time = t.UTC()
+	utc := t.UTC()
 	year, _, _ := utc.Date()
 	hour, minute, second := utc.Clock()
 
@@ -81,8 +81,8 @@ func GreenwichMeanSiderealTime(t time.Time) float64 {
 	T := (JDtt - 2451545.0) / 36525.0
 
 	// Greenwich Mean Standard Time polynominal part for earth's obliquity (total hours)
-	GMSTpT := 0.014506 + 4612.156534*T + 1.3915817*math.Pow(T, 2)
-	GMSTpT -= 0.00000044*math.Pow(T, 3) + 0.000029956*math.Pow(T, 4) + 0.0000000368*math.Pow(T, 5)
+	GMSTpT := 0.014506 + 4612.156534*T + 1.3915817*math.Pow(T, 2)                                  // nolint:staticcheck
+	GMSTpT -= 0.00000044*math.Pow(T, 3) + 0.000029956*math.Pow(T, 4) + 0.0000000368*math.Pow(T, 5) // nolint:staticcheck
 
 	GMSTpT = math.Mod(GMSTpT/3600.0, 360.0) / 15.0 // convert arc-seconds to hours
 	if GMSTpT < 0.0 {

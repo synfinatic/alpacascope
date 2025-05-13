@@ -88,7 +88,7 @@ func (dms *DMS) HMS() HMS {
 
 // Returns +/- degrees.  If you need 0->360, add 360.0 to negative results!
 func (dms *DMS) toFloat() float64 {
-	var ret float64 = math.Abs(float64(dms.Degrees))
+	ret := math.Abs(float64(dms.Degrees))
 	ret += float64(dms.Minutes) / 60.0
 	ret += dms.Seconds / 3600.0
 	if dms.Degrees < 0 {
